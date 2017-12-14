@@ -3,10 +3,10 @@
 # 目录
 
 - [JXWAF](#jxwaf)
-- [WAF所有配置文件](#WAF所有配置文件)
-- [nginx.conf文件设置](#nginx.conf文件设置)
-- [init.lua文件设置](#init.lua文件设置)
-- [jxwaf_config.json文件设置](#jxwaf_config.json文件设置)
+- [WAF所有配置文件](#waf所有配置文件)
+- [nginx.conf文件设置](#nginxconf文件设置)
+- [init.lua文件设置](#initlua文件设置)
+- [jxwaf_config.json文件设置](#jxwaf_configjson文件设置)
 
 
 ### WAF所有配置文件
