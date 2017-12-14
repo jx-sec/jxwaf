@@ -119,7 +119,7 @@ http {
 
 
 ### Docs 文档
-
+   * [JXWAF配置说明](docs/JXWAF配置说明.md)
    * [基于Openresty实现业务安全防护 ](http://www.freebuf.com/vuls/150571.html)
    * [基于Openresty实现透明部署动态口令功能](http://www.freebuf.com/articles/network/150959.html)
     
