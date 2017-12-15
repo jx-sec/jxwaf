@@ -53,7 +53,7 @@ jxwaf(锦衣盾)由jxwaf与jxwaf管理后台组成:
   - [jxwaf](https://github.com/jx-sec/jxwaf) : 基于openresty(nginx+lua)开发
   - [jxwaf管理后台](https://github.com/jx-sec/jxwaf-server)(开发中)
     - web端架构
-        - 前端架构: seajs + artTemplatejs + adminLTE   
+        - 前端架构: vue.js+sea.js + artTemplate.js + adminLTE+ Echart   
         - 后端架构: django + sqlite
     - 控制端架构: ansible
     - 大数据处理架构: graylog + spark
