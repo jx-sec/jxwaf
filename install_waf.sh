@@ -1,5 +1,5 @@
 #!/bin/bash
-
+yum install pcre-devel openssl-devel gcc make g++ curl -y
 tar zxvf openresty-1.11.2.4.tar.gz
 cd openresty-1.11.2.4 
 ./configure --prefix=/opt/jxwaf && gmake && gmake install
