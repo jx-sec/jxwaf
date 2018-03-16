@@ -69,7 +69,7 @@ jxwaf(锦衣盾)由jxwaf与jxwaf管理中心组成:
    2. $ git clone https://github.com/jx-sec/jxwaf.git
    3. $ cd jxwaf
    4. $ sh install_waf.sh 
-   5. $ 运行后显示nginx: the configuration file /opt/jxwaf/nginx/conf/nginx.conf syntax is ok
+   5. $ 运行后显示nginx: 
    
       nginx: the configuration file /opt/jxwaf/nginx/conf/nginx.conf syntax is ok
 
