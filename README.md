@@ -63,12 +63,17 @@ jxwaf(锦衣盾)由jxwaf与jxwaf管理中心组成:
     - Openresty 1.11.2.4
 
 ###  Install 安装 
-将代码下载到/tmp目录，运行install_waf.sh文件，jxwaf将安装在/opt/jxwaf目录，具体如下:
+将代码下载到/tmp目录，运行install_waf.sh文件(已包含openresty安装包)，jxwaf将安装在/opt/jxwaf目录，具体如下:
 
    1. $ cd /tmp
    2. $ git clone https://github.com/jx-sec/jxwaf.git
    3. $ cd jxwaf
    4. $ sh install_waf.sh 
+   5. $ 运行后显示nginx: the configuration file /opt/jxwaf/nginx/conf/nginx.conf syntax is ok
+   
+      nginx: the configuration file /opt/jxwaf/nginx/conf/nginx.conf syntax is ok
+
+      nginx: configuration file /opt/jxwaf/nginx/conf/nginx.conf test is successful
 
 
 ### Usage 使用
