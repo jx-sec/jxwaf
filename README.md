@@ -7,7 +7,7 @@
 jxwaf(锦衣盾)是一款基于openresty(nginx+lua)开发的下一代web应用防火墙，独创的业务逻辑防护引擎和机器学习引擎可以有效对业务安全风险进行防护，解决传统WAF无法对业务安全进行防护的痛点。内置的语义分析引擎配合机器学习引擎可以避免传统WAF规则叠加太多导致速度变慢的问题，同时增强检测精准性（低误报、低漏报）。
 
 ### Feature 功能
-  - 基础攻击防护
+  - 基础攻击防护 
     - SQL注入攻击
     - XSS攻击
     - 目录遍历漏洞
@@ -26,12 +26,13 @@ jxwaf(锦衣盾)是一款基于openresty(nginx+lua)开发的下一代web应用�
   - 高级CC攻击防护
     - 可针对不同URL，不同请求参数单独设置不同防护变量
     - 人机识别
+  - Cookie安全防护
   - 前端参数加密防护
     - 支持AES加解密
     - 支持DES加解密
     - 支持RSA加解密
-  - 透明部署动态口令功能(将拆分成独立版本)
-    - 可对后台管理系统和网站用户提供动态口令(OTP)功能 
+  - 透明部署动态口令功能
+    - 可对后台管理系统和网站用户提供动态口令(OTP)功能
   - 检测缓存功能
     - 对已经过WAF检测请求进行MD5缓存，提高检测效率
   - 支持协议
@@ -41,6 +42,7 @@ jxwaf(锦衣盾)是一款基于openresty(nginx+lua)开发的下一代web应用�
      -  支持主备部署，避免单点故障
      -  支持集群反向代理模式部署，可处理超大数据流量
      -  支持嵌入式部署，无需改变原有网络拓扑结构
+     -  支持云模式部署
   - 管理功能
     - 基础配置
     - 规则配置
@@ -49,25 +51,16 @@ jxwaf(锦衣盾)是一款基于openresty(nginx+lua)开发的下一代web应用�
 
 ### Architecture 架构
 
-jxwaf(锦衣盾)由jxwaf与jxwaf管理后台组成:
+jxwaf(锦衣盾)由jxwaf与jxwaf管理中心组成:
   - [jxwaf](https://github.com/jx-sec/jxwaf) : 基于openresty(nginx+lua)开发
-  - [jxwaf管理后台](https://github.com/jx-sec/jxwaf-server)(开发中)
-    - web端架构
-        - 前端架构: vue.js+sea.js + artTemplate.js + adminLTE+ Echart   
-        - 后端架构: django + sqlite
-    - 控制端架构: ansible
-    - 大数据处理架构: graylog + spark
+  - [jxwaf管理中心](http://www.jxwaf.com)：http://www.jxwaf.com
+
 
 ### Environment 环境
 
   - jxwaf 
     - Centos 7
-    - Openresty 1.11.2.5
-  - jxwaf管理后台
-    - Centos 7
-    - Django 1.9.2
-    - Ansible 2.1.2
-    - Graylog 2.3.1
+    - Openresty 1.11.2.4
 
 ###  Install 安装 
 将代码下载到/tmp目录，运行jxwaf_install.sh文件，jxwaf将安装在/opt/jxwaf目录，具体如下:
@@ -75,7 +68,7 @@ jxwaf(锦衣盾)由jxwaf与jxwaf管理后台组成:
    1. $ cd /tmp
    2. $ git clone https://github.com/jx-sec/jxwaf.git
    3. $ cd jxwaf
-   4. $ sh jxwaf_install.sh 
+   4. $ sh install_waf.sh 
 
 
 ### Usage 使用
@@ -87,29 +80,29 @@ http {
     default_type  application/octet-stream;
     sendfile        on;
     keepalive_timeout  65;
-
+#start
+    resolver  114.114.114.114;
     init_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/init.lua;
-#    lua_shared_dict http_black 200m; 
-#    lua_shared_dict http_white 200m; 
+    init_worker_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/init_worker.lua;
+    rewrite_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/rewrite.lua;
+    access_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/access.lua;
+    header_filter_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/header_filter.lua;
+    log_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/log.lua;
+    lua_code_cache on;
+#end
     upstream http://1.1.1.1 {
                 server 1.1.1.1;
      }
     server {
         listen       80;
         server_name  localhost;
-        lua_code_cache on;
-        access_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/access.lua;
-        log_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/log.lua;
-
         location / {
-#        access_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/access.lua;
-#        log_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/log.lua;
             root   html;
             index  index.html index.htm;
                 proxy_pass  http://1.1.1.1;
         }
-
-
+    }
+}
 
 ```
 
@@ -119,9 +112,10 @@ http {
 
 
 ### Docs 文档
-   * [JXWAF配置说明](docs/JXWAF配置说明.md)
+   * [JXWAF使用说明](docs/JXWAF使用说明.md)
    * [基于Openresty实现业务安全防护 ](http://www.freebuf.com/vuls/150571.html)
    * [基于Openresty实现透明部署动态口令功能](http://www.freebuf.com/articles/network/150959.html)
+   * [WAF开发之Cookie安全防护  ](http://www.freebuf.com/articles/web/164232.html) 
     
 
 ### Contributor 贡献者
@@ -131,6 +125,6 @@ http {
 
 ### BUG&Requirement BUG&需求
 
-- github提交问题或需求
-- QQ群 xxxxxx
+- github 提交BUG题或需求
+- QQ群 730947092
 
