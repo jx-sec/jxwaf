@@ -4,6 +4,7 @@ tar zxvf openresty-1.11.2.4.tar.gz
 cd openresty-1.11.2.4 
 ./configure --prefix=/opt/jxwaf && gmake && gmake install
 cd ../libinjection/
+chmod +x src/*.py
 make all
 cp src/libinjection.so /opt/jxwaf/lualib/
 cd ../lua-aho-corasick/
