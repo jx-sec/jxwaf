@@ -111,11 +111,15 @@ local function _parse_request_body()
 
 	if content_type and  ngx.re.find(content_type, [=[^application/json;]=],"oij") and tonumber(ngx.req.get_headers()["Content-Length"]) ~= 0 then
 	
-		local body_data = ngx.req.get_post_args()
-		local json_args_raw 
-		for k,_ in pairs(body_data)do
-			json_args_raw = k
-		end
+--		local body_data = ngx.req.get_post_args() 
+		local json_args_raw = ngx.req.get_body_data()
+		if not json_args_raw then
+			ngx.log(ngx.ERR,"get_body_data ERR!")
+			ngx.exit(500)
+		end 
+--		for k,_ in pairs(body_data)do
+--			json_args_raw = k
+--		end
 		local json_args,err = cjson.decode(json_args_raw)
 		if json_args == nil then
 			ngx.log(ngx.ERR,"failed to decode json args :",err)
