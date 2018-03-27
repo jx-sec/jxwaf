@@ -228,6 +228,7 @@ end
 
 local function _rule_match(rules)
 	local result
+	ngx.ctx.rule_observ_log = {}
 	for _,rule in ipairs(rules) do
 		
 	
