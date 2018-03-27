@@ -270,21 +270,38 @@ local function _rule_match(rules)
 				end
 				
 			     end
-                        if matchs_result and rule.rule_log == "true" then                       
-                        	ctx_rule_log.rule_id = rule.rule_id
-                                ctx_rule_log.rule_detail = rule.rule_detail
-                                ctx_rule_log.rule_serverity = rule.rule_serverity
-                                ctx_rule_log.rule_category = rule.rule_category
-                                ctx_rule_log.rule_action = rule.rule_action
-				if _config_info.log_all == "true" or rule.rule_log_all=="true" then
-				ctx_rule_log.rule_raw_headers =  request.request['RAW_HEADER']()
-				ctx_rule_log.rule_raw_post =  ngx.req.get_body_data()
+                if matchs_result and rule.rule_log == "true" then                       
+                    ctx_rule_log.rule_id = rule.rule_id
+                    ctx_rule_log.rule_detail = rule.rule_detail
+                    ctx_rule_log.rule_serverity = rule.rule_serverity
+                    ctx_rule_log.rule_category = rule.rule_category
+                    ctx_rule_log.rule_action = rule.rule_action
+					if _config_info.log_all == "true" or rule.rule_log_all=="true" then
+						ctx_rule_log.rule_raw_headers =  request.request['RAW_HEADER']()
+						ctx_rule_log.rule_raw_post =  ngx.req.get_body_data()
+					end
+					ngx.ctx.rule_log = ctx_rule_log
 				end
-				ngx.ctx.rule_log = ctx_rule_log
-			end
-                        if rule.rule_action == "pass" and matchs_result then
-				matchs_result = false
-			end
+				if _config_info.observ_mode == "true" and matchs_result and rule.rule_log == "true" then
+				
+					if _config_info.observ_mode_white_ip == "false" then
+						table_insert(ngx.ctx.rule_observ_log,ctx_rule_log)
+						matchs_result = false
+					else
+						for _,v in ipairs(_config_info.observ_mode_white_ip) do
+							local client_ip = ngx.var.remote_addr
+							if client_ip == v then
+								table_insert(ngx.ctx.rule_observ_log,ctx_rule_log)							
+								matchs_result = false					
+							end
+				
+						end
+					end	
+				end
+	
+                if rule.rule_action == "pass" and matchs_result then
+					matchs_result = false
+				end
 		
 			
 			if matchs_result then
@@ -386,6 +403,8 @@ local function _global_update_rule()
 	_config_info.cookie_safe_client_ip = _config_info.cookie_safe_client_ip or _update_rule['cookie_safe_client_ip'] or "true"
 	_config_info.cookie_safe_is_safe = _config_info.cookie_safe_is_safe or _update_rule['cookie_safe_is_safe'] or "false"	
 	_config_info.aes_random_key = _config_info.aes_random_key or _update_rule['aes_random_key'] or  str.to_hex(resty_random.bytes(8))
+	_config_info.observ_mode =  _config_info.observ_mode or _update_rule['observ_mode'] or "false"
+	_config_info.observ_mode_white_ip =  _config_info.observ_mode_white_ip or _update_rule['observ_mode_white_ip'] or "false"
         ngx.log(ngx.ALERT,"success load global config ",_config_info.base_engine)
 	if _config_info.base_engine == "true" then
 		_base_update_rule()
