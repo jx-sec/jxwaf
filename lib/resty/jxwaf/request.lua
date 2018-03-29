@@ -11,7 +11,7 @@ local function _file_parse()
 	if (ngx.re.find(content_type, [=[^multipart/form-data; boundary=]=], "oij")) then
 
 	if  ngx.req.get_body_file() then
-		ngx.log(NGX.err,"request body size larger than client_body_buffer_size, refuse request ")
+		ngx.log(ngx.ERR,"request body size larger than client_body_buffer_size, refuse request ")
 		ngx.exit(503)
 	end
 	
@@ -116,7 +116,7 @@ local function _parse_request_body()
 	end
 
 	if  ngx.req.get_body_file() then
-		ngx.log(NGX.err,"request body size larger than client_body_buffer_size, refuse request ")
+		ngx.log(ngx.ERR,"request body size larger than client_body_buffer_size, refuse request ")
 		ngx.exit(503)
 	end
 
