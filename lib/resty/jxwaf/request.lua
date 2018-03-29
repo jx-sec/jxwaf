@@ -9,6 +9,12 @@ local function _file_parse()
 	local file_type = {}
 	local content_type = ngx.req.get_headers()["Content-type"] or ""
 	if (ngx.re.find(content_type, [=[^multipart/form-data; boundary=]=], "oij")) then
+
+	if  ngx.req.get_body_file() then
+		ngx.log(NGX.err,"equest body size larger than client_body_buffer_size, refuse request ")
+		ngx.exit(503)
+	end
+	
 	local form, err = upload:new()	
 	if not form then
 		ngx.log(ngx.ERR, "failed to new upload: ", err)
@@ -107,6 +113,11 @@ local function _parse_request_body()
 	if ngx.req.get_method() == "POST" and not content_type then
 --		ngx.log(ngx.ERR,"Request not contained  content-type headers :",ngx.req.raw_header())
 
+	end
+
+	if  ngx.req.get_body_file() then
+		ngx.log(NGX.err,"equest body size larger than client_body_buffer_size, refuse request ")
+		ngx.exit(503)
 	end
 
 	if content_type and  ngx.re.find(content_type, [=[^application/json;]=],"oij") and tonumber(ngx.req.get_headers()["Content-Length"]) ~= 0 then
@@ -327,7 +338,7 @@ _M.request = {
 	REQUEST_PROTOCOL = function() return ngx.var.server_protocol end,
 	REQUEST_COOKIES = function() return  take_cookies() or {} end,
 	REQUEST_COOKIES_NAMES = function() return _table_keys(take_cookies()) or {} end,
-	HTTP_USER_AGENT = function() return ngx.var.http_user_agent end,
+	HTTP_USER_AGENT = function() return ngx.var.http_user_agent or "-" end,
 	RAW_HEADER = function() return ngx.req.raw_header() end,
 	HTTP_REFERER = function() return ngx.var.http_referer or "-"  end,
 	REQUEST_HEADERS = function() return ngx.req.get_headers() end,
