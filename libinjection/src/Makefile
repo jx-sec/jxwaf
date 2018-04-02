@@ -39,12 +39,12 @@ samples: ${SAMPLES}
 .PHONY: samples
 
 fingerprints.txt: make_parens.py
-	./make_parens.py < fingerprints.txt > fingerprints2.txt
-	mv fingerprints2.txt fingerprints.txt
+#	./make_parens.py < fingerprints.txt > fingerprints2.txt
+#	mv fingerprints2.txt fingerprints.txt
 
 fingerprints:
-	./make_parens.py < fingerprints.txt > fingerprints2.txt
-	mv fingerprints2.txt fingerprints.txt
+#	./make_parens.py < fingerprints.txt > fingerprints2.txt
+#	mv fingerprints2.txt fingerprints.txt
 .PHONY: fingerprints
 
 sqlparse_data.json: sqlparse_map.py fingerprints
