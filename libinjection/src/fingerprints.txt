@@ -1662,7 +1662,6 @@
 1osvf
 1osvo
 1osvs
-1ov
 1ov&(
 1ov&1
 1ov&E
