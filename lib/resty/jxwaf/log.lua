@@ -32,7 +32,7 @@ end
 else
 if rule_log then
 	rule_log['http_request_time'] = ngx.localtime()
-	v['http_request_host'] = ngx.req.get_headers()["Host"]
+	rule_log['http_request_host'] = ngx.req.get_headers()["Host"]
 	local bytes, err = logger.log(cjson.encode(rule_log))
 	if err then
 		ngx.log(ngx.ERR, "failed to log message: ", err)
@@ -57,7 +57,7 @@ if config_info.log_local == "true" then
 		local rule_log = ngx.ctx.rule_log
 		if rule_log then
 			rule_log['http_request_time'] = ngx.localtime()
-			v['http_request_host'] = ngx.req.get_headers()["Host"]
+			rule_log['http_request_host'] = ngx.req.get_headers()["Host"]
 			ngx.log(ngx.ERR,cjson.encode(rule_log))
 		end
 	end
