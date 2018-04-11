@@ -477,7 +477,7 @@ end
 
 function _M.access_init()
 	local content_type = ngx.req.get_headers()["Content-type"]
-	if content_type and  ngx.re.find(content_type, [=[^multipart/form-data;]=],"oij") and tonumber(ngx.req.get_headers()["Content-Length"]) ~= 0 then
+	if content_type and  ngx.re.find(content_type, [=[^multipart/form-data; boundary=]=],"oij") and tonumber(ngx.req.get_headers()["Content-Length"]) ~= 0 then
 		local form, err = upload:new()
 		local _file_name = {}
 		local _form_name = {}
@@ -491,7 +491,9 @@ function _M.access_init()
 		ngx.req.init_body()
 		ngx.req.append_body("--" .. form.boundary)
 		local lasttype, chunk
+		local count = 0
 		while true do
+			count = count + 1
 			local typ, res, err = form:read()
                 if not typ then
                     ngx.say("failed to read: ", err)
@@ -504,7 +506,7 @@ function _M.access_init()
                     	local _tmp_form_name = ngx.re.match(res[2],[=[(.+)\bname="([^"]+)"(.*)]=],"oij")
 						local _tmp_file_name =  ngx.re.match(res[2],[=[(.+)filename="([^"]+)"(.*)]=],"oij")
                     	if _tmp_form_name  then
-                        	table.insert(_form_name,_tmp_form_name[2])
+                        	table.insert(_form_name,_tmp_form_name[2]..count)
 						end
 						if _tmp_file_name  then
 							table.insert(_file_name,_tmp_file_name[2])

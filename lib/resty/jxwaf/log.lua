@@ -22,6 +22,7 @@ if config_info.observ_mode == "true" then
 if #rule_observ_log ~= 0 then
 	for  _,v in ipairs(rule_observ_log) do
 			v['http_request_time'] = ngx.localtime()
+			v['http_request_host'] = ngx.req.get_headers()["Host"]
        		local bytes, err = logger.log(cjson.encode(v))
 		if err then
 			ngx.log(ngx.ERR, "failed to log message: ", err)	
@@ -31,8 +32,8 @@ end
 else
 if rule_log then
 	rule_log['http_request_time'] = ngx.localtime()
+	v['http_request_host'] = ngx.req.get_headers()["Host"]
 	local bytes, err = logger.log(cjson.encode(rule_log))
-	
 	if err then
 		ngx.log(ngx.ERR, "failed to log message: ", err)
 	end
@@ -47,6 +48,7 @@ if config_info.log_local == "true" then
 		if #rule_observ_log ~= 0 then
 			for  _,v in ipairs(rule_observ_log) do
 				v['http_request_time'] = ngx.localtime()
+				v['http_request_host'] = ngx.req.get_headers()["Host"]
 				ngx.log(ngx.ERR,cjson.encode(v))
 			end
 		end
@@ -55,6 +57,7 @@ if config_info.log_local == "true" then
 		local rule_log = ngx.ctx.rule_log
 		if rule_log then
 			rule_log['http_request_time'] = ngx.localtime()
+			v['http_request_host'] = ngx.req.get_headers()["Host"]
 			ngx.log(ngx.ERR,cjson.encode(rule_log))
 		end
 	end
