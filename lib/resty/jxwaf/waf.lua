@@ -478,7 +478,7 @@ end
 function _M.access_init()
 	local content_type = ngx.req.get_headers()["Content-type"]
 	if content_type and  ngx.re.find(content_type, [=[^multipart/form-data;]=],"oij") and tonumber(ngx.req.get_headers()["Content-Length"]) ~= 0 then
-		local form, err = upload:new(4096)
+		local form, err = upload:new()
 		local _file_name = {}
 		local _form_name = {}
 		local _file_type = {}
@@ -488,13 +488,18 @@ function _M.access_init()
 			ngx.log(ngx.ERR, "failed to new upload: ", err)
 			ngx.exit(500)	
 		end
+		ngx.req.init_body()
+		ngx.req.append_body("--" .. form.boundary)
+		local lasttype, chunk
 		while true do
 			local typ, res, err = form:read()
                 if not typ then
                     ngx.say("failed to read: ", err)
                 	return nil
                 end
-                if typ == "header" then
+				if typ == "header" then
+					chunk = res[3]
+					ngx.req.append_body("\r\n" .. chunk)
                     if res[1] == "Content-Disposition" then
                     	local _tmp_form_name = ngx.re.match(res[2],[=[(.+)\bname="([^"]+)"(.*)]=],"oij")
 						local _tmp_file_name =  ngx.re.match(res[2],[=[(.+)filename="([^"]+)"(.*)]=],"oij")
@@ -510,18 +515,34 @@ function _M.access_init()
 						_type_flag = "true"
                 	end
             	end
-            	if typ == "body" then
+				if typ == "body" then
+					chunk = res
+					if lasttype == "header" then
+						ngx.req.append_body("\r\n\r\n")
+					end
+					ngx.req.append_body(chunk)
                     if _type_flag == "true" then
                         _type_flag = "false"
 						t[_form_name[#_form_name]] = ""
-                    else
-                        t[_form_name[#_form_name]] = res
+					else
+						if lasttype == "header" then
+							t[_form_name[#_form_name]] = res
+						else
+							t[_form_name[#_form_name]] = ""
+						end
                     end
 				end
-                if typ == "eof" then
+				if typ == "part_end" then 
+					ngx.req.append_body("\r\n--" .. form.boundary)
+				end
+				if typ == "eof" then
+					ngx.req.append_body("--\r\n")
                     break
-                end
-        end
+				end
+				lasttype = typ
+		end
+		form:read()
+		ngx.req.finish_body()
 		ngx.ctx.form_post_args = t
 		ngx.ctx.form_file_name = _file_name
 		ngx.ctx.form_file_type = _file_type
