@@ -10,6 +10,7 @@ local table_insert = table.insert
 local table_sort = table.sort
 local table_concat = table.concat
 local http = require "resty.jxwaf.http"
+local upload = require "resty.upload"
 local _M = {}
 _M.version = "1.0"
 
@@ -475,9 +476,58 @@ end
 
 
 function _M.access_init()
-
-	ngx.req.read_body()
-
+	local content_type = ngx.req.get_headers()["Content-type"]
+	if content_type and  ngx.re.find(content_type, [=[^multipart/form-data;]=],"oij") and tonumber(ngx.req.get_headers()["Content-Length"]) ~= 0 then
+		local form, err = upload:new(4096)
+		local _file_name = {}
+		local _form_name = {}
+		local _file_type = {}
+		local t ={}
+		local _type_flag = "false"
+		if not form then
+			ngx.log(ngx.ERR, "failed to new upload: ", err)
+			ngx.exit(500)	
+		end
+		while true do
+			local typ, res, err = form:read()
+                if not typ then
+                    ngx.say("failed to read: ", err)
+                	return nil
+                end
+                if typ == "header" then
+                    if res[1] == "Content-Disposition" then
+                    	local _tmp_form_name = ngx.re.match(res[2],[=[(.+)\bname="([^"]+)"(.*)]=],"oij")
+						local _tmp_file_name =  ngx.re.match(res[2],[=[(.+)filename="([^"]+)"(.*)]=],"oij")
+                    	if _tmp_form_name  then
+                        	table.insert(_form_name,_tmp_form_name[2])
+						end
+						if _tmp_file_name  then
+							table.insert(_file_name,_tmp_file_name[2])
+                    	end
+                	end
+                	if res[1] == "Content-Type" then
+                    	table.insert(_file_type,res[2])
+						_type_flag = "true"
+                	end
+            	end
+            	if typ == "body" then
+                    if _type_flag == "true" then
+                        _type_flag = "false"
+						t[_form_name[#_form_name]] = ""
+                    else
+                        t[_form_name[#_form_name]] = res
+                    end
+				end
+                if typ == "eof" then
+                    break
+                end
+        end
+		ngx.ctx.form_post_args = t
+		ngx.ctx.form_file_name = _file_name
+		ngx.ctx.form_file_type = _file_type
+	else
+		ngx.req.read_body()
+	end
 end
 
 
