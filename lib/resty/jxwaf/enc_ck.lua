@@ -62,7 +62,8 @@ local function _aes_ck()
 		if config_info.cookie_safe_is_safe == "true" then
 			
 			for k,v in pairs(fields) do
-				local key = aes_init:decrypt(hexstr2bin(k))
+		--		local key = aes_init:decrypt(hexstr2bin(k))
+				local key = k
 				local value = aes_init:decrypt(hexstr2bin(v))
 		
 				if key and value then
@@ -72,7 +73,8 @@ local function _aes_ck()
 			
 		else
 			 for k,v in pairs(fields) do
-                                local key = aes_init:decrypt(hexstr2bin(k))
+                --              local key = aes_init:decrypt(hexstr2bin(k))
+                		local key = k
                                 local value = aes_init:decrypt(hexstr2bin(v))
 
 				 
@@ -88,7 +90,7 @@ local function _aes_ck()
 		end
 		
 		 ngx.req.set_header("Cookie", table.concat(new_cookie,";"))
-
+--		 ngx.log(ngx.ERR, ngx.req.get_headers()['Cookie'])
 
 	end
 end
@@ -128,9 +130,16 @@ local function _resp_aes_ck()
                         aes_key = aes_random_key
                 end
 		local _resp_cookie = ngx.resp.get_headers()['Set-Cookie']
-		local resp_cookie
-		if _resp_cookie then
-			resp_cookie = split(_resp_cookie,";")
+		local resp_cookie = {}
+		
+		if type(_resp_cookie) == "table" then
+			for _,v in ipairs(_resp_cookie) do
+				string.gsub(v,'[^'..";"..']+',function ( w )
+					table.insert(resp_cookie,w)
+ 				end)
+			end
+		elseif type(_resp_cookie) == "string" then
+			resp_cookie = split(_resp_cookie,";") 
 		else
 			return
 		end
@@ -139,24 +148,28 @@ local function _resp_aes_ck()
 		for k,v in pairs(resp_cookie) do
 			local _tmp = split(v,"=")
 			local _tmp_result = {}
+
 			for _k,_v in ipairs(_tmp) do
 				        local value = _v
                                         local lower_value = string.lower(trim(value))
 					if _k == 1 then
+
 						if lower_value == "expires" or lower_value == "max-age" or lower_value == "domain" or lower_value == "path" or lower_value == "secure" or lower_value == "httponly" or lower_value == "sameSite" then
 							table.insert(_tmp_result,value)
 						else
 							break
 						end
 							
-					else
+					else  
 
 							table.insert(_tmp_result,value)
 					end
 			end
+
 			for _k,_v in ipairs(_tmp)do
 					local value = trim(_v)
 					local lower_value = string.lower(value)
+
 					if _k == 1 then
 						if lower_value == "expires" or lower_value == "max-age" or lower_value == "domain" or lower_value == "path" or lower_value == "secure" or lower_value == "httponly" or lower_value == "sameSite" then
 						
@@ -164,12 +177,15 @@ local function _resp_aes_ck()
 						else
 						
 							
-							table.insert(_tmp_result,str.to_hex(aes_init:encrypt(value)))
+					--		table.insert(_tmp_result,str.to_hex(aes_init:encrypt(value)))
+							table.insert(_tmp_result,value)
 						end
 					else
 					
 						table.insert(_tmp_result,str.to_hex(aes_init:encrypt(value)))
 					end	
+
+
 			end
 			
 
@@ -177,7 +193,7 @@ local function _resp_aes_ck()
 			table.insert(tmp_result,table.concat(_tmp_result,"="))
 		end
 		ngx.header['Set-Cookie'] = table.concat(tmp_result,";")
-	
+		
 
 
 	end
