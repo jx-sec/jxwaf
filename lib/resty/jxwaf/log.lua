@@ -21,6 +21,7 @@ local rule_observ_log = ngx.ctx.rule_observ_log
 if config_info.observ_mode == "true" then
 if #rule_observ_log ~= 0 then
 	for  _,v in ipairs(rule_observ_log) do
+			v['http_request_time'] = ngx.localtime()
        		local bytes, err = logger.log(cjson.encode(v))
 		if err then
 			ngx.log(ngx.ERR, "failed to log message: ", err)	
@@ -29,6 +30,7 @@ if #rule_observ_log ~= 0 then
 end
 else
 if rule_log then
+	rule_log['http_request_time'] = ngx.localtime()
 	local bytes, err = logger.log(cjson.encode(rule_log))
 	
 	if err then
@@ -44,6 +46,7 @@ if config_info.log_local == "true" then
 		local rule_observ_log = ngx.ctx.rule_observ_log
 		if #rule_observ_log ~= 0 then
 			for  _,v in ipairs(rule_observ_log) do
+				v['http_request_time'] = ngx.localtime()
 				ngx.log(ngx.ERR,cjson.encode(v))
 			end
 		end
@@ -51,6 +54,7 @@ if config_info.log_local == "true" then
 	else
 		local rule_log = ngx.ctx.rule_log
 		if rule_log then
+			rule_log['http_request_time'] = ngx.localtime()
 			ngx.log(ngx.ERR,cjson.encode(rule_log))
 		end
 	end

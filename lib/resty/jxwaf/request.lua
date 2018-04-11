@@ -4,64 +4,6 @@ local cjson = require "cjson.safe"
 local _M = {}
 _M.version = "1.0"
 
-local function _file_parse()
-	local file_name = {}
-	local file_type = {}
-	local content_type = ngx.req.get_headers()["Content-type"] or ""
-	if (ngx.re.find(content_type, [=[^multipart/form-data; boundary=]=], "oij")) then
-
-	if  ngx.req.get_body_file() then
-		ngx.log(ngx.ERR,"request body size larger than client_body_buffer_size, refuse request ")
-		ngx.exit(503)
-	end
-	
-	local form, err = upload:new()	
-	if not form then
-		ngx.log(ngx.ERR, "failed to new upload: ", err)
-		ngx.exit(500)
-	end
-	while true do
-		local typ, res, err = form:read()
-		if not typ then
-			ngx.say("failed to read: ", err)
-			return nil
-		end
-		if typ == "header" then
-			if res[1] == "Content-Disposition" then
-				local _file_name = ngx.re.match(res[2],[[(.+)filename="(.+)"(.*)]])
-				if _file_name then
-					table.insert(file_name,_file_name[2])
-				end
-			else
-				table.insert(file_type,res[2])
-			end
-		end
-
-		if typ == "eof" then
-			break
-		end
-	
-	end
-	
-	end
-	return file_name,file_type
-
-end
-
-local function _file_names()
-
-	local file_name = _file_parse()
-
-	return file_name
-
-end
-
-local function _file_types()
-	local file_name,file_type = _file_parse()
-	return file_type
-
-end
-
 local function _process_json_args(json_args,t)
         local t = t or {}
         for k,v in pairs(json_args) do
@@ -105,6 +47,9 @@ end
 
 
 local function _parse_request_body()
+	if ngx.ctx.form_post_args then
+		return ngx.ctx.form_post_args 
+	end
 	local content_type = ngx.req.get_headers()["Content-type"]
 	if (type(content_type) == "table") then
 		ngx.log(ngx.ERR,"Request contained multiple content-type headers")
@@ -345,8 +290,8 @@ _M.request = {
 	REQUEST_HEADERS_NAMES = function() return _table_keys(ngx.req.get_headers()) end,
 	TIME = function() return ngx.localtime() end,
 	TIME_EPOCH = function() return ngx.time() end,
-	FILE_NAMES = function() return _file_names() end,
-	FILE_TYPES = function() return _file_types() end ,
+	FILE_NAMES = function() return ngx.ctx.form_file_name or {} end,
+	FILE_TYPES = function() return ngx.ctx.form_file_type or {} end ,
 	RESP_BODY = function() return _resp_body() end ,
 	RESP_COOKIES = function() return "" end,
 	RESP_HEADERS = function() return ngx.resp.get_headers() end,
