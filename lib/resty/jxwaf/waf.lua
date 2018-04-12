@@ -477,7 +477,7 @@ end
 
 function _M.access_init()
 	local content_type = ngx.req.get_headers()["Content-type"]
-	if content_type and  ngx.re.find(content_type, [=[^multipart/form-data; boundary=]=],"oij") and tonumber(ngx.req.get_headers()["Content-Length"]) ~= 0 then
+	if content_type and  ngx.re.find(content_type, [=[^multipart/form-data]=],"oij") and tonumber(ngx.req.get_headers()["Content-Length"]) ~= 0 then
 		local form, err = upload:new()
 		local _file_name = {}
 		local _form_name = {}
@@ -500,21 +500,34 @@ function _M.access_init()
                 	return nil
                 end
 				if typ == "header" then
-					chunk = res[3]
-					ngx.req.append_body("\r\n" .. chunk)
+				--	chunk = res[3]
+				--	ngx.req.append_body("\r\n" .. chunk)
                     if res[1] == "Content-Disposition" then
-                    	local _tmp_form_name = ngx.re.match(res[2],[=[(.+)\bname="([^"]+)"(.*)]=],"oij")
-						local _tmp_file_name =  ngx.re.match(res[2],[=[(.+)filename="([^"]+)"(.*)]=],"oij")
+                    	local _tmp_form_name = ngx.re.match(res[2],[=[(.+)\bname=[" ']*?([^"]+)[" ']*?]=],"oij")
+						local _tmp_file_name =  ngx.re.match(res[2],[=[(.+)filename=[" ']*?([^"]+)[" ']*?]=],"oij")
                     	if _tmp_form_name  then
                         	table.insert(_form_name,_tmp_form_name[2]..count)
 						end
 						if _tmp_file_name  then
 							table.insert(_file_name,_tmp_file_name[2])
-                    	end
+						end
+						if _tmp_form_name and _tmp_file_name then
+							chunk = string.format([=[Content-Disposition: form-data; name="%s"; filename="%s"]=],_tmp_form_name[2],_tmp_file_name[2])
+							ngx.req.append_body("\r\n" .. chunk)
+						elseif _tmp_form_name then
+							chunk = string.format([=[Content-Disposition: form-data; name="%s"]=],_tmp_form_name[2])
+							 ngx.req.append_body("\r\n" .. chunk)
+						else
+							ngx.log(ngx.ERR,"Content-Disposition ERR!")
+							ngx.exit(503)
+						end
+
                 	end
                 	if res[1] == "Content-Type" then
                     	table.insert(_file_type,res[2])
 						_type_flag = "true"
+						chunk = string.format([=[Content-Type: %s]=],res[2])
+						ngx.req.append_body("\r\n" .. chunk)
                 	end
             	end
 				if typ == "body" then
