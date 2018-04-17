@@ -460,8 +460,8 @@ function _M.get_config_info()
 
 end
 
-function _M.get_resp_info()
-	
+function _M.get_resp_rule()
+
 	return  _resp_rules
 
 end
