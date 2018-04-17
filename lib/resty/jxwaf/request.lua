@@ -1,6 +1,7 @@
 local cookiejar = require "resty.jxwaf.cookie"
 local upload = require "resty.upload"
 local cjson = require "cjson.safe"
+local zlib = require "zlib"
 local _M = {}
 _M.version = "1.0"
 
@@ -242,9 +243,22 @@ local function _resp_body()
 	local data = ""
 	local args = ngx.arg[1]
 	if args ~= nil then
-		data = args
+		local content_type = ngx.req.get_headers()["Accept-Encoding"]
+		if content_type and ngx.re.find(content_type, [=[gzip]=],"oij") then
+			local inflate = zlib.inflate()
+			local is_success,tmp_data = pcall(inflate,args)
+			if is_success then
+				data = tmp_data	
+			else
+				data = args
+			end
+
+		else
+			data = args
+		end
 	end
 	return data
+
 end
 
 
@@ -296,7 +310,8 @@ _M.request = {
 	RESP_COOKIES = function() return "" end,
 	RESP_HEADERS = function() return ngx.resp.get_headers() end,
 	RESP_HEADERS_NAMES = function() return _table_keys(ngx.resp.get_headers()) end,
-	RX_CAPTURE = function() return ngx.ctx.rx_capture or "" end,
+	--RX_CAPTURE = function() return ngx.ctx.rx_capture or "" end,
+	RX_CAPTURE = function() return _resp_body()  end,
 }
 
 
