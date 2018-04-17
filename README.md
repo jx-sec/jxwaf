@@ -75,7 +75,7 @@ jxwaf(锦衣盾)由jxwaf与jxwaf管理中心组成:
 
       nginx: configuration file /opt/jxwaf/nginx/conf/nginx.conf test is successful
 
-   6. 访问 http://www.jxwaf.com 并注册账号，在 WAF规则管理->查看官方规则组 页面按照自身需求加载规则，之后在 WAF规则配置->WAF全局配置 页面获取 “WAFAPIKEY”
+   6. 访问 http://www.jxwaf.com 并注册账号，在 WAF规则管理->查看官方规则组 页面按照自身需求加载规则，之后在 WAF规则配置->WAF全局配置 页面获取 “WAF_API_KEY”
    7. 修改/opt/jxwaf/nginx/conf/jxwaf/jxwafconfig.json 中的”waf_api_key”为你自己账号的”WAF_API_KEY”
    8. $ /opt/jxwaf/nginx/sbin/nginx 启动openresty,openresty会在启动或者reload的时候自动到jxwaf管理中心拉取用户配置的最新规则
 
