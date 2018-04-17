@@ -17,7 +17,7 @@ mkdir /opt/jxwaf/nginx/conf/jxwaf
 cp ../conf/jxwaf_config.json /opt/jxwaf/nginx/conf/jxwaf/
 cp -r ../lib/resty/jxwaf  /opt/jxwaf/lualib/resty/
 cd ../lua-zlib-1.2
-make linux > make_info.txt
+make linux 2> make_info.txt
 cp zlib.so /opt/jxwaf/lualib/
 /opt/jxwaf/nginx/sbin/nginx -t
 
