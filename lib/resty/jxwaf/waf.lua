@@ -18,7 +18,7 @@ _M.version = "1.0"
 local _config_path = "/opt/jxwaf/nginx/conf/jxwaf/jxwaf_config.json"
 local _config_info = {}
 local _rules = {}
-
+local _resp_rules = {}
 local function _sort_rules(a,b)
         return tonumber(a.rule_id)<tonumber(b.rule_id)
 end
@@ -335,6 +335,7 @@ end
 
 local function _base_update_rule()
 	local _base_update_rule = {}
+	local _resp_update_rule = {}
 	local _update_website  =  _config_info.base_rule_update_website or "http://update.jxwaf.com/waf/update_rule"		
 	local httpc = http.new()
 	local api_key = _config_info.waf_api_key or "jxwaf"
@@ -360,12 +361,18 @@ local function _base_update_rule()
 		ngx.log(ngx.ERR,"init fail,can not decode base rule config file")
 	end
 	for _,v in ipairs(_update_rule) do
-		table_insert(_base_update_rule,v)
+		if v.rule_update_category == "resp" then
+			table_insert(_resp_update_rule,v)
+		else
+			table_insert(_base_update_rule,v)
+		end
 	end	
+	table_sort(_resp_update_rule,_sort_rules)
 	table_sort(_base_update_rule,_sort_rules)
 	_rules =  _base_update_rule
+	_resp_rules = _resp_update_rule
 	ngx.log(ngx.ALERT,"success load base rule,count is "..#_rules)
-		
+	ngx.log(ngx.ALERT,"success load resp rule,count is "..#_resp_rules)
 	
 	
 	
@@ -410,8 +417,9 @@ local function _global_update_rule()
 	_config_info.aes_random_key = _config_info.aes_random_key or _update_rule['aes_random_key'] or  str.to_hex(resty_random.bytes(8))
 	_config_info.observ_mode =  _config_info.observ_mode or _update_rule['observ_mode'] or "false"
 	_config_info.observ_mode_white_ip =  _config_info.observ_mode_white_ip or _update_rule['observ_mode_white_ip'] or "false"
-        ngx.log(ngx.ALERT,"success load global config ",_config_info.base_engine)
-	if _config_info.base_engine == "true" then
+	_config_info.resp_engine =  _config_info.resp_engine or _update_rule['resp_engine'] or "false"
+    ngx.log(ngx.ALERT,"success load global config ",_config_info.base_engine)
+	if _config_info.base_engine == "true" or _config_info.resp_engine == "true" then
 		_base_update_rule()
 	end
 	
@@ -452,6 +460,11 @@ function _M.get_config_info()
 
 end
 
+function _M.get_resp_info()
+	
+	return  _resp_rules
+
+end
 
 function _M.base_check()
 	if _config_info.base_engine == "true" then
