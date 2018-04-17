@@ -248,10 +248,13 @@ local function _rule_match(rules)
                                                 ctx_rule_log.rule_operator = match.rule_operator
                                                 ctx_rule_log.rule_negated = match.rule_negated
                                                 ctx_rule_log.rule_transform = match.rule_transform
-						if not(rule.rule_action == "logic") then
-                                        	        ctx_rule_log.rule_match_var = _operator_value
+												if ngx.get_phase() == "body_filter" then
+													ctx_rule_log.rule_match_var = var.rule_var
+												else
+													ctx_rule_log.rule_match_var = _operator_value
+												
+												end
 						
-						end
 						
                                                 ctx_rule_log.rule_match_key = _operator_key
 						ctx_rule_log.rule_url = ngx.var.request_uri
