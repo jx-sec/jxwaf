@@ -310,7 +310,7 @@ local function _rule_match(rules)
 		
 			
 			if matchs_result then
-				return matchs_result,rule.rule_action
+				return matchs_result,rule
 			end
 		end
 
@@ -474,15 +474,15 @@ function _M.base_check()
 		return
 	--	ngx.exit(500)	
 	end
-	local result,rule_action = _rule_match(rules)	
+	local result,rule = _rule_match(rules)	
 
-	if( result and rule_action == 'deny' ) then
+	if( result and rule.rule_action == 'deny' ) then
 		ngx.exit(403)
 	end	 
-	if(result and rule_action == 'allow') then
+	if(result and rule.rule_action == 'allow') then
 		ngx.exit(0)
 	end
-	if(result and rule_action == "redirect") then
+	if(result and rule.rule_action == "redirect") then
 	
 		ngx.redirect(_config_info.http_redirect)	
 		
