@@ -1,7 +1,7 @@
 local waf = require "resty.jxwaf.waf"
 local config_info = waf.get_config_info()
 
-if (config_info.resp_engine == "false") and (#ngx.arg[1] ~= 0) and (ngx.arg[2] ~= true) then
+if (config_info.resp_engine == "true") and (#ngx.arg[1] ~= 0) and (ngx.arg[2] ~= true) then
 	local rules = waf.get_resp_rule()
 	if #rules == 0 then
 		ngx.log(ngx.CRIT,"can not find resp rules")
