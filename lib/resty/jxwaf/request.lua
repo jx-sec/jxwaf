@@ -261,13 +261,14 @@ local function _resp_body()
 
 end
 
-
+--[[
 local function _resp_cookies()
-	local set_cookies = ngx.resp.get_headers()
+	local set_cookies = ngx.resp.get_headers()['Set-Cookie']
 	local return_cookies = cookiejar.get_response_cookie_table(set_cookies)
 	return return_cookies
 
 end
+--]]
 
 
 _M.request = {
@@ -307,11 +308,11 @@ _M.request = {
 	FILE_NAMES = function() return ngx.ctx.form_file_name or {} end,
 	FILE_TYPES = function() return ngx.ctx.form_file_type or {} end ,
 	RESP_BODY = function() return _resp_body() end ,
-	RESP_COOKIES = function() return "" end,
+	--RESP_COOKIES = function() return "" end,
 	RESP_HEADERS = function() return ngx.resp.get_headers() end,
 	RESP_HEADERS_NAMES = function() return _table_keys(ngx.resp.get_headers()) end,
 	--RX_CAPTURE = function() return ngx.ctx.rx_capture or "" end,
-	RX_CAPTURE = function() return _resp_body()  end,
+	--RX_CAPTURE = function() return _resp_body()  end,
 }
 
 

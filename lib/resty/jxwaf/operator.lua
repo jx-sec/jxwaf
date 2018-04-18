@@ -89,7 +89,7 @@ local function _regex( subject, pattern)
 	if captures then
 
 		match = true			
-		ngx.ctx.rx_capture = captures[0]
+		--ngx.ctx.rx_capture = captures[0]
 		return match, subject ,captures[0]
 	end
 
