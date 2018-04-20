@@ -87,7 +87,7 @@ local function _parse_request_body()
 
 		return t 
 	end
-	local post_args,err = ngx.req.get_post_args()
+	local post_args,err = ngx.req.get_post_args(0)
 	if not post_args then
 		ngx.log(ngx.ERR,"failed to get post args: ", err)
 		ngx.exit(500)
@@ -99,7 +99,7 @@ local function _args()
         local request_args_post = _parse_request_body()
         local t = request_args_post
 	
-        local request_args_get = ngx.req.get_uri_args()
+        local request_args_get = ngx.req.get_uri_args(0)
 
         for k,v in pairs(request_args_get) do
 		
@@ -135,7 +135,7 @@ local function _args_names()
         for k,v in pairs(request_args_post) do
                 table.insert(t,k)
         end
-        local request_args_get = ngx.req.get_uri_args()
+        local request_args_get = ngx.req.get_uri_args(0)
         for k,v in pairs(request_args_get) do
                 table.insert(t,k)
         end
@@ -145,13 +145,13 @@ end
 
 local function _args_get()
 	
-	return ngx.req.get_uri_args()	
+	return ngx.req.get_uri_args(0)	
 end
 
 
 local function _args_get_names()
 	local t ={}
-	local request_args_get = ngx.req.get_uri_args()
+	local request_args_get = ngx.req.get_uri_args(0)
         for k,v in pairs(request_args_get) do
                 table.insert(t,k)
         end
@@ -301,8 +301,8 @@ _M.request = {
 	HTTP_USER_AGENT = function() return ngx.var.http_user_agent or "-" end,
 	RAW_HEADER = function() return ngx.req.raw_header() end,
 	HTTP_REFERER = function() return ngx.var.http_referer or "-"  end,
-	REQUEST_HEADERS = function() return ngx.req.get_headers() end,
-	REQUEST_HEADERS_NAMES = function() return _table_keys(ngx.req.get_headers()) end,
+	REQUEST_HEADERS = function() return ngx.req.get_headers(0) end,
+	REQUEST_HEADERS_NAMES = function() return _table_keys(ngx.req.get_headers(0)) end,
 	TIME = function() return ngx.localtime() end,
 	TIME_EPOCH = function() return ngx.time() end,
 	FILE_NAMES = function() return ngx.ctx.form_file_name or {} end,
