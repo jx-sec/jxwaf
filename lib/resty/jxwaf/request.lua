@@ -5,6 +5,18 @@ local zlib = require "zlib"
 local _M = {}
 _M.version = "1.0"
 
+local function _table_keys(tb)
+	if type(tb) ~= "table" then
+		return tb
+	end
+	local t = {}
+	for key,_ in pairs(tb) do
+		table.insert(t,key)
+	end 
+	return t
+end
+
+
 local function _process_json_args(json_args,t)
         local t = t or {}
         for k,v in pairs(json_args) do
@@ -46,6 +58,12 @@ local function _process_json_args(json_args,t)
         return t
 end
 
+local function _parse_request_uri()
+	local t = ngx.req.get_uri_args()
+	ngx.req.set_uri_args(t)
+	ngx.ctx.parse_request_uri = t
+	return t
+end
 
 local function _parse_request_body()
 	if ngx.ctx.form_post_args then
@@ -87,11 +105,12 @@ local function _parse_request_body()
 
 		return t 
 	end
-	local post_args,err = ngx.req.get_post_args(0)
+	local post_args,err = ngx.req.get_post_args()
 	if not post_args then
 		ngx.log(ngx.ERR,"failed to get post args: ", err)
 		ngx.exit(500)
 	end
+	ngx.req.set_body_data(ngx.encode_args(post_args))
 	return post_args
 end
 
@@ -99,7 +118,7 @@ local function _args()
         local request_args_post = _parse_request_body()
         local t = request_args_post
 	
-        local request_args_get = ngx.req.get_uri_args(0)
+	local request_args_get = ngx.ctx.parse_request_uri or _parse_request_uri()
 
         for k,v in pairs(request_args_get) do
 		
@@ -124,7 +143,8 @@ local function _args()
                 else
                         t[k] = v
                 end
-        end
+	end
+	ngx.ctx.request_args = t
         return t
 end
 
@@ -135,26 +155,29 @@ local function _args_names()
         for k,v in pairs(request_args_post) do
                 table.insert(t,k)
         end
-        local request_args_get = ngx.req.get_uri_args(0)
+	local request_args_get = ngx.ctx.parse_request_uri or _parse_request_uri()
         for k,v in pairs(request_args_get) do
                 table.insert(t,k)
-        end
+	end
+	ngx.ctx.request_args_names = t
         return t	
 end
 
 
 local function _args_get()
-	
-	return ngx.req.get_uri_args(0)	
+	local  t = ngx.ctx.parse_request_uri or _parse_request_uri()
+	ngx.ctx.request_args_get = t
+	return t	
 end
 
 
 local function _args_get_names()
 	local t ={}
-	local request_args_get = ngx.req.get_uri_args(0)
+	local request_args_get = ngx.ctx.parse_request_uri or _parse_request_uri()
         for k,v in pairs(request_args_get) do
                 table.insert(t,k)
-        end
+	end
+	ngx.ctx.request_args_get_names = t
         return t
 
 end
@@ -163,8 +186,8 @@ end
 local  function _args_post()
 	local t = {}
 
-        local request_args_post = _parse_request_body()
-
+	local request_args_post = _parse_request_body()
+	ngx.ctx.request_args_post = request_args_post
         return request_args_post
 
 end
@@ -175,7 +198,8 @@ local function _args_post_names()
         local request_args_post = _parse_request_body()
         for k,v in pairs(request_args_post) do
                 table.insert(t,k)
-        end
+	end
+	ngx.ctx.request_args_post_names = t
         return t
 end
 
@@ -193,19 +217,6 @@ local function take_cookies()
 	end
 	return request_cookies
 end
-
-
-local function _table_keys(tb)
-	if type(tb) ~= "table" then
-		return tb
-	end
-	local t = {}
-	for key,_ in pairs(tb) do
-		table.insert(t,key)
-	end 
-	return t
-end
-
 
 local function _table_values(tb)
     if type(tb) ~= "table" then
@@ -257,6 +268,7 @@ local function _resp_body()
 			data = args
 		end
 	end
+	ngx.ctx.response_get_data = data
 	return data
 
 end
@@ -270,14 +282,59 @@ local function _resp_cookies()
 end
 --]]
 
+local function _get_headers()
+	local t = ngx.req.get_headers()
+	local count = #_table_keys(t)
+	if count > 80 then
+		ngx.log(ngx.ERR,"ERR get_headers")
+		ngx.exit(503)
+	end
+	ngx.ctx.request_get_headers = t
+        return t
+end
+
+
+local function _get_headers_names()
+	local t = _table_keys(ngx.req.get_headers())
+	local count = #tab
+	if count > 80 then
+		ngx.log(ngx.ERR,"ERR get_headers_names")
+		ngx.exit(503)
+	end
+	ngx.ctx.request_get_headers_names = t
+        return t
+end
+
+local function _resp_get_headers()
+	local t = ngx.resp.get_headers()
+	local count = #_table_keys(t)
+	if count > 50 then
+		ngx.log(ngx.ERR,"ERR resp_get_headers")
+		ngx.exit(503)
+	end
+	ngx.ctx.response_get_headers = t
+        return t
+end
+
+
+local function _resp_get_headers()
+	local t = _table_keys(ngx.resp.get_headers())
+	local count = #tab
+	if count > 50 then
+		ngx.log(ngx.ERR,"ERR get_headers_names")
+		ngx.exit(503)
+	end
+	ngx.ctx.response_get_headers_names = t
+        return t
+end
 
 _M.request = {
-	ARGS = function() return _args() end,
-	ARGS_NAMES = function() return  _args_names() end,
-	ARGS_GET = function() return _args_get() end,
-	ARGS_GET_NAMES = function() return _args_get_names() end,
-	ARGS_POST = function() return _args_post() end,
-	ARGS_POST_NAMES = function() return _args_post_names() end,
+	ARGS = function() return ngx.ctx.request_args or _args() end,
+	ARGS_NAMES = function() return ngx.ctx.request_args_names _args_names() end,
+	ARGS_GET = function() return ngx.ctx.request_args_get or _args_get() end,
+	ARGS_GET_NAMES = function() return ngx.ctx.request_args_get_names or _args_get_names() end,
+	ARGS_POST = function() return ngx.ctx.request_args_post or _args_post() end,
+	ARGS_POST_NAMES = function() return ngx.ctx.request_args_post_names or _args_post_names() end,
 	REMOTE_ADDR = function() return  ngx.var.remote_addr end,
 	BIN_REMOTE_ADDR = function() return ngx.var.binary_remote_addr end,
 	SCHEME = function() return ngx.var.scheme end,
@@ -301,16 +358,16 @@ _M.request = {
 	HTTP_USER_AGENT = function() return ngx.var.http_user_agent or "-" end,
 	RAW_HEADER = function() return ngx.req.raw_header() end,
 	HTTP_REFERER = function() return ngx.var.http_referer or "-"  end,
-	REQUEST_HEADERS = function() return ngx.req.get_headers(0) end,
-	REQUEST_HEADERS_NAMES = function() return _table_keys(ngx.req.get_headers(0)) end,
+	REQUEST_HEADERS = function() return ngx.ctx.request_get_headers or _get_headers() end,
+	REQUEST_HEADERS_NAMES = function() return ngx.ctx.request_get_headers_names or _get_headers_names() end,
 	TIME = function() return ngx.localtime() end,
 	TIME_EPOCH = function() return ngx.time() end,
 	FILE_NAMES = function() return ngx.ctx.form_file_name or {} end,
 	FILE_TYPES = function() return ngx.ctx.form_file_type or {} end ,
-	RESP_BODY = function() return _resp_body() end ,
+	RESP_BODY = function() return ngx.ctx.response_get_data or _resp_body() end ,
 	--RESP_COOKIES = function() return "" end,
-	RESP_HEADERS = function() return ngx.resp.get_headers() end,
-	RESP_HEADERS_NAMES = function() return _table_keys(ngx.resp.get_headers()) end,
+	RESP_HEADERS = function() return ngx.ctx.response_get_headers or  _resp_get_headers() end,
+	RESP_HEADERS_NAMES = function() return ngx.ctx.response_get_headers_names or _resp_get_headers() end,
 	--RX_CAPTURE = function() return ngx.ctx.rx_capture or "" end,
 	--RX_CAPTURE = function() return _resp_body()  end,
 }
