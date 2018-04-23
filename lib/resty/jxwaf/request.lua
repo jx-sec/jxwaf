@@ -66,9 +66,7 @@ local function _parse_request_uri()
 end
 
 local function _parse_request_body()
-	if ngx.ctx.form_post_args then
-		return ngx.ctx.form_post_args 
-	end
+
 	local content_type = ngx.req.get_headers()["Content-type"]
 	if (type(content_type) == "table") then
 		ngx.log(ngx.ERR,"Request contained multiple content-type headers")
@@ -110,12 +108,18 @@ local function _parse_request_body()
 		ngx.log(ngx.ERR,"failed to get post args: ", err)
 		ngx.exit(500)
 	end
-	ngx.req.set_body_data(ngx.encode_args(post_args))
+	local json_check = cjson.decode(ngx.req.get_body_data())
+	if json_check then
+		ngx.log(ngx.ERR,"get post args ERR, json data")
+	else
+		ngx.req.set_body_data(ngx.encode_args(post_args))
+	end
+	ngx.ctx.parse_request_body = post_args
 	return post_args
 end
 
 local function _args()
-        local request_args_post = _parse_request_body()
+        local request_args_post = ngx.ctx.parse_request_body or _parse_request_body()
         local t = request_args_post
 	
 	local request_args_get = ngx.ctx.parse_request_uri or _parse_request_uri()
@@ -151,7 +155,7 @@ end
 
 local function _args_names()
         local t = {}
-        local request_args_post = _parse_request_body()
+        local request_args_post = ngx.ctx.parse_request_body or _parse_request_body()
         for k,v in pairs(request_args_post) do
                 table.insert(t,k)
         end
@@ -186,7 +190,7 @@ end
 local  function _args_post()
 	local t = {}
 
-	local request_args_post = _parse_request_body()
+	local request_args_post = ngx.ctx.parse_request_body or _parse_request_body()
 	ngx.ctx.request_args_post = request_args_post
         return request_args_post
 
@@ -195,7 +199,7 @@ end
 
 local function _args_post_names()
 	local t = {}
-        local request_args_post = _parse_request_body()
+        local request_args_post = ngx.ctx.parse_request_body or _parse_request_body()
         for k,v in pairs(request_args_post) do
                 table.insert(t,k)
 	end
@@ -296,7 +300,7 @@ end
 
 local function _get_headers_names()
 	local t = _table_keys(ngx.req.get_headers())
-	local count = #tab
+	local count = #t
 	if count > 80 then
 		ngx.log(ngx.ERR,"ERR get_headers_names")
 		ngx.exit(503)
@@ -330,7 +334,7 @@ end
 
 _M.request = {
 	ARGS = function() return ngx.ctx.request_args or _args() end,
-	ARGS_NAMES = function() return ngx.ctx.request_args_names _args_names() end,
+	ARGS_NAMES = function() return ngx.ctx.request_args_names or _args_names() end,
 	ARGS_GET = function() return ngx.ctx.request_args_get or _args_get() end,
 	ARGS_GET_NAMES = function() return ngx.ctx.request_args_get_names or _args_get_names() end,
 	ARGS_POST = function() return ngx.ctx.request_args_post or _args_post() end,
