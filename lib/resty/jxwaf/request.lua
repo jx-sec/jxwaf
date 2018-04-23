@@ -288,10 +288,13 @@ end
 
 local function _get_headers()
 	local t = ngx.req.get_headers()
-	local count = #_table_keys(t)
-	if count > 80 then
-		ngx.log(ngx.ERR,"ERR get_headers")
-		ngx.exit(503)
+--	local count = #_table_keys(t)
+--	if count > 80 then
+--		ngx.log(ngx.ERR,"ERR get_headers")
+--		ngx.exit(503)
+--	end
+	for k,v in pairs(ngx.req.get_headers()) do
+		ngx.req.set_header(k, v)
 	end
 	ngx.ctx.request_get_headers = t
         return t
@@ -300,10 +303,13 @@ end
 
 local function _get_headers_names()
 	local t = _table_keys(ngx.req.get_headers())
-	local count = #t
-	if count > 80 then
-		ngx.log(ngx.ERR,"ERR get_headers_names")
-		ngx.exit(503)
+--	local count = #t
+--	if count > 80 then
+--		ngx.log(ngx.ERR,"ERR get_headers_names")
+--		ngx.exit(503)
+--	end
+	for k,v in pairs(ngx.req.get_headers()) do
+		ngx.req.set_header(k, v)
 	end
 	ngx.ctx.request_get_headers_names = t
         return t
