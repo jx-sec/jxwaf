@@ -23,6 +23,10 @@ if #rule_observ_log ~= 0 then
 	for  _,v in ipairs(rule_observ_log) do
 			v['http_request_time'] = ngx.localtime()
 			v['http_request_host'] = ngx.req.get_headers()["Host"]
+			local match_captures = v['rule_match_captures']
+			if match_captures then
+				v['rule_match_captures'] = ngx.re.gsub(match_captures, [=[\\x]=], [=[\\x]=], "oij")
+			end
        		local bytes, err = logger.log(cjson.encode(v))
 		if err then
 			ngx.log(ngx.ERR, "failed to log message: ", err)	
@@ -33,6 +37,10 @@ else
 if rule_log then
 	rule_log['http_request_time'] = ngx.localtime()
 	rule_log['http_request_host'] = ngx.req.get_headers()["Host"]
+	local match_captures = rule_log['rule_match_captures']
+	if match_captures then
+		rule_log['rule_match_captures'] = ngx.re.gsub(match_captures, [=[\\x]=], [=[\\x]=], "oij")
+	end
 	local bytes, err = logger.log(cjson.encode(rule_log))
 	if err then
 		ngx.log(ngx.ERR, "failed to log message: ", err)
@@ -49,6 +57,10 @@ if config_info.log_local == "true" then
 			for  _,v in ipairs(rule_observ_log) do
 				v['http_request_time'] = ngx.localtime()
 				v['http_request_host'] = ngx.req.get_headers()["Host"]
+				local match_captures = v['rule_match_captures']
+				if match_captures then
+					v['rule_match_captures'] = ngx.re.gsub(match_captures, [=[\\x]=], [=[\\x]=], "oij")
+				end
 				ngx.log(ngx.ERR,cjson.encode(v))
 			end
 		end
@@ -58,6 +70,10 @@ if config_info.log_local == "true" then
 		if rule_log then
 			rule_log['http_request_time'] = ngx.localtime()
 			rule_log['http_request_host'] = ngx.req.get_headers()["Host"]
+			local match_captures = rule_log['rule_match_captures']
+			if match_captures then
+				rule_log['rule_match_captures'] = ngx.re.gsub(match_captures, [=[\\x]=], [=[\\x]=], "oij")
+			end
 			ngx.log(ngx.ERR,cjson.encode(rule_log))
 		end
 	end
