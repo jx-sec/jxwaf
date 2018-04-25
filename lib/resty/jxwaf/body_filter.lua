@@ -1,7 +1,12 @@
 local waf = require "resty.jxwaf.waf"
 local config_info = waf.get_config_info()
 
-if (config_info.resp_engine == "true")  then
+if ngx.ctx.resp_js_insert == "true" and ngx.ctx.is_inject ~= "true" then
+	ngx.arg[1] = ngx.arg[1]..payload
+	ngx.ctx.is_inject = "true"
+end
+
+if (config_info.resp_engine == "true" and ngx.ctx.is_inject ~= "true" )  then
 	local rules = waf.get_resp_rule()
 	if #rules == 0 then
 		ngx.log(ngx.CRIT,"can not find resp rules")
@@ -27,6 +32,14 @@ if (config_info.resp_engine == "true")  then
 		ngx.log(ngx.ERR,"success")
 		ngx.arg[1] = nil
 	end
+	
+	if result and (rule.rule_action == "redirect" or ngx.ctx.resp_js_insert == "true") then
+			local payload = [=[<script>alert(/test/)</script>]=]
+			ngx.arg[1] = ngx.arg[1]..payload
+			ngx.ctx.is_inject = "true"
+	
+	end
+
 	end
 --	ngx.update_time()
 --	ngx.log(ngx.ERR,ngx.now() - ngx.req.start_time())

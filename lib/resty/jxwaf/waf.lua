@@ -19,6 +19,7 @@ local _config_path = "/opt/jxwaf/nginx/conf/jxwaf/jxwaf_config.json"
 local _config_info = {}
 local _rules = {}
 local _resp_rules = {}
+local _resp_js_insert = "false"
 local function _sort_rules(a,b)
         return tonumber(a.rule_id)<tonumber(b.rule_id)
 end
@@ -363,6 +364,9 @@ local function _base_update_rule()
 	for _,v in ipairs(_update_rule) do
 		if v.rule_update_category == "resp" then
 			table_insert(_resp_update_rule,v)
+			if v.rule_action == "redirect" then
+				_resp_js_insert = "true"
+			end
 		else
 			table_insert(_base_update_rule,v)
 		end
@@ -374,7 +378,7 @@ local function _base_update_rule()
 	ngx.log(ngx.ALERT,"success load base rule,count is "..#_rules)
 	ngx.log(ngx.ALERT,"success load resp rule,count is "..#_resp_rules)
 	
-	
+
 	
 end
 
@@ -484,8 +488,8 @@ function _M.base_check()
 	end
 	if(result and rule.rule_action == "redirect") then
 	
-		ngx.redirect(_config_info.http_redirect)	
-		
+		--ngx.redirect(_config_info.http_redirect)	
+		ngx.ctx.resp_js_insert = "true"
 	end
 	end
 end
@@ -582,5 +586,8 @@ function _M.access_init()
 	end
 end
 
+function _M.resp_js_insert()
+	return _resp_js_insert
+end
 
 return _M
