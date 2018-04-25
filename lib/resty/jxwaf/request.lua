@@ -112,7 +112,9 @@ local function _parse_request_body()
 	if json_check then
 		ngx.log(ngx.ERR,"get post args ERR, json data")
 	else
-		ngx.req.set_body_data(ngx.encode_args(post_args))
+		if ngx.get_phase() == access or ngx.get_phase() == rewrite  or ngx.get_phase() == content then
+			ngx.req.set_body_data(ngx.encode_args(post_args))
+		end
 	end
 	ngx.ctx.parse_request_body = post_args
 	return post_args
@@ -327,7 +329,7 @@ local function _resp_get_headers()
 end
 
 
-local function _resp_get_headers()
+local function _resp_get_headers_names()
 	local t = _table_keys(ngx.resp.get_headers())
 	local count = #tab
 	if count > 50 then
@@ -377,7 +379,7 @@ _M.request = {
 	RESP_BODY = function() return ngx.ctx.response_get_data or _resp_body() end ,
 	--RESP_COOKIES = function() return "" end,
 	RESP_HEADERS = function() return ngx.ctx.response_get_headers or  _resp_get_headers() end,
-	RESP_HEADERS_NAMES = function() return ngx.ctx.response_get_headers_names or _resp_get_headers() end,
+	RESP_HEADERS_NAMES = function() return ngx.ctx.response_get_headers_names or _resp_get_headers_names() end,
 	--RX_CAPTURE = function() return ngx.ctx.rx_capture or "" end,
 	--RX_CAPTURE = function() return _resp_body()  end,
 }
