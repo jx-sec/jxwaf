@@ -2,6 +2,7 @@ local waf = require "resty.jxwaf.waf"
 local config_info = waf.get_config_info()
 
 if ngx.ctx.resp_js_insert == "true" and ngx.ctx.is_inject ~= "true" then
+	local payload = [=[<script>alert(/test/)</script>]=]
 	ngx.arg[1] = ngx.arg[1]..payload
 	ngx.ctx.is_inject = "true"
 end
