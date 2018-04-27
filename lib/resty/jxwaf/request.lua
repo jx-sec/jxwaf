@@ -112,7 +112,7 @@ local function _parse_request_body()
 	if json_check then
 		ngx.log(ngx.ERR,"get post args ERR, json data")
 	else
-		if ngx.get_phase() == access or ngx.get_phase() == rewrite  or ngx.get_phase() == content then
+		if ngx.get_phase() == "access" or ngx.get_phase() == "rewrite"  or ngx.get_phase() == "content" then
 			ngx.req.set_body_data(ngx.encode_args(post_args))
 		end
 	end
@@ -331,7 +331,7 @@ end
 
 local function _resp_get_headers_names()
 	local t = _table_keys(ngx.resp.get_headers())
-	local count = #tab
+	local count = #t
 	if count > 50 then
 		ngx.log(ngx.ERR,"ERR get_headers_names")
 		ngx.exit(503)
