@@ -5,6 +5,8 @@ local zlib = require "resty.jxwaf.ffi-zlib"
 
 if ngx.ctx.resp_js_insert == "true" and ngx.ctx.is_inject ~= "true" and ngx.arg[2] ~= true  then
 	local payload = request.request['RESP_BODY']()..[=[<script>alert(/test/)</script>]=]
+	local content_type = ngx.resp.get_headers()["Content-Encoding"]
+	if content_type and ngx.re.find(content_type, [=[gzip]=],"oij") then
 	local count = 0
 local input = function(bufsize)
     local start = count > 0 and bufsize*count or 1
@@ -27,7 +29,9 @@ if not ok then
 end
 local compressed = table.concat(output_table,'')
 ngx.arg[1] = compressed
-ngx.log(ngx.ERR,#ngx.arg[1])
+else
+	ngx.arg[1] = payload
+end	
 	ngx.ctx.is_inject = "true"
 end
 
