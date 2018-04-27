@@ -26,6 +26,7 @@ if #rule_observ_log ~= 0 then
 			local match_captures = v['rule_match_captures']
 			if match_captures then
 				v['rule_match_captures'] = ngx.re.gsub(match_captures, [=[\\x]=], [=[\\x]=], "oij")
+				v['rule_match_captures'] = ngx.re.gsub(match_captures, [=[\\u]=], [=[\\u]=], "oij")
 			end
        		local bytes, err = logger.log(cjson.encode(v))
 		if err then
@@ -40,6 +41,7 @@ if rule_log then
 	local match_captures = rule_log['rule_match_captures']
 	if match_captures then
 		rule_log['rule_match_captures'] = ngx.re.gsub(match_captures, [=[\\x]=], [=[\\x]=], "oij")
+		rule_log['rule_match_captures'] = ngx.re.gsub(match_captures, [=[\\u]=], [=[\\u]=], "oij")
 	end
 	local bytes, err = logger.log(cjson.encode(rule_log))
 	if err then
@@ -60,6 +62,7 @@ if config_info.log_local == "true" then
 				local match_captures = v['rule_match_captures']
 				if match_captures then
 					v['rule_match_captures'] = ngx.re.gsub(match_captures, [=[\\x]=], [=[\\x]=], "oij")
+					v['rule_match_captures'] = ngx.re.gsub(match_captures, [=[\\u]=], [=[\\u]=], "oij")
 				end
 				ngx.log(ngx.ERR,cjson.encode(v))
 			end
@@ -73,6 +76,7 @@ if config_info.log_local == "true" then
 			local match_captures = rule_log['rule_match_captures']
 			if match_captures then
 				rule_log['rule_match_captures'] = ngx.re.gsub(match_captures, [=[\\x]=], [=[\\x]=], "oij")
+				rule_log['rule_match_captures'] = ngx.re.gsub(match_captures, [=[\\u]=], [=[\\u]=], "oij")
 			end
 			ngx.log(ngx.ERR,cjson.encode(rule_log))
 		end
