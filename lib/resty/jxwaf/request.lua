@@ -1,7 +1,7 @@
 local cookiejar = require "resty.jxwaf.cookie"
 local upload = require "resty.upload"
 local cjson = require "cjson.safe"
-local zlib = require "zlib"
+local zlib = require "resty.jxwaf.ffi-zlib"
 local _M = {}
 _M.version = "1.0"
 
@@ -260,16 +260,29 @@ local function _resp_body()
 	local data = ""
 	local args = ngx.arg[1]
 	if args ~= nil then
-		local content_type = ngx.req.get_headers()["Accept-Encoding"]
+		local content_type = ngx.resp.get_headers()["Content-Encoding"]
 		if content_type and ngx.re.find(content_type, [=[gzip]=],"oij") then
-			local inflate = zlib.inflate()
-			local is_success,tmp_data = pcall(inflate,args)
-			if is_success then
-				data = tmp_data	
+                        local count = 0
+                        local output_table = {}
+                        local input = function(bufsize)
+                                local start = count > 0 and bufsize*count or 1
+                                local data = args:sub(start, (bufsize*(count+1)-1) )
+                                count = count + 1
+                                return data
+                        end
+                        local output = function(data)
+                            table.insert(output_table, data)
+                        end
+                        local chunk = 16384
+                        local ok, err = zlib.inflateGzip(input, output, chunk)
+                        if not ok then
+			    ngx.log(ngx.ERR,err)
+			    data = args
 			else
-				data = args
+                            local output_data = table.concat(output_table,'')
+			    data = output_data
 			end
-
+			
 		else
 			data = args
 		end
