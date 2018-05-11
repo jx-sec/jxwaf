@@ -19,7 +19,7 @@ local _config_path = "/opt/jxwaf/nginx/conf/jxwaf/jxwaf_config.json"
 local _config_info = {}
 local _rules = {}
 local _resp_rules = {}
-local _resp_js_insert = "false"
+local _resp_header_chunk = nil
 local function _sort_rules(a,b)
         return tonumber(a.rule_id)<tonumber(b.rule_id)
 end
@@ -290,19 +290,10 @@ local function _rule_match(rules)
 				end
 				if _config_info.observ_mode == "true" and matchs_result and rule.rule_log == "true" then
 				
-					if _config_info.observ_mode_white_ip == "false" then
+				
 						table_insert(ngx.ctx.rule_observ_log,ctx_rule_log)
 						matchs_result = false
-					else
-						for _,v in ipairs(_config_info.observ_mode_white_ip) do
-							local client_ip = ngx.var.remote_addr
-							if client_ip == v then
-								table_insert(ngx.ctx.rule_observ_log,ctx_rule_log)							
-								matchs_result = false					
-							end
-				
-						end
-					end	
+		
 				end
 	
                 if rule.rule_action == "pass" and matchs_result then
@@ -364,8 +355,8 @@ local function _base_update_rule()
 	for _,v in ipairs(_update_rule) do
 		if v.rule_update_category == "resp" then
 			table_insert(_resp_update_rule,v)
-			if v.rule_action == "redirect" then
-				_resp_js_insert = "true"
+			if v.rule_action == "inject_js" or v.rule_action == "rewrite" or v.rule_action == "replace" then
+				_resp_header_chunk = true
 			end
 		else
 			table_insert(_base_update_rule,v)
@@ -420,9 +411,9 @@ local function _global_update_rule()
 	_config_info.cookie_safe_is_safe = _config_info.cookie_safe_is_safe or _update_rule['cookie_safe_is_safe'] or "false"	
 	_config_info.aes_random_key = _config_info.aes_random_key or _update_rule['aes_random_key'] or  str.to_hex(resty_random.bytes(8))
 	_config_info.observ_mode =  _config_info.observ_mode or _update_rule['observ_mode'] or "false"
-	_config_info.observ_mode_white_ip =  _config_info.observ_mode_white_ip or _update_rule['observ_mode_white_ip'] or "false"
+	--_config_info.observ_mode_white_ip =  _config_info.observ_mode_white_ip or _update_rule['observ_mode_white_ip'] or "false"
 	_config_info.resp_engine =  _config_info.resp_engine or _update_rule['resp_engine'] or "false"
-    ngx.log(ngx.ALERT,"success load global config ",_config_info.base_engine)
+        ngx.log(ngx.ALERT,"success load global config ",_config_info.base_engine)
 	if _config_info.base_engine == "true" or _config_info.resp_engine == "true" then
 		_base_update_rule()
 	end
@@ -479,18 +470,29 @@ function _M.base_check()
 	--	ngx.exit(500)	
 	end
 	local result,rule = _rule_match(rules)	
-
-	if( result and rule.rule_action == 'deny' ) then
-		ngx.exit(403)
-	end	 
-	if(result and rule.rule_action == 'allow') then
-		ngx.exit(0)
-	end
-	if(result and rule.rule_action == "redirect") then
 	
-		--ngx.redirect(_config_info.http_redirect)	
-		ngx.ctx.resp_js_insert = "true"
+	if result then
+		if rule.rule_action == 'deny' then
+			ngx.exit(403)
+		elseif rule.rule_action == 'allow' then
+			ngx.exit(0)
+		elseif rule.rule_action == 'redirect' then
+			ngx.redirect(_config_info.http_redirect)
+		elseif rule.rule_action == 'rewrite' then
+			ngx.ctx.resp_action = "rewrite"
+			ngx.ctx.resp_rewrite_data = rule.rule_rewrite_data
+		elseif rule.rule_action == 'inject_js' then
+			ngx.ctx.resp_action = "inject_js"
+			ngx.ctx.resp_inject_js_data = rule.rule_inject_js_data
+		elseif rule.rule_action == "replace" then
+			ngx.ctx.resp_action = "replace"
+			ngx.ctx.resp_replace_check = rule.rule.replace_check
+			ngx.ctx.resp_replace_data = rule.rule_replace_data
+		else
+			ngx.log(ngx.ERR,"rule action ERR!")
+		end
 	end
+
 	end
 end
 
@@ -586,8 +588,8 @@ function _M.access_init()
 	end
 end
 
-function _M.resp_js_insert()
-	return _resp_js_insert
+function _M.resp_header_chunk()
+	return _resp_header_chunk
 end
 
 return _M
