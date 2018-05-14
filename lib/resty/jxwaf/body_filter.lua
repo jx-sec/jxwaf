@@ -3,6 +3,7 @@ local config_info = waf.get_config_info()
 local request = require "resty.jxwaf.request"
 local zlib = require "resty.jxwaf.ffi-zlib"
 
+
 local function zlib_compress(input_data)
 	local _input_data = input_data
 	local count = 0 
@@ -31,7 +32,7 @@ end
 local Content_Disposition = ngx.resp.get_headers()['Content-Disposition']
 local Content_Encoding = ngx.resp.get_headers()["Content-Encoding"]
 local Content_Type = ngx.resp.get_headers()['Content-Type']
-local check_content_type = ngx.re.find(Content_Type, [=[test|json|xml|javascript]=],"oij") 
+local check_content_type = ngx.re.find(Content_Type, [=[text|json|xml|javascript]=],"oij") 
 
 if  (not ngx.ctx.is_resp_action) and ngx.ctx.resp_action and (not Content_Disposition) and check_content_type and (ngx.arg[2] ~= true)  and (#ngx.arg[1] ~= 0) then
 	local resp_raw_data = request.request['RESP_BODY']()
@@ -78,7 +79,8 @@ if (config_info.resp_engine == "true") and (not ngx.ctx.is_resp_action) and (not
 
 	end
 
-	if sign  or ((#ngx.arg[1] ~= 0) and (ngx.arg[2] ~= true) and (not Content_Disposition) and check_content_type) then		
+	if sign  or ((#ngx.arg[1] ~= 0) and (ngx.arg[2] ~= true) and (not Content_Disposition) and check_content_type) then	
+			
 		local result,rule = waf.rule_match(rules)
 		if result then
 		local resp_raw_data = request.request['RESP_BODY']()
@@ -87,13 +89,13 @@ if (config_info.resp_engine == "true") and (not ngx.ctx.is_resp_action) and (not
                         ngx.arg[1] = nil
 			ngx.arg[2] = true 
                 elseif rule.rule_action == 'rewrite' then
-                        resp_data = rule.rule_rewrite_data
+                        resp_data = rule.rule_action_data
 			ngx.ctx.is_resp_action = true
                 elseif rule.rule_action == 'inject_js' then
-                        resp_data = resp_raw_data..rule.rule_inject_js_data
+                        resp_data = resp_raw_data..rule.rule_action_data
                 	ngx.ctx.is_resp_action = true
                 elseif rule.rule_action == "replace" then
-                        resp_data = ngx.re.gsub(resp_raw_data,rule.rule.replace_check,rule.rule_replace_data)
+                        resp_data = ngx.re.gsub(resp_raw_data,rule.rule_action_data,rule.rule_action_replace_data)
                 else
                         ngx.log(ngx.ERR,"rule action ERR!,in resp!!")
                 end
@@ -109,9 +111,7 @@ if (config_info.resp_engine == "true") and (not ngx.ctx.is_resp_action) and (not
 
 
 	end
-	ngx.update_time()
-	ngx.log(ngx.ERR,ngx.now() - ngx.req.start_time())
+
 end
---        ngx.update_time()
---        ngx.log(ngx.ERR,ngx.now() - ngx.req.start_time())
+
 

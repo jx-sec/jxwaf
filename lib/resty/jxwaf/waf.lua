@@ -353,7 +353,7 @@ local function _base_update_rule()
 		ngx.log(ngx.ERR,"init fail,can not decode base rule config file")
 	end
 	for _,v in ipairs(_update_rule) do
-		if v.rule_update_category == "resp" then
+		if v.rule_phase == "resp" then
 			table_insert(_resp_update_rule,v)
 			if v.rule_action == "inject_js" or v.rule_action == "rewrite" or v.rule_action == "replace" then
 				_resp_header_chunk = true
@@ -479,15 +479,16 @@ function _M.base_check()
 		elseif rule.rule_action == 'redirect' then
 			ngx.redirect(_config_info.http_redirect)
 		elseif rule.rule_action == 'rewrite' then
-			ngx.ctx.resp_action = "rewrite"
-			ngx.ctx.resp_rewrite_data = rule.rule_rewrite_data
+--			ngx.ctx.resp_action = "rewrite"
+--			ngx.ctx.resp_rewrite_data = rule.rule_action_data
+			ngx.say(rule.rule_action_data)
 		elseif rule.rule_action == 'inject_js' then
 			ngx.ctx.resp_action = "inject_js"
-			ngx.ctx.resp_inject_js_data = rule.rule_inject_js_data
+			ngx.ctx.resp_inject_js_data = rule.rule_action_data
 		elseif rule.rule_action == "replace" then
 			ngx.ctx.resp_action = "replace"
-			ngx.ctx.resp_replace_check = rule.rule.replace_check
-			ngx.ctx.resp_replace_data = rule.rule_replace_data
+			ngx.ctx.resp_replace_check = rule.rule_action_data
+			ngx.ctx.resp_replace_data = rule.rule_action_replace_data
 		else
 			ngx.log(ngx.ERR,"rule action ERR!")
 		end
