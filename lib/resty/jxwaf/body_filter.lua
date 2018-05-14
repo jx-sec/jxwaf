@@ -89,7 +89,7 @@ if (config_info.resp_engine == "true") and (not ngx.ctx.is_resp_action) and (not
                         ngx.arg[1] = nil
 			ngx.arg[2] = true 
                 elseif rule.rule_action == 'rewrite' then
-                        resp_data = rule.rule_action_data
+                        resp_data = ngx.decode_base64(rule.rule_action_data)
 			ngx.ctx.is_resp_action = true
                 elseif rule.rule_action == 'inject_js' then
                         resp_data = resp_raw_data..rule.rule_action_data
