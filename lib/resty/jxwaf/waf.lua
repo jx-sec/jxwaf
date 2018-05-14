@@ -289,16 +289,11 @@ local function _rule_match(rules)
 					ngx.ctx.rule_log = ctx_rule_log
 				end
 				if _config_info.observ_mode == "true" and matchs_result and rule.rule_log == "true" then
-<<<<<<< HEAD
-					table_insert(ngx.ctx.rule_observ_log,ctx_rule_log)
-					matchs_result = false
-=======
 				
 				
 						table_insert(ngx.ctx.rule_observ_log,ctx_rule_log)
 						matchs_result = false
 		
->>>>>>> dev
 				end
 	
                 if rule.rule_action == "pass" and matchs_result then
@@ -416,10 +411,7 @@ local function _global_update_rule()
 	_config_info.cookie_safe_is_safe = _config_info.cookie_safe_is_safe or _update_rule['cookie_safe_is_safe'] or "false"	
 	_config_info.aes_random_key = _config_info.aes_random_key or _update_rule['aes_random_key'] or  str.to_hex(resty_random.bytes(8))
 	_config_info.observ_mode =  _config_info.observ_mode or _update_rule['observ_mode'] or "false"
-<<<<<<< HEAD
-=======
 	--_config_info.observ_mode_white_ip =  _config_info.observ_mode_white_ip or _update_rule['observ_mode_white_ip'] or "false"
->>>>>>> dev
 	_config_info.resp_engine =  _config_info.resp_engine or _update_rule['resp_engine'] or "false"
         ngx.log(ngx.ALERT,"success load global config ",_config_info.base_engine)
 	if _config_info.base_engine == "true" or _config_info.resp_engine == "true" then
