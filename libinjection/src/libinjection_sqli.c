@@ -2319,7 +2319,8 @@ int libinjection_sqli(const char* input, size_t slen, char fingerprint[])
     if (issqli) {
         strcpy(fingerprint, state.fingerprint);
     } else {
-        fingerprint[0] = '\0';
+        strcpy(fingerprint, state.fingerprint);
+        /* fingerprint[0] = '\0'; */
     }
     return issqli;
 }
