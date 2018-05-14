@@ -481,7 +481,8 @@ function _M.base_check()
 		elseif rule.rule_action == 'rewrite' then
 --			ngx.ctx.resp_action = "rewrite"
 --			ngx.ctx.resp_rewrite_data = rule.rule_action_data
-			ngx.say(rule.rule_action_data)
+			ngx.header["Content-Type"] = "text/html; charset=utf-8"
+			ngx.say(ngx.decode_base64(rule.rule_action_data))		
 		elseif rule.rule_action == 'inject_js' then
 			ngx.ctx.resp_action = "inject_js"
 			ngx.ctx.resp_inject_js_data = rule.rule_action_data
