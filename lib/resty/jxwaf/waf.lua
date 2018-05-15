@@ -258,7 +258,7 @@ local function _rule_match(rules)
 						
 						
                                                 ctx_rule_log.rule_match_key = _operator_key
-						ctx_rule_log.rule_url = ngx.var.request_uri
+						ctx_rule_log.rule_url = ngx.var.uri
 						ctx_rule_log.rule_remote_ip = ngx.var.remote_addr
 						ctx_rule_log.rule_match_captures = captures
 
