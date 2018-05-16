@@ -230,7 +230,7 @@ end
 
 local function _rule_match(rules)
 	local result
-	if _config_info.observ_mode == "true"
+	if _config_info.observ_mode == "true" then
 		ngx.ctx.rule_observ_log = {}
 	end
 	for _,rule in ipairs(rules) do
