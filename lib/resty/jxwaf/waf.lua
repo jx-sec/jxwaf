@@ -231,7 +231,7 @@ end
 local function _rule_match(rules)
 	local result
 	if _config_info.observ_mode == "true" then
-		ngx.ctx.rule_observ_log = {}
+		local rule_observ_log = {}
 	end
 	for _,rule in ipairs(rules) do
 		
@@ -294,7 +294,7 @@ local function _rule_match(rules)
 				if _config_info.observ_mode == "true" and matchs_result and rule.rule_log == "true" then
 				
 				
-						table_insert(ngx.ctx.rule_observ_log,ctx_rule_log)
+						table_insert(rule_observ_log,ctx_rule_log)
 						matchs_result = false
 		
 				end
@@ -312,8 +312,9 @@ local function _rule_match(rules)
 	 
 
 
-	
-	
+	if _config_info.observ_mode == "true" then
+		ngx.ctx.rule_observ_log = rule_observ_log
+	end
 
 	return result
 end
