@@ -260,7 +260,7 @@ local function _rule_match(rules)
 						
 						
                                                 ctx_rule_log.rule_match_key = _operator_key
-						ctx_rule_log.rule_url = ngx.var.uri
+						ctx_rule_log.rule_uri = ngx.var.uri
 						ctx_rule_log.rule_remote_ip = ngx.var.remote_addr
 						ctx_rule_log.rule_match_captures = captures
 
@@ -285,7 +285,8 @@ local function _rule_match(rules)
                     ctx_rule_log.rule_category = rule.rule_category
                     ctx_rule_log.rule_action = rule.rule_action
 					if _config_info.log_all == "true" or rule.rule_log_all=="true" then
-						ctx_rule_log.rule_raw_headers =  request.request['RAW_HEADER']()
+						ctx_rule_log.rule_raw_headers =  request.request['REQUEST_HEADERS']()
+						ctx_rule_log.rule_url = request.request['REQUEST_URI']()
 						ctx_rule_log.rule_raw_post =  ngx.req.get_body_data()
 					end
 					ngx.ctx.rule_log = ctx_rule_log
