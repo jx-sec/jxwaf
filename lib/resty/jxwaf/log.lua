@@ -55,7 +55,12 @@ end
 if config_info.log_local == "true" then
 	if config_info.observ_mode == "true" then
 		local rule_observ_log = ngx.ctx.rule_observ_log
-		if #rule_observ_log ~= 0 then
+		if type(rule_observ_log) == nil then
+			ngx.log(ngx.ERR,"BUG find!!!")
+			ngx.log(ngx.ERR,ngx.req.raw_header())
+			ngx.log(ngx.ERR,ngx.req.get_body_data())
+		end
+		if rule_observ_log and #rule_observ_log ~= 0 then
 			for  _,v in ipairs(rule_observ_log) do
 				v['http_request_time'] = ngx.localtime()
 				v['http_request_host'] = ngx.req.get_headers()["Host"]
