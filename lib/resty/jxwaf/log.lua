@@ -55,7 +55,7 @@ end
 if config_info.log_local == "true" then
 	if config_info.observ_mode == "true" then
 		local rule_observ_log = ngx.ctx.rule_observ_log
-		if type(rule_observ_log) == nil then
+		if type(rule_observ_log) ~= "table" then
 			ngx.log(ngx.ERR,"BUG find!!!")
 			ngx.log(ngx.ERR,ngx.req.raw_header())
 			ngx.log(ngx.ERR,ngx.req.get_body_data())
