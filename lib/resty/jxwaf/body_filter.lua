@@ -32,8 +32,9 @@ end
 local Content_Disposition = ngx.resp.get_headers()['Content-Disposition']
 local Content_Encoding = ngx.resp.get_headers()["Content-Encoding"]
 local Content_Type = ngx.resp.get_headers()['Content-Type']
+local check_content_type 
 if Content_Type then
-local check_content_type = ngx.re.find(Content_Type, [=[text|json|xml|javascript]=],"oij") 
+	check_content_type = ngx.re.find(Content_Type, [=[text|json|xml|javascript]=],"oij") 
 end
 
 if  (not ngx.ctx.is_resp_action) and ngx.ctx.resp_action and (not Content_Disposition) and check_content_type and (ngx.arg[2] ~= true)  and (#ngx.arg[1] ~= 0) then
