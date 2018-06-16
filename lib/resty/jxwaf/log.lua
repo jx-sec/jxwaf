@@ -75,6 +75,7 @@ if config_info.log_local == "true" then
 		
 	else
 		local rule_log = ngx.ctx.rule_log
+		local rule_limit_reject_log = ngx.ctx.rule_limit_reject_log
 		if rule_log then
 			rule_log['http_request_time'] = ngx.localtime()
 			rule_log['http_request_host'] = ngx.req.get_headers()["Host"]
@@ -84,6 +85,11 @@ if config_info.log_local == "true" then
 				rule_log['rule_match_captures'] = ngx.re.gsub(match_captures, [=[\\u]=], [=[\\u]=], "oij")
 			end
 			ngx.log(ngx.ERR,cjson.encode(rule_log))
+		end
+		if rule_limit_reject_log then
+			rule_limit_reject_log['http_request_time'] = ngx.localtime()
+			rule_limit_reject_log['http_request_host'] = ngx.req.get_headers()["Host"]
+			ngx.log(ngx.ERR,cjson.encode(rule_limit_reject_log))
 		end
 	end
 end
