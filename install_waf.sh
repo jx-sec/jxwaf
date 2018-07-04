@@ -2,7 +2,7 @@
 yum install pcre-devel openssl-devel gcc make g++ curl lua-devel gcc-c++ automake -y
 tar zxvf openresty-1.13.6.2.tar.gz
 tar zxvf lua-zlib-1.2.tar.gz
-cd openresty-1.13.6.2.4 
+cd openresty-1.13.6.2 
 ./configure --prefix=/opt/jxwaf && gmake && gmake install
 cd ../libinjection/
 chmod +x src/*.py
