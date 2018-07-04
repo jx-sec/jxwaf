@@ -1,7 +1,7 @@
 
 local _M = {}
 local limit_req = require "resty.limit.req"
-local limit_count = require "resty.jxwaf.count"
+local limit_count = require "resty.limit.count"
 _M.version = "1.0"
 
 function _M.limit_req_rate(rule,process_key)
@@ -62,14 +62,13 @@ function _M.limit_req_rate(rule,process_key)
 end
 
 function _M.limit_req_count(rule,process_key)
-	local limit_store = "limit_req"
+	local limit_store = "limit_req_count"
 	local count = tonumber(rule.rule_rate_or_count)
 	local time = tonumber(rule.rule_burst_or_time)
 	local key = process_key 
 	local rule_id = rule.rule_id
 	local rule_detail = rule.rule_detail
 	local rule_limit_log = rule.rule_log
-	
 
 	local lim, err = limit_count.new(limit_store, count, time)
 	if not lim then

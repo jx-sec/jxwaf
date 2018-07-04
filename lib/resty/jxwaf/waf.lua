@@ -232,12 +232,10 @@ end
 
 local function _rule_match(rules)
 	local result
-	if _config_info.observ_mode == "true" then
-		local rule_observ_log = {}
-	end
+	local rule_observ_log = {}
 	for _,rule in ipairs(rules) do
 		
-		if _config_info.limitreq_engine == "true" and rule.rule_limitreq_global == "true"   then    --limit_req start
+		if _config_info.limitreq_engine == "true" and rule.rule_global == "true"   then    --limit_req start
 
 		local process_key
 		local limit_var = {}
@@ -319,7 +317,11 @@ local function _rule_match(rules)
 						ctx_rule_log.rule_url = request.request['REQUEST_URI']()
 						ctx_rule_log.rule_raw_post =  ngx.req.get_body_data()
 					end
+					if rule.rule_action == "limit_req_rate" or rule.rule_action == "limit_req_count" then
+
+					else
 					ngx.ctx.rule_log = ctx_rule_log
+					end
 				end
 				if _config_info.observ_mode == "true" and matchs_result and rule.rule_log == "true" then
 				
@@ -332,7 +334,7 @@ local function _rule_match(rules)
                 if rule.rule_action == "pass" and matchs_result then
 					matchs_result = false
 				end
-			if   _config_info.limitreq_rule_engine == "true" and matchs_result and (rule.rule_action == "limitreq_rate" or rule.rule_action == "limitreq_count") then
+			if   _config_info.limitreq_engine == "true" and matchs_result and (rule.rule_action == "limit_req_rate" or rule.rule_action == "limit_req_count") then
 				local process_key
 				local limit_var = {}
 				for _,var in ipairs(rule.rule_key_vars) do
@@ -421,7 +423,7 @@ local function _base_update_rule()
 				_resp_header_chunk = true
 			end
 		else
-			if v.rule_action == "limitreq_rate" or v.rule_action == "limitreq_count" then
+			if v.rule_action == "limit_req_rate" or v.rule_action == "limit_req_count" then
 				if _config_info.limitreq_engine == "true" then
 					table_insert(_limit_req_rule,v)
 				end
@@ -485,7 +487,7 @@ local function _global_update_rule()
 	_config_info.observ_mode =  _config_info.observ_mode or _update_rule['observ_mode'] or "false"
 	--_config_info.observ_mode_white_ip =  _config_info.observ_mode_white_ip or _update_rule['observ_mode_white_ip'] or "false"
 	_config_info.resp_engine =  _config_info.resp_engine or _update_rule['resp_engine'] or "false"
-	_config_info.limitreq_engine = _config_info.limitreq_engine or _update_rule['limitreq_engine'] or "false"
+	_config_info.limitreq_engine = _config_info.limitreq_engine or _update_rule['cc_engine'] or "false"
         ngx.log(ngx.ALERT,"success load global config ",_config_info.base_engine)
 	if _config_info.base_engine == "true" or _config_info.resp_engine == "true" or _config_info.limitreq_engine == "true" then
 		_base_update_rule()
