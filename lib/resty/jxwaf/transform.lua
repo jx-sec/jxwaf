@@ -72,7 +72,7 @@ end
 local function _lowercase(value)
    
             
-            return string.lower(value)
+            return string.lower(tostring(value)
         end
 local function _md5(value)
             if not value then return nil end
