@@ -103,18 +103,18 @@ local function _parse_request_body()
 
 		return t 
 	end
-	local post_args,err = ngx.req.get_post_args()
+	local post_args,err = ngx.req.get_post_args(210)
 	if not post_args then
 		ngx.log(ngx.ERR,"failed to get post args: ", err)
 		ngx.exit(500)
 	end
+	if #_table_keys(post_args) > 200 then
+		ngx.log(ngx.ERR,"post args count error,is attack!")
+		ngx.exit(503)
+	end
 	local json_check = cjson.decode(ngx.req.get_body_data())
 	if json_check then
 		ngx.log(ngx.ERR,"get post args ERR, json data")
-	else
-		if ngx.get_phase() == "access" or ngx.get_phase() == "rewrite"  or ngx.get_phase() == "content" then
-			ngx.req.set_body_data(ngx.encode_args(post_args))
-		end
 	end
 	ngx.ctx.parse_request_body = post_args
 	return post_args
