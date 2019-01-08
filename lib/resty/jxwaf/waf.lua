@@ -17,6 +17,8 @@ _M.version = "1.0"
 
 
 local _config_path = "/opt/jxwaf/nginx/conf/jxwaf/jxwaf_config.json"
+local _local_config_path = "/opt/jxwaf/nginx/conf/jxwaf/jxwaf_local_config.json"
+local _local_base_config_path = "/opt/jxwaf/nginx/conf/jxwaf/jxwaf_local_base_config.json"
 local _config_info = {}
 local _rules = {}
 local _resp_rules = {}
@@ -498,13 +500,55 @@ end
 
 
 function _M.init_worker()
+	if _config_info.waf_local == "false" then
 	local global_ok, global_err = ngx.timer.at(0,_global_update_rule)
 	if not global_ok then
                 ngx.log(ngx.ERR, "failed to create the global timer: ", global_err)
         end
-
+	end
 end
 
+local function _local_base_update_rule()
+	local _base_update_rule = {}
+	local _resp_update_rule = {}
+	local _limit_req_rule = {}
+	local init_local_config_path =  _local_base_config_path
+	local read_local_config = assert(io.open(init_local_config_path,'r'))
+	local raw_local_config_info = read_local_config:read('*all')
+	read_local_config:close()
+	local _update_rule = cjson.decode(raw_local_config_info)
+	if _update_rule == nil or #_update_rule == 0 then
+		ngx.log(ngx.ERR,"init fail,can not decode base rule config file")
+	end
+	for _,v in ipairs(_update_rule) do
+		if v.rule_phase == "resp" then
+			table_insert(_resp_update_rule,v)
+			if v.rule_action == "inject_js" or v.rule_action == "rewrite" or v.rule_action == "replace" then
+				_resp_header_chunk = true
+			end
+		else
+			if v.rule_action == "limit_req_rate" or v.rule_action == "limit_req_count" then
+				if _config_info.limitreq_engine == "true" then
+					table_insert(_limit_req_rule,v)
+				end
+			else
+				table_insert(_base_update_rule,v)
+			end
+		end
+	end	
+
+	table_sort(_resp_update_rule,_sort_rules)
+	table_sort(_base_update_rule,_sort_rules)
+	table_sort(_limit_req_rule,_sort_rules)
+	_rules =  _base_update_rule
+	_resp_rules = _resp_update_rule
+	_limit_req_rules = _limit_req_rule 
+	ngx.log(ngx.ALERT,"success load base rule,count is "..#_rules)
+	ngx.log(ngx.ALERT,"success load resp rule,count is "..#_resp_rules)
+	ngx.log(ngx.ALERT,"success load limit req rule,count is "..#_limit_req_rules)
+
+	
+end
 
 function _M.init(config_path)
 	local init_config_path = config_path or _config_path
@@ -517,8 +561,37 @@ function _M.init(config_path)
 	end
 
 	_config_info = config_info
+	if _config_info.waf_local == "true" then
+		local init_local_config_path =  _local_config_path
+		local read_local_config = assert(io.open(init_local_config_path,'r'))
+		local raw_local_config_info = read_local_config:read('*all')
+		read_local_config:close()
+		local _update_rule = cjson.decode(raw_local_config_info)
+		_config_info.base_engine = _config_info.base_engine or _update_rule['base_engine'] or "true"
+		_config_info.log_all = _config_info.log_all or  _update_rule['log_all'] or "false"
+		_config_info.log_remote = _config_info.log_remote or  _update_rule['log_remote'] or "false"
+		_config_info.log_local = _config_info.log_local or  _update_rule['log_local'] or "true"
+		_config_info.http_redirect = _config_info.http_redirect or  _update_rule['http_redirect'] or "/"
+		_config_info.log_ip = _config_info.log_ip or  _update_rule['log_ip'] or "127.0.0.1"
+		_config_info.log_port = _config_info.log_port or  _update_rule['log_port'] or "5555"
+		_config_info.log_sock_type = _config_info.log_sock_type or  _update_rule['log_sock_type'] or "udp"
+		_config_info.log_flush_limit = _config_info.log_flush_limit or  _update_rule['log_flush_limit'] or "1"
+		_config_info.cookie_safe = _config_info.cookie_safe or _update_rule['cookie_safe'] or "true"
+		_config_info.cookie_safe_client_ip = _config_info.cookie_safe_client_ip or _update_rule['cookie_safe_client_ip'] or "true"
+		_config_info.cookie_safe_is_safe = _config_info.cookie_safe_is_safe or _update_rule['cookie_safe_is_safe'] or "false"	
+		_config_info.aes_random_key = _config_info.aes_random_key or _update_rule['aes_random_key'] or  str.to_hex(resty_random.bytes(8))
+		_config_info.observ_mode =  _config_info.observ_mode or _update_rule['observ_mode'] or "false"
+		--_config_info.observ_mode_white_ip =  _config_info.observ_mode_white_ip or _update_rule['observ_mode_white_ip'] or "false"
+		_config_info.resp_engine =  _config_info.resp_engine or _update_rule['resp_engine'] or "false"
+		_config_info.limitreq_engine = _config_info.limitreq_engine or _update_rule['cc_engine'] or "false"
+			ngx.log(ngx.ALERT,"success load global config ",_config_info.base_engine)
+		if _config_info.base_engine == "true" or _config_info.resp_engine == "true" or _config_info.limitreq_engine == "true" then
+			_local_base_update_rule()
+		end		
 
 
+
+	end
 end
 
 
