@@ -117,7 +117,7 @@ http {
 ### Rule Local load 规则本地加载
    1. $ curl "http://update.jxwaf.com/waf/update_global_rule"  -d 'api_key=3d96848e-bab2-40b7-8c0b-abac3b613585' > /opt/jxwaf/nginx/conf/jxwaf/jxwaf_local_config.json
    2. $ curl "http://update.jxwaf.com/waf/update_rule"  -d 'api_key=3d96848e-bab2-40b7-8c0b-abac3b613585' > /opt/jxwaf/nginx/conf/jxwaf/jxwaf_local_base_config.json
-   3. $ 修改/opt/jxwaf/nginx/conf/jxwaf/jxwafconfig.json 中的”waf_local”为”true”
+   3. $ 修改/opt/jxwaf/nginx/conf/jxwaf/jxwaf_config.json 中的”waf_local”为”true”
    4. /opt/jxwaf/nginx/sbin/nginx -s reload
    
   注意:api_key需修改为你自己账号的”WAF_API_KEY”
