@@ -372,9 +372,8 @@ local function _rule_match(rules)
 
 
 	end
-	if _config_info.observ_mode == "true" then
-		ngx.ctx.rule_observ_log = rule_observ_log
-	end
+	
+	ngx.ctx.rule_observ_log = rule_observ_log
 
 	return result
 end
