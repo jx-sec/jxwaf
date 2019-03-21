@@ -19,7 +19,7 @@ end
 local rule_log = ngx.ctx.rule_log
 local rule_observ_log = ngx.ctx.rule_observ_log
 if config_info.observ_mode == "true" then
-if #rule_observ_log ~= 0 then
+if rule_observ_log and #rule_observ_log ~= 0 then
 	for  _,v in ipairs(rule_observ_log) do
 			v['http_request_time'] = ngx.localtime()
 			v['http_request_host'] = ngx.req.get_headers()["Host"]
