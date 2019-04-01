@@ -97,8 +97,9 @@ local function _regex( subject, pattern)
 end
 
 local function _detect_sqli(input)
-	
-		if (libinject.sqli(input)) then
+		local result,fingerprint = libinject.sqli(input)
+		if (result) then
+			--ngx.log(ngx.ERR,fingerprint)
                         return true, input
                 else
                         return false, nil
