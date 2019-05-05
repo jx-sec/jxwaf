@@ -11,6 +11,7 @@ jxwaf(锦衣盾)是一款基于openresty(nginx+lua)开发的下一代web应用�
   - 旧版本将维护至年底,新用户请使用jxwaf2 
   - 测试账号为test@jxwaf.com,密码 123456
   - 测试网站为 tmp.jxwaf.com
+  - 注册如未收到邮件,请查看垃圾邮箱
   
 ### Feature 功能
   - 待补充
