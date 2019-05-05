@@ -1,5 +1,8 @@
 {
-    "waf_api_key": "3d96848e-bab2-40b7-8c0b-abac3b613585",
+    "waf_api_key": "",
+    "waf_api_password": "",
+    "waf_update_website": "http://update2.jxwaf.com/waf_update",
     "waf_local":"false"
+    
 }
 

@@ -1,23 +1,30 @@
 #!/bin/bash
-yum install pcre-devel openssl-devel gcc make g++ curl lua-devel gcc-c++ automake -y
+yum install -y epel-release pcre-devel openssl-devel gcc cmake make g++ curl lua-devel gcc-c++ automake
 tar zxvf openresty-1.13.6.2.tar.gz
-tar zxvf lua-zlib-1.2.tar.gz
-cd openresty-1.13.6.2 
-./configure --prefix=/opt/jxwaf && gmake && gmake install
-cd ../libinjection/
-chmod +x src/*.py
-make all
-cp src/libinjection.so /opt/jxwaf/lualib/
-cd ../lua-aho-corasick/
+tar zxvf libmaxminddb-1.3.2.tar.gz
+tar zxvf aliyun-log-c-sdk-lite.tar.gz
+tar zxvf curl-7.64.1.tar.gz
+cd curl-7.64.1
 make
-cp libac.so /opt/jxwaf/lualib/
+make install
+cd ../openresty-1.13.6.2
+./configure --prefix=/opt/jxwaf && gmake && gmake install
 mv /opt/jxwaf/nginx/conf/nginx.conf  /opt/jxwaf/nginx/conf/nginx.conf.bak
 cp ../conf/nginx.conf /opt/jxwaf/nginx/conf/
+cp ../conf/full_chain.pem /opt/jxwaf/nginx/conf/
+cp ../conf/private.key /opt/jxwaf/nginx/conf/
 mkdir /opt/jxwaf/nginx/conf/jxwaf
 cp ../conf/jxwaf_config.json /opt/jxwaf/nginx/conf/jxwaf/
+cp ../conf/GeoLite2-Country.mmdb /opt/jxwaf/nginx/conf/jxwaf/
 cp -r ../lib/resty/jxwaf  /opt/jxwaf/lualib/resty/
-cd ../lua-zlib-1.2
-make linux 2> make_info.txt
-cp zlib.so /opt/jxwaf/lualib/
+cd ../libmaxminddb-1.3.2
+./configure
+make
+cp src/.libs/libmaxminddb.so.0.0.7 /opt/jxwaf/lualib/libmaxminddb.so
+cd ../aliyun-log-c-sdk-lite
+cmake .
+make
+cp build/lib/liblog_c_sdk.so.2.0.0 /opt/jxwaf/lualib/liblog_c_sdk.so
 /opt/jxwaf/nginx/sbin/nginx -t
+
 

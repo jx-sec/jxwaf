@@ -1,9 +1,8 @@
 local cookiejar = require "resty.jxwaf.cookie"
-local upload = require "resty.upload"
 local cjson = require "cjson.safe"
-local zlib = require "resty.jxwaf.ffi-zlib"
+local exit_code = require "resty.jxwaf.exit_code"
 local _M = {}
-_M.version = "1.0"
+_M.version = "2.0"
 
 local function _table_keys(tb)
 	if type(tb) ~= "table" then
@@ -69,94 +68,94 @@ local function _parse_request_body()
 
 	local content_type = ngx.req.get_headers()["Content-type"]
 	if (type(content_type) == "table") then
+    local error_info = {}
+    error_info['headers'] = ngx.ctx.request_get_headers or _get_headers()
+    error_info['log_type'] = "error_log"
+    error_info['error_type'] = "parse_request_body"
+    error_info['error_info'] = "Request contained multiple content-type headers"
+    error_info['remote_addr'] = ngx.var.remote_addr
+    ngx.ctx.error_log = error_info
 		ngx.log(ngx.ERR,"Request contained multiple content-type headers")
-		ngx.exit(403)
+		exit_code.return_exit()
 	end
-	if ngx.req.get_method() == "POST" and not content_type then
---		ngx.log(ngx.ERR,"Request not contained  content-type headers :",ngx.req.raw_header())
+  
+  
+	if content_type and  ngx.re.find(content_type, [=[^multipart/form-data]=],"oij") and ngx.req.get_headers()["Content-Length"] and tonumber(ngx.req.get_headers()["Content-Length"]) ~= 0 and not(ngx.ctx.no_check_upload) then
+      ngx.ctx.parse_request_body = {}
+      return {}
+  end
 
-	end
-
-	if  ngx.req.get_body_file() then
+  if  ngx.req.get_body_file() then
+    local error_info = {}
+    error_info['headers'] = ngx.ctx.request_get_headers or _get_headers()
+    error_info['log_type'] = "error_log"
+    error_info['error_type'] = "parse_request_body"
+    error_info['error_info'] = "request body size larger than client_body_buffer_size, refuse request "
+    error_info['remote_addr'] = ngx.var.remote_addr
+    ngx.ctx.error_log = error_info
 		ngx.log(ngx.ERR,"request body size larger than client_body_buffer_size, refuse request ")
-		ngx.exit(503)
+		exit_code.return_error()
 	end
-	if content_type and  ngx.re.find(content_type, [=[^multipart/form-data]=],"oij") and ngx.req.get_headers()["Content-Length"] and tonumber(ngx.req.get_headers()["Content-Length"]) ~= 0 then
-		ngx.ctx.parse_request_body = {}
-		return {}
-	end
+	
 	if content_type and  ngx.re.find(content_type, [=[^application/json;]=],"oij") and ngx.req.get_headers()["Content-Length"] and tonumber(ngx.req.get_headers()["Content-Length"]) ~= 0 then
 	
---		local body_data = ngx.req.get_post_args() 
 		local json_args_raw = ngx.req.get_body_data()
 		if not json_args_raw then
-			ngx.log(ngx.ERR,"get_body_data ERR!")
-			ngx.exit(500)
+			ngx.ctx.parse_request_body = {}
+			return {}
 		end 
---		for k,_ in pairs(body_data)do
---			json_args_raw = k
---		end
+
 		local json_args,err = cjson.decode(json_args_raw)
 		if json_args == nil then
-			ngx.log(ngx.ERR,"failed to decode json args :",err)
-			ngx.exit(503)
+      local error_info = {}
+      error_info['headers'] = ngx.ctx.request_get_headers or _get_headers()
+      error_info['log_type'] = "error_log"
+      error_info['error_type'] = "parse_request_body"
+      error_info['error_info'] = "failed to decode json args :"..err
+      error_info['remote_addr'] = ngx.var.remote_addr
+      ngx.ctx.error_log = error_info
+      ngx.log(ngx.ERR,"failed to decode json args :",err)
+      exit_code.return_error()
 		end
 		local t = {}
 		t = _process_json_args(json_args)
-
+		ngx.ctx.parse_request_body = t 
 		return t 
 	end
+
 	local post_args,err = ngx.req.get_post_args(210)
 	if not post_args then
+    local error_info = {}
+    error_info['headers'] = ngx.ctx.request_get_headers or _get_headers()
+    error_info['log_type'] = "error_log"
+    error_info['error_type'] = "parse_request_body"
+    error_info['error_info'] = "failed to get post args: "..err
+    error_info['remote_addr'] = ngx.var.remote_addr
+    ngx.ctx.error_log = error_info
 		ngx.log(ngx.ERR,"failed to get post args: ", err)
-		ngx.exit(500)
+		exit_code.return_error()
 	end
 	if #_table_keys(post_args) > 200 then
+    local error_info = {}
+    error_info['headers'] = ngx.ctx.request_get_headers or _get_headers()
+    error_info['log_type'] = "error_log"
+    error_info['error_type'] = "parse_request_body"
+    error_info['error_info'] = "post args count error,is attack!"
+    error_info['remote_addr'] = ngx.var.remote_addr
+    ngx.ctx.error_log = error_info
 		ngx.log(ngx.ERR,"post args count error,is attack!")
-		ngx.exit(503)
+		exit_code.return_error()
 	end
 	local json_check = cjson.decode(ngx.req.get_body_data())
 	if json_check then
-		ngx.log(ngx.ERR,"get post args ERR, json data")
+		local _tmp = {}
+		_tmp = _process_json_args(json_check)
+		ngx.ctx.parse_request_body = _tmp
+		return _tmp
 	end
 	ngx.ctx.parse_request_body = post_args
 	return post_args
 end
-
-local function _args()
-        local request_args_post = ngx.ctx.parse_request_body or _parse_request_body()
-        local t = request_args_post
-	
-	local request_args_get = ngx.ctx.parse_request_uri or _parse_request_uri()
-
-        for k,v in pairs(request_args_get) do
-		
-                if(t[k]) then
-                        local _t = {}
-                        if(type(t[k])== 'table') then
-                                for  _ ,_v in ipairs(t[k]) do
-                                table.insert(_t,_v)
-                                end
-                        else
-                                table.insert(_t,t[k])
-
-                        end
-                        if(type(v) == 'table') then
-                                for _,_d in ipairs(v) do
-                                table.insert(_t,_d)
-                                end
-                        else
-                                table.insert(_t,v)
-                        end
-                        t[k] =_t
-                else
-                        t[k] = v
-                end
-	end
-	ngx.ctx.request_args = t
-        return t
-end
-
 
 local function _args_names()
         local t = {}
@@ -247,70 +246,10 @@ local function _table_values(tb)
     
     return t
 end
-function _M.table_keys(t)
-
-
-	return _table_keys(t)
-end
-
-function _M.table_values(t)
-
-
-        return _table_values(t)
-end
-
-local function _resp_body()
-	local data = ""
-	local args = ngx.arg[1]
-	if args ~= nil then
-		local content_type = ngx.resp.get_headers()["Content-Encoding"]
-		if content_type and ngx.re.find(content_type, [=[gzip]=],"oij") then
-                        local count = 0
-                        local output_table = {}
-                        local input = function(bufsize)
-                                local start = count > 0 and bufsize*count or 1
-                                local data = args:sub(start, (bufsize*(count+1)-1) )
-                                count = count + 1
-                                return data
-                        end
-                        local output = function(data)
-                            table.insert(output_table, data)
-                        end
-                        local chunk = 16384
-                        local ok, err = zlib.inflateGzip(input, output, chunk)
-                        if not ok then
-			    ngx.log(ngx.ERR,err)
-			    data = args
-			else
-                            local output_data = table.concat(output_table,'')
-			    data = output_data
-			end
-			
-		else
-			data = args
-		end
-	end
-	ngx.ctx.response_get_data = data
-	return data
-
-end
-
---[[
-local function _resp_cookies()
-	local set_cookies = ngx.resp.get_headers()['Set-Cookie']
-	local return_cookies = cookiejar.get_response_cookie_table(set_cookies)
-	return return_cookies
-
-end
---]]
 
 local function _get_headers()
 	local t = ngx.req.get_headers()
---	local count = #_table_keys(t)
---	if count > 80 then
---		ngx.log(ngx.ERR,"ERR get_headers")
---		ngx.exit(503)
---	end
+
 	for k,v in pairs(ngx.req.get_headers()) do
 		ngx.req.set_header(k, v)
 	end
@@ -321,11 +260,7 @@ end
 
 local function _get_headers_names()
 	local t = _table_keys(ngx.req.get_headers())
---	local count = #t
---	if count > 80 then
---		ngx.log(ngx.ERR,"ERR get_headers_names")
---		ngx.exit(503)
---	end
+
 	for k,v in pairs(ngx.req.get_headers()) do
 		ngx.req.set_header(k, v)
 	end
@@ -333,71 +268,101 @@ local function _get_headers_names()
         return t
 end
 
-local function _resp_get_headers()
-	local t = ngx.resp.get_headers()
-	local count = #_table_keys(t)
-	if count > 50 then
-		ngx.log(ngx.ERR,"ERR resp_get_headers")
-		ngx.exit(503)
+local function _http_body()
+	if  ngx.req.get_body_file() then
+    local error_info = {}
+    error_info['headers'] = ngx.ctx.request_get_headers or _get_headers()
+    error_info['log_type'] = "error_log"
+    error_info['error_type'] = "http_body"
+    error_info['error_info'] = "request body size larger than client_body_buffer_size, refuse request "
+    error_info['remote_addr'] = ngx.var.remote_addr
+    ngx.ctx.error_log = error_info
+		ngx.log(ngx.ERR,"request body size larger than client_body_buffer_size, refuse request ")
+		exit_code.return_error()
 	end
-	ngx.ctx.response_get_headers = t
-        return t
+	local result = ""
+	local data = ngx.req.get_body_data()
+	if data then
+		result = data
+	end
+	ngx.ctx.http_body = result
+	return result
 end
 
-
-local function _resp_get_headers_names()
-	local t = _table_keys(ngx.resp.get_headers())
-	local count = #t
-	if count > 50 then
-		ngx.log(ngx.ERR,"ERR get_headers_names")
-		ngx.exit(503)
+local function _remote_addr()
+	local xff = ngx.req.get_headers()['X-Forwarded-For']
+	local result
+	if xff then
+		local ip = ngx.re.match(ngx.var.remote_addr,[=[^\d{1,3}+\.\d{1,3}+\.\d{1,3}+\.\d{1,3}+]=],'oj')
+		if ip then
+			result = ip 
+		else
+			result = ngx.var.remote_addr
+		end 		
+	else
+		result = ngx.var.remote_addr
 	end
-	ngx.ctx.response_get_headers_names = t
-        return t
+	ngx.ctx.remote_addr = result
+	return result
+end
+
+local function _http_full_info()
+  local full_info = {}
+  full_info['host'] = ngx.var.host
+  full_info['headers'] = ngx.ctx.request_get_headers or _get_headers()
+  full_info['scheme'] = ngx.var.scheme
+  full_info['version'] = tostring(ngx.req.http_version())
+  full_info['uri'] = ngx.var.uri
+  full_info['method'] = ngx.req.get_method()
+  full_info['query_string'] = ngx.var.query_string or ""
+  full_info['body'] = ngx.ctx.http_body or  _http_body()
+  full_info['remote_addr'] = ngx.var.remote_addr
+  full_info['xxf_addr'] = ngx.ctx.remote_addr or _remote_addr()
+  ngx.ctx.http_full_info = full_info
+  return full_info
+end
+
+local function _http_upload_info()
+  local full_info = {}
+  full_info['host'] = ngx.var.host
+  full_info['headers'] = ngx.ctx.request_get_headers or _get_headers()
+  full_info['scheme'] = ngx.var.scheme
+  full_info['version'] = tostring(ngx.req.http_version())
+  full_info['uri'] = ngx.var.uri
+  full_info['method'] = ngx.req.get_method()
+  full_info['query_string'] = ngx.var.query_string or ""
+  full_info['remote_addr'] = ngx.var.remote_addr
+  full_info['xxf_addr'] = ngx.ctx.remote_addr or _remote_addr()
+  return full_info
 end
 
 _M.request = {
-	ARGS = function() return ngx.ctx.request_args or _args() end,
-	ARGS_NAMES = function() return ngx.ctx.request_args_names or _args_names() end,
 	ARGS_GET = function() return ngx.ctx.request_args_get or _args_get() end,
 	ARGS_GET_NAMES = function() return ngx.ctx.request_args_get_names or _args_get_names() end,
 	ARGS_POST = function() return ngx.ctx.request_args_post or _args_post() end,
-	ARGS_POST_NAMES = function() return ngx.ctx.request_args_post_names or _args_post_names() end,
-	REMOTE_ADDR = function() return  ngx.var.remote_addr end,
-	BIN_REMOTE_ADDR = function() return ngx.var.binary_remote_addr end,
-	SCHEME = function() return ngx.var.scheme end,
-	REMOTE_HOST = function() return  ngx.var.host end,
-	SERVER_ADDR = function() return tostring(ngx.var.server_addr) end,
-	REMOTE_USER = function() return ngx.var.remote_user end,
-	SERVER_NAME = function() return ngx.var.server_name end,
-	SERVER_PORT = function() return ngx.var.server_port end,
-	HTTP_VERSION = function() return tostring(ngx.req.http_version()) end,
-	REQUEST_METHOD = function() return ngx.req.get_method() end,
-	URI = function() return ngx.var.uri end,
-	URI_ARGS = function() return ngx.req.get_uri_args() end,
-	METHOD = function() return ngx.req.get_method() end,
-	QUERY_STRING = function() return ngx.var.query_string or "" end,
-	REQUEST_URI = function() return ngx.var.request_uri end,
-	REQUEST_BASENAME = function() return ngx.var.uri end,
-	REQUEST_LINE = function() return ngx.var.request end,
-	REQUEST_PROTOCOL = function() return ngx.var.server_protocol end,
-	REQUEST_COOKIES = function() return  take_cookies() or {} end,
-	REQUEST_COOKIES_NAMES = function() return _table_keys(take_cookies()) or {} end,
-	HTTP_USER_AGENT = function() return ngx.var.http_user_agent or "-" end,
-	RAW_HEADER = function() return ngx.req.raw_header() end,
-	HTTP_REFERER = function() return ngx.var.http_referer or "-"  end,
-	REQUEST_HEADERS = function() return ngx.ctx.request_get_headers or _get_headers() end,
-	REQUEST_HEADERS_NAMES = function() return ngx.ctx.request_get_headers_names or _get_headers_names() end,
-	TIME = function() return ngx.localtime() end,
-	TIME_EPOCH = function() return ngx.time() end,
+  ARGS_POST_NAMES = function() return ngx.ctx.request_args_post_names or _args_post_names() end,
+	ARGS_HEADERS = function() return ngx.ctx.request_get_headers or _get_headers() end,
+  ARGS_HEADERS_NAMES = function() return ngx.ctx.request_get_headers_names or _get_headers_names() end,
+	ARGS_COOKIES = function() return  take_cookies() or {} end,
+  ARGS_COOKIES_NAMES = function() return _table_keys(take_cookies()) or {} end,
+	HTTP_COOKIE = function() return ngx.var.http_cookie or "" end, 
+	HTTP_SCHEME = function() return ngx.var.scheme end, -- http
+	HTTP_HOST = function() return  ngx.var.host end, -- 52.xxx.xxx.xxx  www.xxx.xxx
+	HTTP_PORT = function() return ngx.var.server_port end,
+	HTTP_VERSION = function() return tostring(ngx.req.http_version()) end,-- 1.1 1.0 2.0
+	HTTP_METHOD = function() return ngx.req.get_method() end, -- GET POST PUT 
+	HTTP_URI = function() return ngx.var.uri end, -- /aaa/index.php
+	HTTP_BODY = function() return ngx.ctx.http_body or  _http_body() end,
+	HTTP_QUERY_STRING = function() return ngx.var.query_string or "" end, -- a=1113123&s=122222
+	HTTP_USER_AGENT = function() return ngx.var.http_user_agent or "" end,
+	HTTP_REFERER = function() return ngx.var.http_referer or ""  end,
 	FILE_NAMES = function() return ngx.ctx.form_file_name or {} end,
 	FILE_TYPES = function() return ngx.ctx.form_file_type or {} end ,
-	RESP_BODY = function() return ngx.ctx.response_get_data or _resp_body() end ,
-	--RESP_COOKIES = function() return "" end,
-	RESP_HEADERS = function() return ngx.ctx.response_get_headers or  _resp_get_headers() end,
-	RESP_HEADERS_NAMES = function() return ngx.ctx.response_get_headers_names or _resp_get_headers_names() end,
-	--RX_CAPTURE = function() return ngx.ctx.rx_capture or "" end,
-	--RX_CAPTURE = function() return _resp_body()  end,
+	REMOTE_ADDR = function() return ngx.ctx.remote_addr or _remote_addr() end, --ip xff
+	REAL_REMOTE_ADDR = function() return ngx.var.remote_addr end,
+	TIME_STAMP = function() return tonumber(ngx.time()) end,
+  HTTP_FULL_INFO = function() return ngx.ctx.http_full_info or _http_full_info() end,
+  HTTP_UPLOAD_INFO = function() return  _http_upload_info() end,
 }
 
 

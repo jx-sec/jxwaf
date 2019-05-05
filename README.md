@@ -4,50 +4,16 @@
 [![Django](https://img.shields.io/badge/centos-7-brightgreen.svg)](https://www.centos.org/)
 [![Python3](https://img.shields.io/badge/openresty-1.11.2.5-brightgreen.svg)](http://openresty.org/en/)
 
-jxwaf(锦衣盾)是一款基于openresty(nginx+lua)开发的下一代web应用防火墙，独创的业务逻辑防护引擎和机器学习引擎可以有效对业务安全风险进行防护，解决传统WAF无法对业务安全进行防护的痛点。内置的语义分析引擎配合机器学习引擎可以避免传统WAF规则叠加太多导致速度变慢的问题，同时增强检测精准性（低误报、低漏报）。
+jxwaf(锦衣盾)是一款基于openresty(nginx+lua)开发的下一代web应用防火墙，独创的业务安全防护引擎和机器学习引擎可以有效对业务安全风险进行防护，解决传统WAF无法对业务安全进行防护的痛点。内置的语义分析引擎配合机器学习引擎可以避免传统WAF规则叠加太多导致速度变慢的问题，同时增强检测精准性（低误报、低漏报）。
 
+### Notice 通知
+  - 新版本jxwaf2正式发布,欢迎使用,地址为 http://www.jxwaf.com
+  - 旧版本将维护至年底,新用户请使用jxwaf2 
+  - 测试账号为test@jxwaf.com,密码 123456
+  - 测试网站为 tmp.jxwaf.com
+  
 ### Feature 功能
-  - 基础攻击防护 
-    - SQL注入攻击
-    - XSS攻击
-    - 目录遍历漏洞
-    - 命令注入攻击
-    - WebShell上传防护
-    - 扫描器攻击等...
-  - 机器学习
-    - 支持向量机(SVM)
-  - 语义分析
-    - SQL注入语义分析
-    - XSS攻击语义分析  
-  - 业务逻辑漏洞防护
-    - 短信炸弹防护
-    - 越权漏洞防护
-    - 短信验证码校验绕过防护等...
-  - 高级CC攻击防护
-    - 可针对不同URL，不同请求参数单独设置不同防护变量
-    - 人机识别
-  - Cookie安全防护
-  - 前端参数加密防护
-    - 支持AES加解密
-    - 支持DES加解密
-    - 支持RSA加解密
-  - 透明部署动态口令功能
-    - 可对后台管理系统和网站用户提供动态口令(OTP)功能
-  - 检测缓存功能
-    - 对已经过WAF检测请求进行MD5缓存，提高检测效率
-  - 支持协议
-    - HTTP/HTTPS 
-  - 性能&可靠性
-     -  毫秒级响应，请求处理时间小于一毫秒
-     -  支持主备部署，避免单点故障
-     -  支持集群反向代理模式部署，可处理超大数据流量
-     -  支持嵌入式部署，无需改变原有网络拓扑结构
-     -  支持云模式部署
-  - 管理功能
-    - 基础配置
-    - 规则配置
-    - 报表展示
-    - 告警配置
+  - 待补充
 
 ### Architecture 架构
 
@@ -75,52 +41,20 @@ jxwaf(锦衣盾)由jxwaf与jxwaf管理中心组成:
 
       nginx: configuration file /opt/jxwaf/nginx/conf/nginx.conf test is successful
 
-   6. 访问 http://www.jxwaf.com 并注册账号，在 WAF规则管理->查看官方规则组 页面按照自身需求加载规则，之后在 WAF规则配置->WAF全局配置 页面获取 “WAF_API_KEY”
-   7. 修改/opt/jxwaf/nginx/conf/jxwaf/jxwafconfig.json 中的”waf_api_key”为你自己账号的”WAF_API_KEY”
-   8. $ /opt/jxwaf/nginx/sbin/nginx 启动openresty,openresty会在启动或者reload的时候自动到jxwaf管理中心拉取用户配置的最新规则
+   6. 访问 http://www.jxwaf.com 并注册账号,在全局配置页面获取"api key"和"api password"
+   7. 修改/opt/jxwaf/nginx/conf/jxwaf/jxwaf_config.json 中的"waf_api_key"为你自己账号的"api key","waf_api_password"为你自己账号的"api password"
+   8. $ /opt/jxwaf/nginx/sbin/nginx 启动openresty,openresty会在启动或者reload的时候自动到jxwaf管理中心拉取用户配置的最新规则,之后会定期同步配置,周期可在全局配置页面设置,默认为五分钟同步一次
 
 ### Usage 使用
 
 ```
 
-http {
-    include       mime.types;
-    default_type  application/octet-stream;
-    sendfile        on;
-    keepalive_timeout  65;
-#start
-    resolver  114.114.114.114;
-    init_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/init.lua;
-    init_worker_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/init_worker.lua;
-    rewrite_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/rewrite.lua;
-    access_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/access.lua;
-    header_filter_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/header_filter.lua;
-    log_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/log.lua;
-    lua_code_cache on;
-#end
-    upstream http://1.1.1.1 {
-                server 1.1.1.1;
-     }
-    server {
-        listen       80;
-        server_name  localhost;
-        location / {
-            root   html;
-            index  index.html index.htm;
-                proxy_pass  http://1.1.1.1;
-        }
-    }
-}
+待补充
 
 ```
 
 ### Rule Local load 规则本地加载
-   1. $ curl "http://update.jxwaf.com/waf/update_global_rule"  -d 'api_key=3d96848e-bab2-40b7-8c0b-abac3b613585' > /opt/jxwaf/nginx/conf/jxwaf/jxwaf_local_config.json
-   2. $ curl "http://update.jxwaf.com/waf/update_rule"  -d 'api_key=3d96848e-bab2-40b7-8c0b-abac3b613585' > /opt/jxwaf/nginx/conf/jxwaf/jxwaf_local_base_config.json
-   3. $ 修改/opt/jxwaf/nginx/conf/jxwaf/jxwaf_config.json 中的”waf_local”为”true”
-   4. /opt/jxwaf/nginx/sbin/nginx -s reload
-   
-  注意:api_key需修改为你自己账号的”WAF_API_KEY”
+    待补充
 
 
 
