@@ -533,7 +533,11 @@ function _M.jxcheck_protection()
         rule_log['request_arg'] = request_arg
         ngx.ctx.rule_log = rule_log
       end
-      exit_code.return_exit()
+      if req_host['protection_set']['page_custom'] == "true" then
+        exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
+      else
+        exit_code.return_exit()
+      end
     end
   end  
  
