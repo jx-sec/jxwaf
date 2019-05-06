@@ -533,6 +533,12 @@ function _M.jxcheck_protection()
         rule_log['request_arg'] = request_arg
         ngx.ctx.rule_log = rule_log
       end
+      if req_host and req_host["protection_set"]["attack_ip_protection"] == "true"  then
+        local req_count_rule = {}
+        req_count_rule['rule_rate_count'] = req_host['attack_ip_protection_set']['attack_ip_protection_count']
+        req_count_rule['rule_burst_time'] = req_host['attack_ip_protection_set']['attack_ip_protection_time']
+        limitreq.limit_attack_ip(req_count_rule,ngx_md5(ngx.var.remote_addr))
+      end
       if req_host['protection_set']['page_custom'] == "true" then
         exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
       else

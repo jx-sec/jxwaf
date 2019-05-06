@@ -80,3 +80,6 @@ jxwaf(锦衣盾)由jxwaf与jxwaf管理中心组成:
 - github 提交BUG题或需求
 - QQ群 730947092
 - 邮箱 jx-sec@outlook.com
+
+### Thanks 致谢
+ - P4NY(p4ny@qq.com): 发现语义识别引擎一处绕过漏洞
