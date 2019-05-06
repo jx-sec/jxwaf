@@ -87,7 +87,7 @@ local config
 --local client
 
 function _M.init()
-  ffi.load("curl", true)
+  ffi.load("/usr/local/lib/libcurl.so", true)
   aliyun_log = ffi.load("/opt/jxwaf/lualib/liblog_c_sdk.so")
   local result = aliyun_log.log_producer_env_init(3)
   if result ~= 0 then
