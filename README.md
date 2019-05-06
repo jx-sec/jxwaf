@@ -55,7 +55,10 @@ jxwaf(锦衣盾)由jxwaf与jxwaf管理中心组成:
 ```
 
 ### Rule Local load 规则本地加载
-    待补充
+  1. $ curl "http://update2.jxwaf.com/waf_update" -d 'api_key=3d96848e-bab2-40b7-8c0b-abac3b613585&api_password=8d86848e-bab2-40b7-880b-abac3b613585&md5=""' > /opt/jxwaf/nginx/conf/jxwaf/jxwaf_local_config.json
+  2. $ 修改/opt/jxwaf/nginx/conf/jxwaf/jxwaf_config.json 中的”waf_local”为”true”
+  3. $ /opt/jxwaf/nginx/sbin/nginx -s reload
+注意:api_key需修改为你自己账号的”api key”,api_password需修改为你自己账号的”api password"
 
 
 
@@ -71,8 +74,9 @@ jxwaf(锦衣盾)由jxwaf与jxwaf管理中心组成:
     
 
 ### Contributor 贡献者
-- [chenjc](https://github.com/jx-sec)  安全工程师
-- [jiongrizi](https://github.com/jiongrizi) 前端开发工程师
+- [chenjc](https://github.com/jx-sec)  安全工程师,负责waf引擎开发
+- [jiongrizi](https://github.com/jiongrizi) 前端开发工程师,负责管理中心前端开发,人机识别功能开发,小程序JXWAF助手开发
+- [vinsonzou](https://github.com/vinsonzou)   安全工程师,负责日志,大数据分析平台及机器学习平台开发
 
 
 ### BUG&Requirement BUG&需求
@@ -82,4 +86,4 @@ jxwaf(锦衣盾)由jxwaf与jxwaf管理中心组成:
 - 邮箱 jx-sec@outlook.com
 
 ### Thanks 致谢
- - P4NY(p4ny@qq.com): 发现语义识别引擎一处绕过漏洞
+ - P4NY(p4ny@qq.com):发现SQL语义识别引擎一处绕过漏洞  
