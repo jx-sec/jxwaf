@@ -66,7 +66,9 @@ local function _process_request(var)
     
 		if( type(var.rule_ignore) == "table" ) then
 			local ignore_result = {}
-			ignore_result = t
+			for k,v in pairs(t) do
+				ignore_result[k] = v 
+			end
 			for _,v in ipairs(var.rule_ignore) do
 				ignore_result[string.lower(v)] = nil
 			end
