@@ -76,7 +76,7 @@ jxwaf(锦衣盾)由jxwaf与jxwaf管理中心组成:
 ### Contributor 贡献者
 - [chenjc](https://github.com/jx-sec)  安全工程师,负责waf引擎开发
 - [jiongrizi](https://github.com/jiongrizi) 前端开发工程师,负责管理中心前端开发,人机识别功能开发,小程序JXWAF助手开发
-- [vinsonzou](https://github.com/vinsonzou)   安全工程师,负责日志,大数据分析平台及机器学习平台开发
+- [thankfly](https://github.com/thankfly)   安全工程师,负责日志,大数据分析平台及机器学习平台开发
 
 
 ### BUG&Requirement BUG&需求
