@@ -475,8 +475,8 @@ function _M.limitreq_check()
 			req_domain_rule['attack_black_ip_time'] = req_host['cc_protection_set']['attack_black_ip_time']
 			req_domain_rule['attack_ip_qps'] = req_host['cc_protection_set']['attack_ip_qps']
 			req_domain_rule['attack_ip_expire_qps'] = req_host['cc_protection_set']['attack_ip_expire_qps']
-			limitreq.limit_req_count(req_count_rule,ngx_md5(ngx.var.remote_addr))
-      limitreq.limit_req_rate(req_rate_rule,ngx_md5(ngx.var.remote_addr))
+			limitreq.limit_req_count(req_count_rule,ngx_md5(request.request['REMOTE_ADDR']()))
+      limitreq.limit_req_rate(req_rate_rule,ngx_md5(request.request['REMOTE_ADDR']()))
 			limitreq.limit_req_domain_rate(req_domain_rule,ngx_md5(host))
 	end
 	
@@ -489,7 +489,7 @@ function _M.attack_ip_protection()
 			local req_count_rule = {}
 			req_count_rule['rule_rate_count'] = req_host['attack_ip_protection_set']['attack_ip_protection_count']
 			req_count_rule['rule_burst_time'] = req_host['attack_ip_protection_set']['attack_ip_protection_time']
-			limitreq.limit_attack_ip(req_count_rule,ngx_md5(ngx.var.remote_addr),false)
+			limitreq.limit_attack_ip(req_count_rule,ngx_md5(request.request['REMOTE_ADDR']()),false)
 	end
 end
 
@@ -563,7 +563,7 @@ function _M.access_init()
     local xff_result
     local iplist = iputils.parse_cidrs(req_host['domain_set']['proxy_ip'])
     if iputils.ip_in_cidrs(ngx.var.remote_addr, iplist) then
-      local ip = ngx.re.match(ngx.var.remote_addr,[=[^\d{1,3}+\.\d{1,3}+\.\d{1,3}+\.\d{1,3}+]=],'oj')
+      local ip = ngx.req.get_headers()['X-REAL-IP'] or ngx.re.match(ngx.var.remote_addr,[=[^\d{1,3}+\.\d{1,3}+\.\d{1,3}+\.\d{1,3}+]=],'oj')
       if ip then
         xff_result = ip 
       else

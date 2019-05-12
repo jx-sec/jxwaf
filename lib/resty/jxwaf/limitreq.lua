@@ -113,7 +113,7 @@ function _M.limit_req_domain_rate(rule,process_key)
         ngx.log(ngx.ERR,"limit_req_domain_count,failed to instantiate a resty.limit.count object: ", err_count," limit_store is: ",limit_count_store)
         exit_code.return_error()
       end
-      local delay_count, err_count_incoming = lim_count:incoming(ngx.md5(ngx.var.remote_addr), true)
+      local delay_count, err_count_incoming = lim_count:incoming(ngx.md5(request.request['REMOTE_ADDR']()), true)
       if not delay_count then
         if err_count_incoming == "rejected" then
           local limit_domain_count_log_info = request.request['HTTP_FULL_INFO']()
@@ -143,7 +143,7 @@ function _M.limit_req_domain_rate(rule,process_key)
           ngx.log(ngx.ERR,"limit_req_domain_rate,failed to instantiate a resty.limit.req object: ", err_rate," limit_store is: ",limit_store)
           exit_code.return_error()
         end
-        local delay_rate, err_rate_incoming = lim_rate:incoming(ngx.md5(ngx.var.remote_addr), true)
+        local delay_rate, err_rate_incoming = lim_rate:incoming(ngx.md5(request.request['REMOTE_ADDR']()), true)
         if not delay_rate then
           if err_rate_incoming == "rejected" then
             local limit_domain_rate_log_info = request.request['HTTP_FULL_INFO']()
