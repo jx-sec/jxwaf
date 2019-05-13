@@ -234,10 +234,10 @@ local function _global_update_rule()
     local httpc = http.new()
     local api_key = _config_info.waf_api_key or ""
     local api_password = _config_info.waf_api_password or ""
+    local server_info = _config_info.server_info or ""
     local res, err = httpc:request_uri( _update_website , {
-	
         method = "POST",
-        body = "api_key="..api_key.."&api_password="..api_password.."&md5=".._md5,
+        body = "api_key="..api_key.."&api_password="..api_password.."&md5=".._md5.."&server_info="..server_info,
         headers = {
         ["Content-Type"] = "application/x-www-form-urlencoded",
         }
