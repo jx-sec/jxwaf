@@ -399,7 +399,7 @@ function _M.custom_rule_check()
 	local host = ngx.var.host
   local scheme = ngx.var.scheme
   local req_host = _update_waf_rule[host]
-	if req_host and req_host['domain_set'][scheme] == "true" then
+	if req_host  then
 		if req_host["protection_set"]["custom_protection"] == "true"  and #req_host["custom_rule_set"]  ~= 0 then
       local result,match_rule = _custom_rule_match(req_host["custom_rule_set"])
       if result then
@@ -556,7 +556,7 @@ function _M.access_init()
   local host = ngx.var.host
   local req_host = _update_waf_rule[host]
   if not req_host then
-    return ngx.exit(404)
+    return exit_code.return_no_exist()
   end
   local xff = ngx.req.get_headers()['X-Forwarded-For']
   if xff and req_host['domain_set']['proxy'] == "true" then
