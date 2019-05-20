@@ -15,6 +15,15 @@ local function _table_keys(tb)
 	return t
 end
 
+local function _get_headers()
+	local t = ngx.req.get_headers()
+
+	for k,v in pairs(ngx.req.get_headers()) do
+		ngx.req.set_header(k, v)
+	end
+	ngx.ctx.request_get_headers = t
+        return t
+end
 
 local function _process_json_args(json_args,t)
         local t = t or {}
@@ -246,17 +255,6 @@ local function _table_values(tb)
     
     return t
 end
-
-local function _get_headers()
-	local t = ngx.req.get_headers()
-
-	for k,v in pairs(ngx.req.get_headers()) do
-		ngx.req.set_header(k, v)
-	end
-	ngx.ctx.request_get_headers = t
-        return t
-end
-
 
 local function _get_headers_names()
 	local t = _table_keys(ngx.req.get_headers())

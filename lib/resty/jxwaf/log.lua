@@ -5,7 +5,7 @@ local uuid = require "resty.jxwaf.uuid"
 local aliyun_log = require "resty.jxwaf.aliyun_log"
 local waf_rule = waf.get_waf_rule()
 local host = ngx.var.host
-local log_host = waf_rule[host]
+local log_host = waf_rule[host] or ngx.ctx.wildcard_host
 local ngx_req_get_headers = ngx.req.get_headers
 local config_info = waf.get_config_info()
 

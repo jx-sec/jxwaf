@@ -16,6 +16,8 @@ local aliyun_log = require "resty.jxwaf.aliyun_log"
 local iputils = require "resty.jxwaf.iputils"
 local exit_code = require "resty.jxwaf.exit_code"
 local ngx_md5 = ngx.md5
+local string_find = string.find
+local string_sub = string.sub
 local loadstring = loadstring
 local _M = {}
 _M.version = "2.0"
@@ -66,7 +68,7 @@ local function _process_request(var)
     
 		if( type(var.rule_ignore) == "table" ) then
 			local ignore_result = {}
-			for k,v in pairs(t) do
+      for k,v in pairs(t) do
 				ignore_result[k] = v 
 			end
 			for _,v in ipairs(var.rule_ignore) do
@@ -398,8 +400,8 @@ end
 function _M.custom_rule_check()
 	local host = ngx.var.host
   local scheme = ngx.var.scheme
-  local req_host = _update_waf_rule[host]
-	if req_host  then
+  local req_host = _update_waf_rule[host] or ngx.ctx.wildcard_host
+	if req_host then
 		if req_host["protection_set"]["custom_protection"] == "true"  and #req_host["custom_rule_set"]  ~= 0 then
       local result,match_rule = _custom_rule_match(req_host["custom_rule_set"])
       if result then
@@ -412,8 +414,6 @@ function _M.custom_rule_check()
         end
       end
 		end
-	else
-    return exit_code.return_no_exist()
 	end
   
 end
@@ -421,7 +421,7 @@ end
 
 function _M.geo_protection()
   local host = ngx.var.host
-  local req_host = _update_waf_rule[host]
+  local req_host = _update_waf_rule[host] or ngx.ctx.wildcard_host
 	if req_host and req_host["protection_set"]["geo_protection"] == "true" then
 		local res,err = geo.lookup(ngx.var.remote_addr)
 		if res then
@@ -444,7 +444,7 @@ function _M.redirect_https()
     return
   end
   local host = ngx.var.host
-  local req_host = _update_waf_rule[host]
+  local req_host = _update_waf_rule[host] or ngx.ctx.wildcard_host
 	if req_host and  req_host['domain_set']['redirect_https'] == "true"  then
     ngx.header.content_type = "text/html"
     ngx.say([=[ <script type="text/javascript">
@@ -461,7 +461,7 @@ end
 
 function _M.limitreq_check()
   local host = ngx.var.host
-  local req_host = _update_waf_rule[host]
+  local req_host = _update_waf_rule[host] or ngx.ctx.wildcard_host
 	if req_host and req_host["protection_set"]["cc_protection"] == "true"  then
 			local req_rate_rule = {}
 			local req_count_rule = {}
@@ -483,7 +483,7 @@ function _M.limitreq_check()
 end
 
 function _M.attack_ip_protection()
-  local host = ngx.var.host
+  local host = ngx.var.host or ngx.ctx.wildcard_host
   local req_host = _update_waf_rule[host]
 	if req_host and req_host["protection_set"]["attack_ip_protection"] == "true"  then
 			local req_count_rule = {}
@@ -495,7 +495,7 @@ end
 
 function _M.jxcheck_protection()
   local host = ngx.var.host
-  local req_host = _update_waf_rule[host]
+  local req_host = _update_waf_rule[host] or ngx.ctx.wildcard_host
   if req_host and  req_host['protection_set']['owasp_protection'] == "true" and _jxcheck then
     if req_host['owasp_check_set']['white_request_bypass'] == "true" then
       local white_result,anomaly_arg,anomaly_message = _jxcheck.white_check()
@@ -554,7 +554,21 @@ end
 
 function _M.access_init()
   local host = ngx.var.host
-  local req_host = _update_waf_rule[host]
+  local req_host = nil
+  if ngx.var.scheme == "http" then
+    if _update_waf_rule[host] then
+      req_host = _update_waf_rule[host]
+    else 
+      local dot_pos = string_find(host,".",1,true)
+      local wildcard_host = "*"..string_sub(host,dot_pos)
+      if _update_waf_rule[wildcard_host] then
+        req_host = _update_waf_rule[wildcard_host]
+        ngx.ctx.wildcard_host = req_host
+      end
+    end
+  else  
+     req_host = _update_waf_rule[host] or ngx.ctx.wildcard_host
+  end
   if not req_host then
     return exit_code.return_no_exist()
   end

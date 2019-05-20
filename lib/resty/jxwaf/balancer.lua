@@ -3,7 +3,7 @@ local waf = require "resty.jxwaf.waf"
 local request = require "resty.jxwaf.request"
 local waf_rule = waf.get_waf_rule()
 local host = ngx.var.host
-local balance_host = waf_rule[host]
+local balance_host = waf_rule[host] or ngx.ctx.wildcard_host
 local scheme = ngx.var.scheme
 local exit_code = require "resty.jxwaf.exit_code"
 

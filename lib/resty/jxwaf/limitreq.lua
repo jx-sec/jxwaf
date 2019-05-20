@@ -126,9 +126,9 @@ function _M.limit_req_domain_rate(rule,process_key)
         local error_info = request.request['HTTP_FULL_INFO']()
         error_info['log_type'] = "error_log"
         error_info['error_type'] = "limit_req"
-        error_info['error_info'] = "limit_req_domain_count,failed to limit count: "..err
+        error_info['error_info'] = "limit_req_domain_count,failed to limit count: "..err_count_incoming
         ngx.ctx.error_log = error_info
-        ngx.log(ngx.ERR, "limit_req_domain_count,failed to limit count: ", err)
+        ngx.log(ngx.ERR, "limit_req_domain_count,failed to limit count: ", err_count_incoming)
         exit_code.return_error()
       end
 --count
