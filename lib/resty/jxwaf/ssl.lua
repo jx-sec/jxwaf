@@ -5,15 +5,18 @@ local waf_rule = waf.get_waf_rule()
 local host = ssl.server_name()
 local string_find = string.find
 local string_sub = string.sub
-local dot_pos = string_find(host,".",1,true)
-local wildcard_host = "*"..string_sub(host,dot_pos)
 local ssl_host = nil
+
 if waf_rule[host] then
   ssl_host = waf_rule[host]
-elseif waf_rule[wildcard_host] then
-  ssl_host = waf_rule[wildcard_host]
-  ngx.ctx.wildcard_host = ssl_host
+else
+  local dot_pos = string_find(host,".",1,true)
+  local wildcard_host = "*"..string_sub(host,dot_pos)
+  if waf_rule[wildcard_host] then
+    ssl_host = waf_rule[wildcard_host]
+  end
 end
+
 local exit_code = require "resty.jxwaf.exit_code"
 if ssl_host then
 	local clear_ok, clear_err = ssl.clear_certs()

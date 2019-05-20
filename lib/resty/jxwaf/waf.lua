@@ -555,20 +555,17 @@ end
 function _M.access_init()
   local host = ngx.var.host
   local req_host = nil
-  if ngx.var.scheme == "http" then
-    if _update_waf_rule[host] then
-      req_host = _update_waf_rule[host]
-    else 
-      local dot_pos = string_find(host,".",1,true)
-      local wildcard_host = "*"..string_sub(host,dot_pos)
-      if _update_waf_rule[wildcard_host] then
-        req_host = _update_waf_rule[wildcard_host]
-        ngx.ctx.wildcard_host = req_host
-      end
+  if _update_waf_rule[host] then
+    req_host = _update_waf_rule[host]
+  else 
+    local dot_pos = string_find(host,".",1,true)
+    local wildcard_host = "*"..string_sub(host,dot_pos)
+    if _update_waf_rule[wildcard_host] then
+      req_host = _update_waf_rule[wildcard_host]
+      ngx.ctx.wildcard_host = req_host
     end
-  else  
-     req_host = _update_waf_rule[host] or ngx.ctx.wildcard_host
   end
+  
   if not req_host then
     return exit_code.return_no_exist()
   end
