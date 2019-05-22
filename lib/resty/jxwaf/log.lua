@@ -16,7 +16,7 @@ if log_host then
       local ok,err = logger.init{
         host = log_host['log_set']['log_ip'],
         port = tonumber(log_host['log_set']['log_port']),
-        sock_type = log_host['log_set']['log_port']['log_sock_type'],
+        sock_type = log_host['log_set']['log_sock_type'],
         flush_limit = 1,
         }
       if not ok then
