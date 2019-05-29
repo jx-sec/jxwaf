@@ -87,3 +87,4 @@ jxwaf(锦衣盾)由jxwaf与jxwaf管理中心组成:
 
 ### Thanks 致谢
  - P4NY(p4ny@qq.com):发现SQL语义识别引擎一处绕过漏洞  
+ - zhutougg(github):发现上传绕过漏洞
