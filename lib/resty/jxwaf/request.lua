@@ -89,10 +89,11 @@ local function _parse_request_body()
 	end
   
   
-	if content_type and  ngx.re.find(content_type, [=[^multipart/form-data]=],"oij") and ngx.req.get_headers()["Content-Length"] and tonumber(ngx.req.get_headers()["Content-Length"]) ~= 0 and not(ngx.ctx.no_check_upload) then
+	if ngx.ctx.upload_request then
       ngx.ctx.parse_request_body = {}
       return {}
   end
+
 
   if  ngx.req.get_body_file() then
     local error_info = {}

@@ -565,7 +565,7 @@ function _M.access_init()
       ngx.ctx.wildcard_host = req_host
     end
   end
-  
+
   if not req_host then
     return exit_code.return_no_exist()
   end
@@ -586,122 +586,114 @@ function _M.access_init()
     ngx.ctx.remote_addr = xff_result
   end
   local content_type = ngx.req.get_headers()["Content-type"]
-  if content_type and  ngx.re.find(content_type, [=[^multipart/form-data]=],"oij") and tonumber(ngx.req.get_headers()["Content-Length"]) ~= 0 then
-    if req_host and req_host['protection_set']['owasp_protection'] == "true" and req_host['owasp_check_set']['upload_check'] == "true" then
-      local form, err = upload:new()
-      local _file_name = {}
-      local _form_name = {}
-      local _file_type = {}
-      local t ={}
-      local _type_flag = "false"
-      if not form then
+  local content_length = ngx.req.get_headers()["Content-Length"]
+  if content_type and  ngx.re.find(content_type, [=[^multipart/form-data]=],"oij") and content_length and tonumber(content_length) ~= 0 then
+    local form, err = upload:new()
+    local _file_name = {}
+    local _form_name = {}
+    local _file_type = {}
+    local t ={}
+    local _type_flag = "false"
+    if not form then
+      local error_info = request.request['HTTP_UPLOAD_INFO']()
+      error_info['log_type'] = "error_log"
+      error_info['error_type'] = "upload"
+      error_info['error_info'] = "failed to new upload: "..err
+      ngx.ctx.error_log = error_info
+      exit_code.return_error()	
+    end
+    ngx.req.init_body()
+    ngx.req.append_body("--" .. form.boundary)
+    local lasttype, chunk
+    local count = 0
+    while true do
+      count = count + 1
+      local typ, res, err = form:read()
+      if not typ then
         local error_info = request.request['HTTP_UPLOAD_INFO']()
         error_info['log_type'] = "error_log"
         error_info['error_type'] = "upload"
-        error_info['error_info'] = "failed to new upload: "..err
+        error_info['error_info'] = "failed to read: "..err
         ngx.ctx.error_log = error_info
-        exit_code.return_error()	
-        --return nil
+        exit_code.return_error()
       end
-      ngx.req.init_body()
-      ngx.req.append_body("--" .. form.boundary)
-      local lasttype, chunk
-      local count = 0
-      while true do
-        count = count + 1
-        local typ, res, err = form:read()
-        if not typ then
-          local error_info = request.request['HTTP_UPLOAD_INFO']()
-          error_info['log_type'] = "error_log"
-          error_info['error_type'] = "upload"
-          error_info['error_info'] = "failed to read: "..err
-          ngx.ctx.error_log = error_info
-          exit_code.return_error()
-          --return nil
-        end
-				if typ == "header" then
-          if res[1] == "Content-Disposition" then
-            local _tmp_form_name = ngx.re.match(res[2],[=[(.+)\bname=[" ']*?([^"]+)[" ']*?]=],"oij")
-						local _tmp_file_name =  ngx.re.match(res[2],[=[(.+)filename=[" ']*?([^"]+)[" ']*?]=],"oij")
-            if _tmp_form_name  then
-              table.insert(_form_name,_tmp_form_name[2]..count)
-						end
-						if _tmp_file_name  then
-							table.insert(_file_name,_tmp_file_name[2])
-						end
-						if _tmp_form_name and _tmp_file_name then
-							chunk = string.format([=[Content-Disposition: form-data; name="%s"; filename="%s"]=],_tmp_form_name[2],_tmp_file_name[2])
-							ngx.req.append_body("\r\n" .. chunk)
-						elseif _tmp_form_name then
-							chunk = string.format([=[Content-Disposition: form-data; name="%s"]=],_tmp_form_name[2])
-							 ngx.req.append_body("\r\n" .. chunk)
-						else
-              local error_info = request.request['HTTP_UPLOAD_INFO']()
-              error_info['log_type'] = "error_log"
-              error_info['error_type'] = "upload"
-              error_info['error_info'] = "Content-Disposition ERR!"
-              ngx.ctx.error_log = error_info
-              exit_code.return_error()
-              --return nil
-						end
+      if typ == "header" then
+        if res[1] == "Content-Disposition" then
+          local _tmp_form_name = ngx.re.match(res[2],[=[(.+)\bname=[" ']*?([^"]+)[" ']*?]=],"oij")
+          local _tmp_file_name =  ngx.re.match(res[2],[=[(.+)filename=[" ']*?([^"]+)[" ']*?]=],"oij")
+          if _tmp_form_name  then
+            table.insert(_form_name,_tmp_form_name[2]..count)
           end
-          if res[1] == "Content-Type" then
-            table.insert(_file_type,res[2])
-						_type_flag = "true"
-						chunk = string.format([=[Content-Type: %s]=],res[2])
-						ngx.req.append_body("\r\n" .. chunk)
+          if _tmp_file_name  then
+            table.insert(_file_name,_tmp_file_name[2])
+          end
+          if _tmp_form_name and _tmp_file_name then
+            chunk = string.format([=[Content-Disposition: form-data; name="%s"; filename="%s"]=],_tmp_form_name[2],_tmp_file_name[2])
+            ngx.req.append_body("\r\n" .. chunk)
+          elseif _tmp_form_name then
+            chunk = string.format([=[Content-Disposition: form-data; name="%s"]=],_tmp_form_name[2])
+            ngx.req.append_body("\r\n" .. chunk)
+          else
+            local error_info = request.request['HTTP_UPLOAD_INFO']()
+            error_info['log_type'] = "error_log"
+            error_info['error_type'] = "upload"
+            error_info['error_info'] = "Content-Disposition ERR!"
+            ngx.ctx.error_log = error_info
+            exit_code.return_error()
           end
         end
-				if typ == "body" then
-					chunk = res
-					if lasttype == "header" then
-						ngx.req.append_body("\r\n\r\n")
-					end
-					ngx.req.append_body(chunk)
-          if _type_flag == "true" then
-            _type_flag = "false"
-						t[_form_name[#_form_name]] = ""
-					else
-						if lasttype == "header" then
-							t[_form_name[#_form_name]] = res
-						else
-							t[_form_name[#_form_name]] = ""
-						end
+        if res[1] == "Content-Type" then
+          table.insert(_file_type,res[2])
+          _type_flag = "true"
+          chunk = string.format([=[Content-Type: %s]=],res[2])
+          ngx.req.append_body("\r\n" .. chunk)
+        end
+      end
+      if typ == "body" then
+        chunk = res
+        if lasttype == "header" then
+          ngx.req.append_body("\r\n\r\n")
+        end
+        ngx.req.append_body(chunk)
+        if _type_flag == "true" then
+          _type_flag = "false"
+          t[_form_name[#_form_name]] = ""
+        else
+          if lasttype == "header" then
+            t[_form_name[#_form_name]] = res
+          else
+            t[_form_name[#_form_name]] = ""
           end
-				end
-				if typ == "part_end" then 
-					ngx.req.append_body("\r\n--" .. form.boundary)
-				end
-				if typ == "eof" then
-					ngx.req.append_body("--\r\n")
-          break
-				end
-				lasttype = typ
+        end
       end
-      form:read()
-      ngx.req.finish_body()
-      --ngx.ctx.form_post_args = t
-      --ngx.ctx.form_file_name = _file_name
-      --ngx.ctx.form_file_type = _file_type
-      if ngx.re.find(_file_name, req_host['owasp_check_set']['upload_check_rule'],"oij") then
-        return nil
-      else
-        local rule_log = request.request['HTTP_UPLOAD_INFO']()
-        rule_log['log_type'] = "protection_log"
-        rule_log['protection_type'] = "upload_protection"
-        rule_log['protection_info'] = "error_upload_suffix"
-        rule_log['file_name'] = _file_name
-        ngx.ctx.rule_log = rule_log
-        exit_code.return_exit()
+      if typ == "part_end" then 
+        ngx.req.append_body("\r\n--" .. form.boundary)
       end
-    else
-      ngx.ctx.no_check_upload = true
-      ngx.req.read_body()
+      if typ == "eof" then
+        ngx.req.append_body("--\r\n")
+        break
+      end
+      lasttype = typ
+    end
+    form:read()
+    ngx.req.finish_body()
+    ngx.ctx.upload_request = true
+    if req_host and req_host['protection_set']['owasp_protection'] == "true" and req_host['owasp_check_set']['upload_check'] == "true" then
+      for _,v in ipairs(_file_name) then
+        if not ngx.re.find(v,req_host['owasp_check_set']['upload_check_rule'],"oij") then
+          local rule_log = request.request['HTTP_UPLOAD_INFO']()
+          rule_log['log_type'] = "protection_log"
+          rule_log['protection_type'] = "upload_protection"
+          rule_log['protection_info'] = "error_upload_suffix"
+          rule_log['file_name'] = _file_name
+          ngx.ctx.rule_log = rule_log
+          exit_code.return_exit()
+        end
+      end
     end
   else
     ngx.req.read_body()
   end
-  
 end
 
 
