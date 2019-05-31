@@ -679,7 +679,7 @@ function _M.access_init()
     ngx.req.finish_body()
     ngx.ctx.upload_request = true
     if req_host and req_host['protection_set']['owasp_protection'] == "true" and req_host['owasp_check_set']['upload_check'] == "true" then
-      for _,v in ipairs(_file_name) then
+      for _,v in ipairs(_file_name) do
         if not ngx.re.find(v,req_host['owasp_check_set']['upload_check_rule'],"oij") then
           local rule_log = request.request['HTTP_UPLOAD_INFO']()
           rule_log['log_type'] = "protection_log"
