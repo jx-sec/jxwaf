@@ -1,8 +1,10 @@
 {
     "waf_api_key": "",
     "waf_api_password": "",
-    "waf_update_website": "http://update2.jxwaf.com/waf_update",
-    "waf_local":"false"
-    
+    "waf_update_website": "http://login.jxwaf.com/waf_update",
+    "waf_monitor_website": "http://login.jxwaf.com/waf_update",
+    "waf_local":"false",
+    "server_info":"server_info_detail",
+    "waf_node_monitor":"true"
 }
 

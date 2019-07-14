@@ -1,3 +1,4 @@
+require "resty.core"
 local cjson = require "cjson.safe"
 local request = require "resty.jxwaf.request"
 local transform = require "resty.jxwaf.transform"
@@ -15,10 +16,15 @@ local geo = require 'resty.jxwaf.maxminddb'
 local aliyun_log = require "resty.jxwaf.aliyun_log"
 local iputils = require "resty.jxwaf.iputils"
 local exit_code = require "resty.jxwaf.exit_code"
+local uuid = require "resty.jxwaf.uuid"
 local ngx_md5 = ngx.md5
 local string_find = string.find
 local string_sub = string.sub
 local loadstring = loadstring
+local tonumber = tonumber
+local type = type
+local string_lower = string.lower
+local process = require "ngx.process"
 local _M = {}
 _M.version = "2.0"
 
@@ -29,9 +35,22 @@ local _config_geo_path = "/opt/jxwaf/nginx/conf/jxwaf/GeoLite2-Country.mmdb"
 local _update_waf_rule = {}
 local _config_info = {}
 local _jxcheck = nil
+local _bot_check = nil
 local _md5 = ""
+local bot_check_info = {}
+local bot_check_key = {}
 local _auto_update = "true"
-local _auto_update_period = "300"
+local _auto_update_period = "60"
+local _waf_node_monitor = "true"
+local _waf_node_monitor_period = "60"
+
+local function _sort_rules(a,b)
+    if a.rule_level == b.rule_level then
+      return tonumber(a.rule_id)<tonumber(b.rule_id)
+    else
+      return tonumber(a.rule_level)>tonumber(b.rule_level)
+    end
+end
 
 function _M.get_config_info()
 	return _config_info
@@ -72,7 +91,7 @@ local function _process_request(var)
 				ignore_result[k] = v 
 			end
 			for _,v in ipairs(var.rule_ignore) do
-				ignore_result[string.lower(v)] = nil
+				ignore_result[string_lower(v)] = nil
 			end
 			return ignore_result
 		end				
@@ -226,20 +245,22 @@ local function _update_at(auto_update_period,global_update_rule)
     if _auto_update == "true" then
       local global_ok, global_err = ngx.timer.at(tonumber(auto_update_period),global_update_rule)
       if not global_ok then
-        ngx.log(ngx.ERR, "failed to create the cycle timer: ", global_err)
+        if global_err ~= "process exiting" then
+          ngx.log(ngx.ERR, "failed to create the cycle timer: ", global_err)
+        end
       end
     end
 end
 
 local function _global_update_rule()
-    local _update_website  =  _config_info.waf_update_website or "http://update2.jxwaf.com/waf_update"
+    local _update_website  =  _config_info.waf_update_website or "https://update2.jxwaf.com/waf_update"
     local httpc = http.new()
+    httpc:set_timeouts(5000, 5000, 30000)
     local api_key = _config_info.waf_api_key or ""
     local api_password = _config_info.waf_api_password or ""
-    local server_info = _config_info.server_info or ""
     local res, err = httpc:request_uri( _update_website , {
         method = "POST",
-        body = "api_key="..api_key.."&api_password="..api_password.."&md5=".._md5.."&server_info="..server_info,
+        body = "api_key="..api_key.."&api_password="..api_password.."&md5=".._md5,
         headers = {
         ["Content-Type"] = "application/x-www-form-urlencoded",
         }
@@ -257,16 +278,28 @@ local function _global_update_rule()
       ngx.log(ngx.ERR,"init fail,failed to request, ",res_body['message'])
       return _update_at(tonumber(_auto_update_period),_global_update_rule)
     end
-    if not res_body['same'] then
+    if not res_body['no_update'] then
       _update_waf_rule = res_body['waf_rule']
       if _update_waf_rule == nil  then
         ngx.log(ngx.ERR,"init fail,can not decode waf rule")
         return _update_at(tonumber(_auto_update_period),_global_update_rule)
       end
+      for k,v in pairs(_update_waf_rule) do
+        if type(v['custom_rule_set']) == "table" then
+        table_sort(v['custom_rule_set'],_sort_rules)
+        _update_waf_rule[k] = v 
+        end
+      end
       if res_body['jxcheck']  then
         local load_jxcheck = loadstring(ngx.decode_base64(res_body['jxcheck']))()
         if load_jxcheck then
           _jxcheck =  load_jxcheck
+        end
+      end
+      if res_body['botcheck']  then
+        local load_botcheck = loadstring(ngx.decode_base64(res_body['botcheck']))()
+        if load_botcheck then
+          _bot_check =  load_botcheck
         end
       end
       _md5 = res_body['md5']
@@ -276,33 +309,93 @@ local function _global_update_rule()
     if _auto_update == "true" then
       local global_ok, global_err = ngx.timer.at(tonumber(_auto_update_period),_global_update_rule)
       if not global_ok then
-        ngx.log(ngx.ERR, "failed to create the cycle timer: ", global_err)
+        if global_err ~= "process exiting" then
+          ngx.log(ngx.ERR, "failed to create the cycle timer: ", global_err)
+        end
       end
     end
-    ngx.log(ngx.ERR,_md5)
+    ngx.log(ngx.ALERT,"config info md5 is ".._md5..",update config info success")
 end
 
-
+local function _momitor_update()
+    local _update_website  =  _config_info.waf_monitor_website or "https://update2.jxwaf.com/waf_monitor"
+    local httpc = http.new()
+    httpc:set_timeouts(5000, 5000, 30000)
+    local api_key = _config_info.waf_api_key or ""
+    local api_password = _config_info.waf_api_password or ""
+    local server_info = _config_info.server_info or ""
+    local waf_node_uuid = _config_info.waf_node_uuid or ""
+    local res, err = httpc:request_uri( _update_website , {
+        method = "POST",
+        body = "api_key="..api_key.."&api_password="..api_password.."&waf_node_uuid="..waf_node_uuid.."&server_info="..server_info,
+        headers = {
+        ["Content-Type"] = "application/x-www-form-urlencoded",
+        }
+    })
+    if not res then
+      ngx.log(ngx.ERR,"failed to request: ", err)
+      return _update_at(tonumber(_auto_update_period),_momitor_update)
+    end
+		local res_body = cjson.decode(res.body)
+		if not res_body then
+      ngx.log(ngx.ERR,"init fail,failed to decode resp body " )
+      return _update_at(tonumber(_auto_update_period),_momitor_update)
+		end
+    if  res_body['result'] == false then
+      ngx.log(ngx.ERR,"init fail,failed to request, ",res_body['message'])
+      return _update_at(tonumber(_auto_update_period),_momitor_update)
+    end
+    _waf_node_monitor = res_body['waf_node_monitor'] or _waf_node_monitor
+    if _waf_node_monitor == "true" then
+      local global_ok, global_err = ngx.timer.at(tonumber(_waf_node_monitor_period),_momitor_update)
+      if not global_ok then
+        if global_err ~= "process exiting" then
+          ngx.log(ngx.ERR, "failed to create the cycle timer: ", global_err)
+        end
+      end
+    end
+    ngx.log(ngx.ALERT,"monitor report success")
+end
 
 function _M.init_worker()
 	if _config_info.waf_local == "false" then
-    local init_ok,init_err = ngx.timer.at(0,_global_update_rule)
-    if not init_ok then
-      ngx.log(ngx.ERR, "failed to create the init timer: ", init_err)
+    if process.type() == "privileged agent" then
+      if _config_info.waf_node_monitor == "true" then
+        local monitor_ok,monitor_err = ngx.timer.at(0,_momitor_update)
+        if not monitor_ok then
+          if monitor_err ~= "process exiting" then
+            ngx.log(ngx.ERR, "failed to create the init timer: ", init_err)
+          end
+        end
+      end
+    else
+      local init_ok,init_err = ngx.timer.at(0,_global_update_rule)
+      if not init_ok then
+        if init_err ~= "process exiting" then
+          ngx.log(ngx.ERR, "failed to create the init timer: ", init_err)
+        end
+      end
     end
   end
 end
 
 function _M.init(config_path)
-  require "resty.core"
 	local init_config_path = config_path or _config_path
-	local read_config = assert(io.open(init_config_path,'r'))
+	local read_config = assert(io.open(init_config_path,'r+'))
 	local raw_config_info = read_config:read('*all')
-	read_config:close()
+  read_config:close()
 	local config_info = cjson.decode(raw_config_info)
 	if config_info == nil then
 		ngx.log(ngx.ERR,"init fail,can not decode config file")
 	end
+  if not config_info['waf_node_uuid'] then
+    local waf_node_uuid = uuid.generate_random()
+    config_info['waf_node_uuid'] = waf_node_uuid
+    local new_config_info = cjson.encode(config_info)
+    local write_config = assert(io.open(init_config_path,'w+'))
+    write_config:write(new_config_info)
+    write_config:close()
+  end
 	_config_info = config_info
 	if _config_info.waf_local == "true" then
 		local init_local_config_path =  _local_config_path
@@ -316,11 +409,10 @@ function _M.init(config_path)
     end
   end
   if not geo.initted() then
-    local r,errs = geo.init(_config_geo_path)
+    local _,errs = geo.init(_config_geo_path)
     if errs then
       ngx.log(ngx.ERR,errs)
     end
-		ngx.log(ngx.ERR,"init geoip success")
   end
   if not geo.initted() then
     ngx.log(ngx.ERR,"init geoip fail")
@@ -330,6 +422,11 @@ function _M.init(config_path)
     ngx.log(ngx.ERR,"init aliyun log fail")
   end
   iputils.enable_lrucache()
+  local ok, err = process.enable_privileged_agent()
+  if not ok then
+    ngx.log(ngx.ERR, "enables privileged agent failed error:", err)
+  end
+  ngx.log(ngx.ALERT,"jxwaf init success,waf node uuid is ".._config_info['waf_node_uuid'])
 end
 
 
@@ -457,7 +554,11 @@ function _M.redirect_https()
   end
 end
 
-
+function _M.bot_auth_check()
+  if _bot_check then
+    _bot_check.bot_commit_auth(_config_info.waf_api_key,bot_check_info)
+  end
+end
 
 function _M.limitreq_check()
   local host = ngx.var.host
@@ -475,13 +576,23 @@ function _M.limitreq_check()
 			req_domain_rule['attack_black_ip_time'] = req_host['cc_protection_set']['attack_black_ip_time']
 			req_domain_rule['attack_ip_qps'] = req_host['cc_protection_set']['attack_ip_qps']
 			req_domain_rule['attack_ip_expire_qps'] = req_host['cc_protection_set']['attack_ip_expire_qps']
-			limitreq.limit_req_count(req_count_rule,ngx_md5(request.request['REMOTE_ADDR']()))
-      limitreq.limit_req_rate(req_rate_rule,ngx_md5(request.request['REMOTE_ADDR']()))
-			limitreq.limit_req_domain_rate(req_domain_rule,ngx_md5(host))
+			local limit_req_count_result = limitreq.limit_req_count(req_count_rule,ngx_md5(request.request['REMOTE_ADDR']()))
+      if limit_req_count_result and _bot_check then
+        _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key)
+      end
+      local limit_req_rate_result = limitreq.limit_req_rate(req_rate_rule,ngx_md5(request.request['REMOTE_ADDR']()))
+      if limit_req_rate_result and _bot_check then
+        _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key)
+      end
+			local limit_req_domain_rate_result = limitreq.limit_req_domain_rate(req_domain_rule,ngx_md5(host))
+      if limit_req_domain_rate_result  and _bot_check then
+        _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key)
+      end
 	end
 	
 end
 
+--[[
 function _M.attack_ip_protection()
   local host = ngx.var.host or ngx.ctx.wildcard_host
   local req_host = _update_waf_rule[host]
@@ -492,6 +603,7 @@ function _M.attack_ip_protection()
 			limitreq.limit_attack_ip(req_count_rule,ngx_md5(request.request['REMOTE_ADDR']()),false)
 	end
 end
+--]]
 
 function _M.jxcheck_protection()
   local host = ngx.var.host
@@ -541,9 +653,10 @@ function _M.jxcheck_protection()
         req_count_rule['rule_burst_time'] = req_host['attack_ip_protection_set']['attack_ip_protection_time']
         limitreq.limit_attack_ip(req_count_rule,ngx_md5(ngx.var.remote_addr))
       end
-      if req_host['protection_set']['page_custom'] == "true" then
+      if req_host['protection_set']['page_custom'] == "true"  and req_host['owasp_check_set']['owasp_protection_mode'] == "true" then
         exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
-      else
+      end
+      if req_host['owasp_check_set']['owasp_protection_mode'] == "true" then
         exit_code.return_exit()
       end
     end

@@ -4,6 +4,8 @@ tar zxvf openresty-1.13.6.2.tar.gz
 tar zxvf libmaxminddb-1.3.2.tar.gz
 tar zxvf aliyun-log-c-sdk-lite.tar.gz
 tar zxvf curl-7.64.1.tar.gz
+server_name=`ip addr | grep inet | awk '{ print $2; }' | sed 's/\/.*$//'|grep -v 127.0.0.1|head -1`
+server_mac=`hostname`
 cd curl-7.64.1
 make
 make install
@@ -25,6 +27,7 @@ cd ../aliyun-log-c-sdk-lite
 cmake .
 make
 cp build/lib/liblog_c_sdk.so.2.0.0 /opt/jxwaf/lualib/liblog_c_sdk.so
+sed -i "s/server_info_detail/$server_name|$server_mac/g" /opt/jxwaf/nginx/conf/jxwaf/jxwaf_config.json
 /opt/jxwaf/nginx/sbin/nginx -t
 
 

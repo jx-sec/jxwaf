@@ -3,7 +3,6 @@ local limit_req = require "resty.limit.req"
 local limit_count = require "resty.limit.count"
 local request = require "resty.jxwaf.request"
 local exit_code = require "resty.jxwaf.exit_code"
-
 _M.version = "2.0"
 
 function _M.limit_req_rate(rule,process_key)
@@ -29,7 +28,8 @@ function _M.limit_req_rate(rule,process_key)
       limit_req_rate_log_info['protection_type'] = "limit_req"
       limit_req_rate_log_info['protection_info'] = "limit_req_rate"
       ngx.ctx.rule_log = limit_req_rate_log_info
-			exit_code.return_limit()
+			--exit_code.return_limit()
+      return true
 		else
       local error_info = request.request['HTTP_FULL_INFO']()
       error_info['log_type'] = "error_log"
@@ -68,7 +68,8 @@ function _M.limit_req_count(rule,process_key)
       limit_req_count_log_info['protection_type'] = "limit_req"
       limit_req_count_log_info['protection_info'] = "limit_req_count"
       ngx.ctx.rule_log = limit_req_count_log_info
-			exit_code.return_limit()
+			--exit_code.return_limit()
+      return true
 		else
       local error_info = request.request['HTTP_FULL_INFO']()
       error_info['log_type'] = "error_log"
@@ -121,7 +122,8 @@ function _M.limit_req_domain_rate(rule,process_key)
           limit_domain_count_log_info['protection_type'] = "limit_req"
           limit_domain_count_log_info['protection_info'] = "limit_req_domain_count"
           ngx.ctx.rule_log = limit_domain_count_log_info
-          exit_code.return_limit()
+          --exit_code.return_limit()
+          return true
         end
         local error_info = request.request['HTTP_FULL_INFO']()
         error_info['log_type'] = "error_log"
@@ -151,7 +153,8 @@ function _M.limit_req_domain_rate(rule,process_key)
             limit_domain_rate_log_info['protection_type'] = "limit_req"
             limit_domain_rate_log_info['protection_info'] = "domain_req_rate"
             ngx.ctx.rule_log = limit_domain_rate_log_info
-            exit_code.return_limit()
+            --exit_code.return_limit()
+            return true
           end
           local error_info = request.request['HTTP_FULL_INFO']()
           error_info['log_type'] = "error_log"

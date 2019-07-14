@@ -5,6 +5,7 @@ local uuid = require "resty.jxwaf.uuid"
 local aliyun_log = require "resty.jxwaf.aliyun_log"
 local waf_rule = waf.get_waf_rule()
 local host = ngx.var.host
+local string_sub = string.sub
 local log_host = waf_rule[host] or ngx.ctx.wildcard_host
 local ngx_req_get_headers = ngx.req.get_headers
 local config_info = waf.get_config_info()
@@ -25,9 +26,18 @@ if log_host then
       end
     --end
     local rule_log = ngx.ctx.rule_log
+
     if rule_log then
+      if log_host['log_set']['log_sock_type'] == "udp" then
+        if #rule_log['body'] > 60000 then
+          local sub_body = string_sub(1,60000) 
+          rule_log['body'] = sub_body
+        end
+      end
       rule_log['request_time'] = ngx.localtime()
       rule_log['uuid'] = uuid.generate_random()
+      rule_log['upstream_status'] = ngx.var.upstream_status
+      rule_log['upstream_connect_time'] = ngx.var.upstream_connect_time
       local bytes, err = logger.log(cjson.encode(rule_log))
       if err then
         ngx.log(ngx.ERR, "failed to log message: ", err)
@@ -35,6 +45,12 @@ if log_host then
     end
     local error_log = ngx.ctx.error_log
     if error_log then
+      if log_host['log_set']['log_sock_type'] == "udp" then
+        if #rule_log['body'] > 60000 then
+          local sub_body = string_sub(1,60000) 
+          rule_log['body'] = sub_body
+        end
+      end
       error_log['request_time'] = ngx.localtime()
       error_log['uuid'] = uuid.generate_random()
       local bytes, err = logger.log(cjson.encode(error_log))
@@ -50,6 +66,8 @@ if log_host then
     if rule_log then
       rule_log['request_time'] = ngx.localtime()
       rule_log['uuid'] = uuid.generate_random()
+      rule_log['upstream_status'] = ngx.var.upstream_status
+      rule_log['upstream_connect_time'] = ngx.var.upstream_connect_time
       ngx.log(ngx.ERR,cjson.encode(rule_log))
     end
     local error_log = ngx.ctx.error_log
@@ -73,6 +91,8 @@ if log_host then
     if rule_log then
       rule_log['request_time'] = ngx.localtime()
       rule_log['uuid'] = uuid.generate_random()
+      rule_log['upstream_status'] = ngx.var.upstream_status
+      rule_log['upstream_connect_time'] = ngx.var.upstream_connect_time
       local headers = rule_log['headers']
       rule_log['headers'] = nil 
       local attack_client,attack_config = aliyun_log.init_config(endpoint,project,logstore,source,access_id,access_key,topic.."_attack_log")

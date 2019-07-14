@@ -7,6 +7,11 @@ local string_find = string.find
 local string_sub = string.sub
 local ssl_host = nil
 
+if not host then
+  return ngx.exit(444)
+end
+
+
 if waf_rule[host] then
   ssl_host = waf_rule[host]
 else

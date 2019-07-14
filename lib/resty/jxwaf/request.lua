@@ -87,13 +87,11 @@ local function _parse_request_body()
 		ngx.log(ngx.ERR,"Request contained multiple content-type headers")
 		exit_code.return_exit()
 	end
-  
-  
+
 	if ngx.ctx.upload_request then
       ngx.ctx.parse_request_body = {}
       return {}
   end
-
 
   if  ngx.req.get_body_file() then
     local error_info = {}
