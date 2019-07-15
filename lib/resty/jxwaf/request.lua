@@ -1,6 +1,7 @@
 local cookiejar = require "resty.jxwaf.cookie"
 local cjson = require "cjson.safe"
 local exit_code = require "resty.jxwaf.exit_code"
+local table_insert = table.insert
 local _M = {}
 _M.version = "2.0"
 
@@ -10,16 +11,22 @@ local function _table_keys(tb)
 	end
 	local t = {}
 	for key,_ in pairs(tb) do
-		table.insert(t,key)
+		table_insert(t,key)
 	end 
 	return t
 end
 
 local function _get_headers()
 	local t = ngx.req.get_headers()
-
-	for k,v in pairs(ngx.req.get_headers()) do
-		ngx.req.set_header(k, v)
+	if #_table_keys(t) > 200 then
+    local error_info = {}
+    error_info['log_type'] = "error_log"
+    error_info['error_type'] = "parse_request_body"
+    error_info['error_info'] = "post args count error,is attack!"
+    error_info['remote_addr'] = ngx.var.remote_addr
+    ngx.ctx.error_log = error_info
+		ngx.log(ngx.ERR,"post args count error,is attack!")
+		exit_code.return_error()
 	end
 	ngx.ctx.request_get_headers = t
         return t
@@ -257,9 +264,15 @@ end
 
 local function _get_headers_names()
 	local t = _table_keys(ngx.req.get_headers())
-
-	for k,v in pairs(ngx.req.get_headers()) do
-		ngx.req.set_header(k, v)
+	if #_table_keys(t) > 200 then
+    local error_info = {}
+    error_info['log_type'] = "error_log"
+    error_info['error_type'] = "parse_request_body"
+    error_info['error_info'] = "post args count error,is attack!"
+    error_info['remote_addr'] = ngx.var.remote_addr
+    ngx.ctx.error_log = error_info
+		ngx.log(ngx.ERR,"post args count error,is attack!")
+		exit_code.return_error()
 	end
 	ngx.ctx.request_get_headers_names = t
         return t
