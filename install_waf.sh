@@ -4,7 +4,7 @@ tar zxvf openresty-1.13.6.2.tar.gz
 tar zxvf libmaxminddb-1.3.2.tar.gz
 tar zxvf aliyun-log-c-sdk-lite.tar.gz
 tar zxvf curl-7.64.1.tar.gz
-server_name=`ip addr | grep inet | awk '{ print $2; }' | sed 's/\/.*$//'|grep -v 127.0.0.1|head -1`
+server_name=`ip addr | grep inet | awk '{ print $2; }' | sed 's/\/.*$//'|grep -v 127.0.0.1|grep -v :|head -1`
 server_mac=`hostname`
 cd curl-7.64.1
 make
