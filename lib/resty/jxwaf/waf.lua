@@ -577,16 +577,28 @@ function _M.limitreq_check()
 			req_domain_rule['attack_ip_qps'] = req_host['cc_protection_set']['attack_ip_qps']
 			req_domain_rule['attack_ip_expire_qps'] = req_host['cc_protection_set']['attack_ip_expire_qps']
 			local limit_req_count_result = limitreq.limit_req_count(req_count_rule,ngx_md5(request.request['REMOTE_ADDR']()))
-      if limit_req_count_result and _bot_check then
-        _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key)
+      if limit_req_count_result  then
+        if _bot_check and req_host['cc_protection_set']['bot_check'] == "true" and #bot_check_key > 0 then
+          _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key)
+        else
+          ngx.exit(444)
+        end
       end
       local limit_req_rate_result = limitreq.limit_req_rate(req_rate_rule,ngx_md5(request.request['REMOTE_ADDR']()))
-      if limit_req_rate_result and _bot_check then
-        _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key)
+      if limit_req_rate_result then
+        if _bot_check and req_host['cc_protection_set']['bot_check'] == "true" and #bot_check_key > 0 then
+          _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key)
+        else
+          ngx.exit(444)
+        end
       end
 			local limit_req_domain_rate_result = limitreq.limit_req_domain_rate(req_domain_rule,ngx_md5(host))
-      if limit_req_domain_rate_result  and _bot_check then
-        _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key)
+      if limit_req_domain_rate_result  then
+        if _bot_check and req_host['cc_protection_set']['bot_check'] == "true" and #bot_check_key > 0 then
+          _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key)
+        else
+          ngx.exit(444)
+        end
       end
 	end
 	
