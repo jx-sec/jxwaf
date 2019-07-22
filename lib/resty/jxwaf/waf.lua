@@ -279,11 +279,14 @@ local function _global_update_rule()
       return _update_at(tonumber(_auto_update_period),_global_update_rule)
     end
     if not res_body['no_update'] then
-      _update_waf_rule = res_body['waf_rule']
-      if _update_waf_rule == nil  then
+      local tmp_waf_rule = res_body['waf_rule']
+      if tmp_waf_rule == nil  then
         ngx.log(ngx.ERR,"init fail,can not decode waf rule")
         return _update_at(tonumber(_auto_update_period),_global_update_rule)
+      else
+        _update_waf_rule = tmp_waf_rule
       end
+      
       for k,v in pairs(_update_waf_rule) do
         if type(v['custom_rule_set']) == "table" then
         table_sort(v['custom_rule_set'],_sort_rules)
