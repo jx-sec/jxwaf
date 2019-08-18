@@ -20,7 +20,7 @@ end
 
 
 local function _length(value)
-  return tonumber(#tostring(value))
+  return tostring(#tostring(value))
 end
 
 local function _lowercase(value)
