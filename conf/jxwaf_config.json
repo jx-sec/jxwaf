@@ -1,10 +1,14 @@
 {
-    "waf_api_key": "",
-    "waf_api_password": "",
+    "waf_api_key": "5fc335bc-d778-4d90-ab3f-ece36bad4a24",
+    "waf_api_password": "6bace0ac-ddca-412f-b768-81407044ea0c",
     "waf_update_website": "http://update2.jxwaf.com/waf_update",
     "waf_monitor_website": "http://update2.jxwaf.com/waf_monitor",
     "waf_local":"false",
     "server_info":"server_info_detail",
-    "waf_node_monitor":"true"
+    "waf_node_monitor":"true",
+    "aes_enc_key":"jxwaf_aes_enc_key",
+    "aes_enc_iv":"jxwaf_aes_enc_iv",
+    "aliyun_access_id":"",
+    "aliyun_access_secret":""
 }
 

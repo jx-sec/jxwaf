@@ -19,7 +19,7 @@ if balance_host and balance_host['domain_set'][scheme] == "true" then
         local error_info = request.request['HTTP_FULL_INFO']()
         error_info['log_type'] = "error_log"
         error_info['error_type'] = "balancer"
-        error_info['error_info'] = "failed to set the current peer: ",err
+        error_info['error_info'] = "failed to set the current peer: ",set_more_tries_err
         ngx.ctx.error_log = error_info
         exit_code.return_error()
     elseif set_more_tries_err then
@@ -57,4 +57,5 @@ if balance_host and balance_host['domain_set'][scheme] == "true" then
 else
 	exit_code.return_no_exist()
 end
+
 
