@@ -77,13 +77,9 @@ try to connect jxwaf server auth api_key and api_password,result is True
 https://docs.jxwaf.com
 
 ### TODO 开发计划
-- 海外版本发布
 - OTP防护功能发布
-- 云WAF版本发布(新注册帐号暂不开放)
-- 高级CC防护功能开发
-- BOT防护功能开发
-- IDC版本发布(DPDK)
-- CDN集成版本发布(DPDK)
+- API安全防护功能发布
+- 业务安全防护功能发布
 
 ### Articles 文章
    * [基于Openresty实现业务安全防护 ](http://www.freebuf.com/vuls/150571.html)
@@ -108,3 +104,5 @@ https://docs.jxwaf.com
  - P4NY(p4ny@qq.com):发现SQL语义识别引擎一处绕过漏洞  
  - zhutougg(github):发现上传绕过漏洞
  - Neo(236309539): 发现SQL语义识别引擎一处绕过漏洞
+ - 1249648969(QQ号)：发现openresty通用绕过
+ - kulozzzz(Github): 对比测试JXWAF与某厂商语义引擎，发现XSS绕过
