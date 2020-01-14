@@ -72,13 +72,13 @@ def main(argv):
             response = requests.post(waf_update_website, data=data)
             req_result = response.text
             if os.path.exists(local_config_path)==True:
-                back_file = '/opt/jxwaf/nginx/conf/jxwaf/jxwaf_config.json.'+time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
+                back_file = '/opt/jxwaf/nginx/conf/jxwaf/jxwaf_local_config.json.'+time.strftime("%Y-%m-%d-%H-%M-%S", time.localtime())
                 shutil.move(local_config_path,back_file)
                 print "backup file path: " + back_file
             ff = open(local_config_path,'w')
             ff.write(req_result)
             ff.close()
-            print "config file path:  "+file_path
+            print "config file path:  "+local_config_path
             print "update success!"
             sys.exit()
         else:
