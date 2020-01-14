@@ -233,6 +233,11 @@ local function _process_operator( process_transform , match , var , rule )
 		for k,v in pairs(process_transform) do
 			if type(v) == "table" then
         if #v > 10 then
+          local rule_log = request.request['HTTP_FULL_INFO']()
+          rule_log['log_type'] = "protection_log"
+          rule_log['protection_type'] = "error_request"
+          rule_log['protection_info'] = "error_request"
+          ngx.ctx.rule_log = rule_log
           exit_code.return_exit()
         end
 				for _,_v in ipairs(v) do
