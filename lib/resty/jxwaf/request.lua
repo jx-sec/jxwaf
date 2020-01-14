@@ -318,7 +318,7 @@ local function _http_full_info()
   full_info['body'] = ngx.ctx.http_body or  _http_body()
   full_info['remote_addr'] = ngx.var.remote_addr
   full_info['xxf_addr'] = ngx.ctx.remote_addr or _remote_addr()
-  ngx.ctx.http_full_info = full_info
+  --ngx.ctx.http_full_info = full_info
   return full_info
 end
 
@@ -361,7 +361,8 @@ _M.request = {
 	REMOTE_ADDR = function() return ngx.ctx.remote_addr or _remote_addr() end, --ip xff
 	REAL_REMOTE_ADDR = function() return ngx.var.remote_addr end,
 	TIME_STAMP = function() return tonumber(ngx.time()) end,
-  HTTP_FULL_INFO = function() return ngx.ctx.http_full_info or _http_full_info() end,
+  --HTTP_FULL_INFO = function() return ngx.ctx.http_full_info or _http_full_info() end,
+  HTTP_FULL_INFO = function() return _http_full_info() end,
   HTTP_UPLOAD_INFO = function() return  _http_upload_info() end,
 }
 
