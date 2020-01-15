@@ -85,6 +85,9 @@ https://docs.jxwaf.com
    * [基于Openresty实现业务安全防护 ](http://www.freebuf.com/vuls/150571.html)
    * [基于Openresty实现透明部署动态口令功能](http://www.freebuf.com/articles/network/150959.html)
    * [WAF开发之Cookie安全防护  ](http://www.freebuf.com/articles/web/164232.html) 
+   * [JXWAF正式版发布](https://mp.weixin.qq.com/s/EWbWXJoUlcKlu3vTDDDYuQ)
+   * [JXWAF最佳实践-离线部署](https://mp.weixin.qq.com/s/3Q8FvAd9Lx7DLvrttE8xkw)
+   * [JXWAF部署指南](https://mp.weixin.qq.com/s/7WXUQRCnq4-_hUXS1kmlZQ)
 
 更多文章请关注公众号 JXWAF
 
