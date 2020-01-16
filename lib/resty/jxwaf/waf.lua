@@ -74,6 +74,10 @@ function _M.get_config_info()
 	return _config_info
 end
 
+function _M.get_update_waf_rule()
+	return _update_waf_rule
+end
+
 local function _process_request(var)
 	local t = request.request[var.rule_var]()
 	if type(t) ~= "string" and type(t) ~= "table" then
