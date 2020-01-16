@@ -42,8 +42,8 @@ if log_host then
 
     if rule_log then
       if log_host['log_set']['log_sock_type'] == "udp" then
-        if #rule_log['body'] > 60000 then
-          local sub_body = string_sub(1,60000) 
+        if #rule_log['body'] > 30000 then
+          local sub_body = string_sub(1,30000) 
           rule_log['body'] = sub_body
         end
       end
@@ -67,8 +67,8 @@ if log_host then
     local error_log = ngx.ctx.error_log
     if error_log then
       if log_host['log_set']['log_sock_type'] == "udp" then
-        if #rule_log['body'] > 60000 then
-          local sub_body = string_sub(1,60000) 
+        if #rule_log['body'] > 30000 then
+          local sub_body = string_sub(1,30000) 
           rule_log['body'] = sub_body
         end
       end
@@ -92,8 +92,8 @@ if log_host then
     local bot_check_log = ngx.ctx.bot_check_log
     if bot_check_log then
       if log_host['log_set']['log_sock_type'] == "udp" then
-        if bot_check_log['body'] and #bot_check_log['body'] > 60000 then
-          local sub_body = string_sub(1,60000) 
+        if bot_check_log['body'] and #bot_check_log['body'] > 30000 then
+          local sub_body = string_sub(1,30000) 
           bot_check_log['body'] = sub_body
         end
       end
