@@ -19,10 +19,14 @@ if req_host and req_host['protection_set']['owasp_protection'] == "true" and req
   local check_file_traversal = {}
   check_black_ip[1] = "check_file_traversal"
   check_black_ip[2] =  ip_addr
-  key_check_file_traversal = table_concat(check_file_traversal)
+  local key_check_file_traversal = table_concat(check_file_traversal)
   local check_file_traversal_count = limit_bot:incr(key_check_file_traversal, 1, 0, check_time) 
-  
+  local check_not_find = {}
+  check_not_find[1] = "check_not_find"
+  check_not_find[2] =  ip_addr
+  local key_check_not_find = table_concat(check_not_find)
   if status == 404 then
+    
   end
   local not_find_count = 
   if check_file_traversal_count and check_file_traversal_count > check_count then
