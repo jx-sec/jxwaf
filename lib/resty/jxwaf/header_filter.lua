@@ -37,6 +37,8 @@ if req_host and req_host['protection_set']['owasp_protection'] == "true" and req
         check_not_find[2] =  ip_addr
         local key_check_not_find = table_concat(check_not_find)
         local check_not_find_count = limit_bot:incr(key_check_not_find, 1, 0, check_time) 
+      else
+        local result = limit_bot:incr(key_check_file_traversal, -1, 0, check_time)
       end
     else
         local check_not_find = {}
