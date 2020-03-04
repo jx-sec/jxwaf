@@ -28,7 +28,7 @@ if req_host and req_host['protection_set']['owasp_protection'] == "true" and req
       local ip_uri = {}
       ip_uri[1] = uri
       ip_uri[2] = ip_addr
-      local key_check_ip_uri = table_concat(check_not_find)
+      local key_check_ip_uri = table_concat(ip_uri)
       local ip_uri_is_exist = limit_bot:get(key_check_ip_uri)
       if not ip_uri_is_exist then 
         local result = limit_bot:set(key_check_ip_uri,true,check_time)
