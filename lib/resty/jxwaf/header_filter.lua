@@ -23,7 +23,7 @@ if req_host and req_host['protection_set']['owasp_protection'] == "true" and req
   local key_check_file_traversal = table_concat(check_file_traversal)
   local check_file_traversal_count = limit_bot:incr(key_check_file_traversal, 1, 0, check_time)
   if status == 404 then
-    if repeat_record then
+    if repeat_record == "true" then
       local uri = request.request['HTTP_URI']()
       local ip_uri = {}
       ip_uri[1] = uri
