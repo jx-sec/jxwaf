@@ -62,14 +62,15 @@ nginx: configuration file /opt/jxwaf/nginx/conf/nginx.conf test is successful
    9. api_key 为全局配置页面中"api key"的值，api_password为"api password"的值，运行完成后，显示类似信息即安装成功
    
 
-```
-如果管理中心为私有化部署
 
-```
-   6. 假设管理中心地址为，http://192.168.1.1,登录网站并注册账号,邮箱验证码随便填写，注册完登录账号后在全局配置页面获取"api key"和"api password"
+
+如果管理中心为私有化部署，则
+
+   6. 假设管理中心地址为 http://192.168.1.1 ,打开网站注册账号,邮箱验证码随便填写，注册完登录账号后在全局配置页面获取"api key"和"api password"
    7. $ cd tools
    8. $ python jxwaf_local_init.py --api_key=a2dde899-96a7-40s2-88ba-31f1f75f1552 --api_password=653cbbde-1cac-11ea-978f-2e728ce88125 --waf_server=http://192.168.1.1
    9. api_key 为全局配置页面中"api key"的值，api_password为"api password"的值，运行完成后，显示类似信息即安装成功
+
 ```
 config file:  /opt/jxwaf/nginx/conf/jxwaf/jxwaf_config.json
 config result:
