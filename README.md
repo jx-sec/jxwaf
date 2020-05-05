@@ -27,7 +27,8 @@ jxwaf(锦衣盾)是一款开源WEB应用防火墙
 
 jxwaf(锦衣盾)由jxwaf客户端与jxwaf管理中心组成:
   - [jxwaf客户端] : 基于openresty开发，由用户部署在自己的服务器上
-  - [jxwaf管理中心]：https://www.jxwaf.com
+  - [jxwaf线上管理中心]：https://www.jxwaf.com
+  - [jxwaf管理中心私有化部署]: docker run -d -p 80:80 jxwaf/jxwaf-server:latest
 
 
 ### Environment 环境
@@ -76,10 +77,6 @@ try to connect jxwaf server auth api_key and api_password,result is True
 使用详情请参考文档
 https://docs.jxwaf.com
 
-### TODO 开发计划
-- OTP防护功能发布
-- API安全防护功能发布
-- 业务安全防护功能发布
 
 ### Articles 文章
    * [基于Openresty实现业务安全防护 ](http://www.freebuf.com/vuls/150571.html)
