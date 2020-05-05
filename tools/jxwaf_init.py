@@ -58,7 +58,7 @@ def main(argv):
     print "init success,access_id is %s,access_secret is %s "%(result_api_key,result_api_password)
     #print  json.dumps(json_data)  
     data = {"md5":"","api_key":result_api_key,"api_password":result_api_password}
-    response = requests.post(waf_update_website, data=data)
+    response = requests.post(waf_update_website, data=data,timeout=5)
     req_result = response.json()['result']
     print "auth result:"
     print("try to connect jxwaf server auth api_key and api_password,result is "+str(req_result))

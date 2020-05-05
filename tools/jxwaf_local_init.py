@@ -49,8 +49,8 @@ def main(argv):
             waf_server_monitor = waf_server + "/waf_monitor"
             f = open(file_path,'r')
             json_data = json.loads(f.read())
-            json_data['waf_update_website'] = waf_update_website
-            json_data['waf_monitor_website'] = waf_monitor_website
+            json_data['waf_update_website'] = waf_server_update
+            json_data['waf_monitor_website'] = waf_server_monitor
             f.close()
             ff = open(file_path,'w')
             ff.write(json.dumps(json_data))
@@ -70,7 +70,7 @@ def main(argv):
     print "init success,access_id is %s,access_secret is %s "%(result_api_key,result_api_password)
     #print  json.dumps(json_data)  
     data = {"md5":"","api_key":result_api_key,"api_password":result_api_password}
-    response = requests.post(waf_update_website, data=data)
+    response = requests.post(waf_update_website, data=data,timeout=5)
     req_result = response.json()['result']
     print "auth result:"
     print("try to connect jxwaf server auth api_key and api_password,result is "+str(req_result))
