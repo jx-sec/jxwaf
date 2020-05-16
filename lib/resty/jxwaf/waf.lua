@@ -878,8 +878,8 @@ end
 function _M.access_init()
   local host = ngx.var.host
   local req_host = nil
-  if _update_waf_rule[host] then
-    req_host = _update_waf_rule[host]
+  if _update_waf_rule[host] or ngx.ctx.wildcard_host then
+    req_host = _update_waf_rule[host] or ngx.ctx.wildcard_host
   else 
     local dot_pos = string_find(host,".",1,true)
     if dot_pos then
