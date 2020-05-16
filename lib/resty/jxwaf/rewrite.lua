@@ -6,14 +6,14 @@ local string_sub = string.sub
 local exit_code = require "resty.jxwaf.exit_code"
 local req_host = nil
 
-if _update_waf_rule[host] then
-  req_host = _update_waf_rule[host]
+if update_waf_rule[host] then
+  req_host = update_waf_rule[host]
 else 
   local dot_pos = string_find(host,".",1,true)
   if dot_pos then
     local wildcard_host = "*"..string_sub(host,dot_pos)
-    if _update_waf_rule[wildcard_host] then
-        req_host = _update_waf_rule[wildcard_host]
+    if update_waf_rule[wildcard_host] then
+        req_host = update_waf_rule[wildcard_host]
         ngx.ctx.wildcard_host = req_host
     end
   end
