@@ -42,8 +42,8 @@ if log_host then
 
     if rule_log then
       if log_host['log_set']['log_sock_type'] == "udp" then
-        if #rule_log['body'] > 30000 then
-          local sub_body = string_sub(1,30000) 
+        if rule_log['body'] and #rule_log['body'] > 4096 then
+          local sub_body = string_sub(rule_log['body'],1,4096) 
           rule_log['body'] = sub_body
         end
       end
@@ -59,7 +59,7 @@ if log_host then
       rule_log['upstream_connect_time'] = upstream_connect_time
       rule_log['status'] = status
       rule_log['request_time'] = request_time
-      local bytes, err = logger.log(cjson.encode(rule_log))
+      local bytes, err = logger.log(cjson.encode(rule_log).."\r\n")
       if err then
         ngx.log(ngx.ERR, "failed to log message: ", err)
       end
@@ -67,9 +67,9 @@ if log_host then
     local error_log = ngx.ctx.error_log
     if error_log then
       if log_host['log_set']['log_sock_type'] == "udp" then
-        if #rule_log['body'] > 30000 then
-          local sub_body = string_sub(1,30000) 
-          rule_log['body'] = sub_body
+        if error_log['body'] and #error_log['body'] > 4096 then
+          local sub_body = string_sub(error_log['body'],1,4096) 
+          error_log['body'] = sub_body
         end
       end
       error_log['request_start_time'] = localtime
@@ -84,7 +84,7 @@ if log_host then
       error_log['upstream_connect_time'] = upstream_connect_time
       error_log['status'] = status
       error_log['request_time'] = request_time
-      local bytes, err = logger.log(cjson.encode(error_log))
+      local bytes, err = logger.log(cjson.encode(error_log).."\r\n")
       if err then
         ngx.log(ngx.ERR, "failed to log message: ", err)
       end
@@ -92,8 +92,8 @@ if log_host then
     local bot_check_log = ngx.ctx.bot_check_log
     if bot_check_log then
       if log_host['log_set']['log_sock_type'] == "udp" then
-        if bot_check_log['body'] and #bot_check_log['body'] > 30000 then
-          local sub_body = string_sub(1,30000) 
+        if bot_check_log['body'] and #bot_check_log['body'] > 4096 then
+          local sub_body = string_sub(bot_check_log['body'],1,4096) 
           bot_check_log['body'] = sub_body
         end
       end
@@ -109,7 +109,7 @@ if log_host then
       bot_check_log['upstream_connect_time'] = upstream_connect_time
       bot_check_log['status'] = status
       bot_check_log['request_time'] = request_time
-      local bytes, err = logger.log(cjson.encode(bot_check_log))
+      local bytes, err = logger.log(cjson.encode(bot_check_log).."\r\n")
       if err then
         ngx.log(ngx.ERR, "failed to log message: ", err)
       end
