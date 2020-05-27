@@ -652,6 +652,9 @@ function _M.custom_rule_check()
       local result,match_rule = _custom_rule_match(req_host["custom_rule_set"])
       if result then
         if match_rule.rule_action == 'deny' then
+          if req_host['protection_set']['page_custom'] == "true" then
+            exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
+          end
           return exit_code.return_exit()
         elseif match_rule.rule_action == 'allow' then
           if req_host['domain_set'] and req_host['domain_set']['redirect_https'] == "true"  then
