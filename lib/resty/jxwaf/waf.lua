@@ -654,6 +654,13 @@ function _M.custom_rule_check()
         if match_rule.rule_action == 'deny' then
           return exit_code.return_exit()
         elseif match_rule.rule_action == 'allow' then
+          if req_host['domain_set'] and req_host['domain_set']['redirect_https'] == "true"  then
+            local force_https = {}
+            force_https[1] = 'https://'
+            force_https[2] = host
+            force_https[3] = ngx.var.request_uri
+            return ngx.redirect(table_concat(force_https), 301)
+          end
           return ngx.exit(0)
         elseif match_rule.rule_action == 'redirect' then
           return ngx.redirect('/')
@@ -928,6 +935,13 @@ function _M.access_init()
         rule_log['protection_type'] = "ip_protection"
         rule_log['protection_info'] = "white_ip"
         ngx.ctx.rule_log = rule_log
+        if req_host['domain_set']['redirect_https'] == "true"  then
+          local force_https = {}
+          force_https[1] = 'https://'
+          force_https[2] = host
+          force_https[3] = ngx.var.request_uri
+          return ngx.redirect(table_concat(force_https), 301)
+        end
         return ngx.exit(0)
       end
     end
