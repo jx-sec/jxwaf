@@ -938,7 +938,8 @@ function _M.access_init()
         rule_log['protection_type'] = "ip_protection"
         rule_log['protection_info'] = "white_ip"
         ngx.ctx.rule_log = rule_log
-        if req_host['domain_set']['redirect_https'] == "true"  then
+	local scheme = ngx.var.scheme			
+        if req_host['domain_set']['redirect_https'] == "true" and scheme == "http" then
           local force_https = {}
           force_https[1] = 'https://'
           force_https[2] = host
