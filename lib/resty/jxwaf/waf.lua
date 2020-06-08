@@ -236,6 +236,7 @@ local function _process_operator( process_transform , match , var , rule )
 	if (rule_var == "ARGS_GET" or rule_var == "ARGS_POST" or rule_var == "ARGS_HEADERS" or rule_var == "ARGS_COOKIES" ) then
 		for k,v in pairs(process_transform) do
 			if type(v) == "table" then
+        --[[
         if #v > 10 then
           local rule_log = request.request['HTTP_FULL_INFO']()
           rule_log['log_type'] = "protection_log"
@@ -244,6 +245,7 @@ local function _process_operator( process_transform , match , var , rule )
           ngx.ctx.rule_log = rule_log
           exit_code.return_exit()
         end
+        --]]
 				for _,_v in ipairs(v) do
 					local result,value
 					result,value = operator.request[rule_operator](_v,rule_pattern)	
