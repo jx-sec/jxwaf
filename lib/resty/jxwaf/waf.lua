@@ -801,6 +801,11 @@ function _M.jxcheck_protection()
         rule_log['protection_info'] = "attack_request"
         rule_log['owasp_type'] = sensitive_file_check_type
         rule_log['deny_arg'] = sensitive_file_check_request_arg
+        if req_host['owasp_check_set']['owasp_protection_mode'] == "true" then
+          rule_log['owasp_protection_mode'] = req_host['owasp_check_set']['owasp_protection_mode']
+        else
+          rule_log['owasp_protection_mode'] = req_host['owasp_check_set']['owasp_protection_mode']
+        end
         ngx.ctx.rule_log = rule_log
       end
       if req_host and req_host["protection_set"]["black_attack_ip"] == "true" and req_host['owasp_check_set']['owasp_protection_mode'] == "true"  then
@@ -862,6 +867,11 @@ function _M.jxcheck_protection()
         rule_log['protection_info'] = "attack_request"
         rule_log['owasp_type'] = owasp_type
         rule_log['deny_arg'] = request_arg
+        if req_host['owasp_check_set']['owasp_protection_mode'] == "true" then
+          rule_log['owasp_protection_mode'] = req_host['owasp_check_set']['owasp_protection_mode']
+        else
+          rule_log['owasp_protection_mode'] = req_host['owasp_check_set']['owasp_protection_mode']
+        end
         ngx.ctx.rule_log = rule_log
       end
       if req_host and req_host["protection_set"]["black_attack_ip"] == "true" and req_host['owasp_check_set']['owasp_protection_mode'] == "true" then
