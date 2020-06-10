@@ -967,6 +967,8 @@ function _M.access_init()
   local content_type = ngx.req.get_headers()["Content-type"]
   local content_length = ngx.req.get_headers()["Content-Length"]
   if content_type and  ngx.re.find(content_type, [=[^multipart/form-data]=],"oij") and content_length and tonumber(content_length) ~= 0 then
+    ngx.ctx.upload_request = true
+    if req_host and req_host['protection_set']['owasp_protection'] == "true" and req_host['owasp_check_set']['upload_check'] == "true" then
     local form, err = upload:new()
     local _file_name = {}
     local _form_name = {}
@@ -1056,7 +1058,6 @@ function _M.access_init()
     end
     form:read()
     ngx.req.finish_body()
-    ngx.ctx.upload_request = true
     if req_host and req_host['protection_set']['owasp_protection'] == "true" and req_host['owasp_check_set']['upload_check'] == "true" then
       for _,v in ipairs(_file_name) do
         if not ngx.re.find(v,req_host['owasp_check_set']['upload_check_rule'],"oij") then
@@ -1071,6 +1072,7 @@ function _M.access_init()
           end
         end
       end
+    end
     end
   else
     ngx.req.read_body()
