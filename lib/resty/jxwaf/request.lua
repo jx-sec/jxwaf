@@ -34,6 +34,9 @@ end
 
 local function _process_json_args(json_args,t)
         local t = t or {}
+        if type(json_args) ~= "table" then
+          return t
+        end
         for k,v in pairs(json_args) do
                 if type(v) == 'table' then
                         for _k,_v in pairs(v) do
@@ -112,7 +115,7 @@ local function _parse_request_body()
 		exit_code.return_error()
 	end
 	
-	if content_type and  ngx.re.find(content_type, [=[^application/json;]=],"oij") and ngx.req.get_headers()["Content-Length"] and tonumber(ngx.req.get_headers()["Content-Length"]) ~= 0 then
+	`if content_type and  ngx.re.find(content_type, [=[^application/json;]=],"oij") and ngx.req.get_headers()["Content-Length"] and tonumber(ngx.req.get_headers()["Content-Length"]) ~= 0 then
 	
 		local json_args_raw = ngx.req.get_body_data()
 		if not json_args_raw then
