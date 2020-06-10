@@ -659,7 +659,8 @@ function _M.custom_rule_check()
           end
           return exit_code.return_exit()
         elseif match_rule.rule_action == 'allow' then
-          if req_host['domain_set'] and req_host['domain_set']['redirect_https'] == "true"  then
+          local scheme = ngx.var.scheme
+          if req_host['domain_set'] and req_host['domain_set']['redirect_https'] == "true" and scheme == "http"  then
             local force_https = {}
             force_https[1] = 'https://'
             force_https[2] = host
@@ -950,7 +951,7 @@ function _M.access_init()
         rule_log['protection_type'] = "ip_protection"
         rule_log['protection_info'] = "white_ip"
         ngx.ctx.rule_log = rule_log
-	local scheme = ngx.var.scheme			
+        local scheme = ngx.var.scheme			
         if req_host['domain_set']['redirect_https'] == "true" and scheme == "http" then
           local force_https = {}
           force_https[1] = 'https://'
