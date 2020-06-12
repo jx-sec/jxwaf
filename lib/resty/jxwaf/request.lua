@@ -115,7 +115,7 @@ local function _parse_request_body()
 		exit_code.return_error()
 	end
 	
-	`if content_type and  ngx.re.find(content_type, [=[^application/json;]=],"oij") and ngx.req.get_headers()["Content-Length"] and tonumber(ngx.req.get_headers()["Content-Length"]) ~= 0 then
+	if content_type and  ngx.re.find(content_type, [=[^application/json;]=],"oij") and ngx.req.get_headers()["Content-Length"] and tonumber(ngx.req.get_headers()["Content-Length"]) ~= 0 then
 	
 		local json_args_raw = ngx.req.get_body_data()
 		if not json_args_raw then
