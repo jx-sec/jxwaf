@@ -17,8 +17,8 @@ local function _table_keys(tb)
 end
 
 local function _get_headers()
-	local t = ngx.req.get_headers()
-	if #_table_keys(t) > 200 then
+	local t,err = ngx.req.get_headers()
+  if err == "truncated" then
     local error_info = {}
     error_info['log_type'] = "error_log"
     error_info['error_type'] = "parse_request_body"
@@ -27,9 +27,9 @@ local function _get_headers()
     ngx.ctx.error_log = error_info
 		ngx.log(ngx.ERR,"post args count error,is attack!")
 		exit_code.return_error()
-	end
+  end
 	ngx.ctx.request_get_headers = t
-        return t
+  return t
 end
 
 local function _process_json_args(json_args,t)
@@ -77,8 +77,18 @@ local function _process_json_args(json_args,t)
 end
 
 local function _parse_request_uri()
-	local t = ngx.req.get_uri_args()
-	ngx.req.set_uri_args(t)
+	local t,err = ngx.req.get_uri_args(200)
+  if err == "truncated" then
+    local error_info = {}
+    error_info['headers'] = ngx.ctx.request_get_headers or _get_headers()
+    error_info['log_type'] = "error_log"
+    error_info['error_type'] = "parse_request_body"
+    error_info['error_info'] = "post args count error,is attack!"
+    error_info['remote_addr'] = ngx.var.remote_addr
+    ngx.ctx.error_log = error_info
+		ngx.log(ngx.ERR,"post args count error,is attack!")
+		exit_code.return_error()
+  end
 	ngx.ctx.parse_request_uri = t
 	return t
 end
@@ -141,7 +151,17 @@ local function _parse_request_body()
 		return t 
 	end
 
-	local post_args,err = ngx.req.get_post_args(210)
+	local post_args,err = ngx.req.get_post_args(200)
+  if err == "truncated" then
+    local error_info = {}
+    error_info['log_type'] = "error_log"
+    error_info['error_type'] = "parse_request_body"
+    error_info['error_info'] = "post args count error,is attack!"
+    error_info['remote_addr'] = ngx.var.remote_addr
+    ngx.ctx.error_log = error_info
+		ngx.log(ngx.ERR,"post args count error,is attack!")
+		exit_code.return_error()
+  end
 	if not post_args then
     local error_info = {}
     error_info['headers'] = ngx.ctx.request_get_headers or _get_headers()
@@ -151,17 +171,6 @@ local function _parse_request_body()
     error_info['remote_addr'] = ngx.var.remote_addr
     ngx.ctx.error_log = error_info
 		ngx.log(ngx.ERR,"failed to get post args: ", err)
-		exit_code.return_error()
-	end
-	if #_table_keys(post_args) > 200 then
-    local error_info = {}
-    error_info['headers'] = ngx.ctx.request_get_headers or _get_headers()
-    error_info['log_type'] = "error_log"
-    error_info['error_type'] = "parse_request_body"
-    error_info['error_info'] = "post args count error,is attack!"
-    error_info['remote_addr'] = ngx.var.remote_addr
-    ngx.ctx.error_log = error_info
-		ngx.log(ngx.ERR,"post args count error,is attack!")
 		exit_code.return_error()
 	end
 	local json_check = cjson.decode(ngx.req.get_body_data())
@@ -266,8 +275,8 @@ local function _table_values(tb)
 end
 
 local function _get_headers_names()
-	local t = _table_keys(ngx.req.get_headers())
-	if #_table_keys(t) > 200 then
+  local get_headers,err = ngx.req.get_headers()
+  if err == "truncated" then
     local error_info = {}
     error_info['log_type'] = "error_log"
     error_info['error_type'] = "parse_request_body"
@@ -276,9 +285,10 @@ local function _get_headers_names()
     ngx.ctx.error_log = error_info
 		ngx.log(ngx.ERR,"post args count error,is attack!")
 		exit_code.return_error()
-	end
+  end
+	local t = _table_keys(ngx.req.get_headers)
 	ngx.ctx.request_get_headers_names = t
-        return t
+  return t
 end
 
 local function _http_body()
