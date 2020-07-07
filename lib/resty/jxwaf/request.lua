@@ -286,7 +286,7 @@ local function _get_headers_names()
 		ngx.log(ngx.ERR,"post args count error,is attack!")
 		exit_code.return_error()
   end
-	local t = _table_keys(ngx.req.get_headers)
+	local t = _table_keys(get_headers)
 	ngx.ctx.request_get_headers_names = t
   return t
 end
