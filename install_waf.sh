@@ -12,7 +12,7 @@ cd curl-7.64.1
 make
 make install
 cd ../openresty-1.15.8.3
-./configure --prefix=/opt/jxwaf --with-http_v2_module && gmake && gmake install
+./configure --prefix=/opt/jxwaf --with-http_v2_module --with-http_stub_status_module && gmake && gmake install
 mv /opt/jxwaf/nginx/conf/nginx.conf  /opt/jxwaf/nginx/conf/nginx.conf.bak
 cp ../conf/nginx.conf /opt/jxwaf/nginx/conf/
 cp ../conf/full_chain.pem /opt/jxwaf/nginx/conf/
