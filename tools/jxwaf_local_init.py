@@ -6,7 +6,7 @@ import requests
 
 def usage():
     print """usage:
-python jxwaf_init.py --api_key=a2dde899-96a7-40s2-88ba-31f1f75f1552 --api_password=653cbbde-1cac-11ea-978f-2e728ce88125 --waf_server=http://192.168.1.1
+python jxwaf_local_init.py --api_key=a2dde899-96a7-40s2-88ba-31f1f75f1552 --api_password=653cbbde-1cac-11ea-978f-2e728ce88125 --waf_server=http://192.168.1.1
 """
 file_path = "/opt/jxwaf/nginx/conf/jxwaf/jxwaf_config.json"
  
