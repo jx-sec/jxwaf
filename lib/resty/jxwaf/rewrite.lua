@@ -27,4 +27,4 @@ if req_host['domain_set']['proxy_pass_https'] == "true" then
   ngx.var.proxy_pass_https_flag = "true"
 end
 
-
+ngx.ctx.req_host = req_host
