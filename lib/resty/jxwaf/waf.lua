@@ -62,6 +62,10 @@ local function _sort_rules(a,b)
     end
 end
 
+function _M.get_log_config()
+  return _log_conf
+end
+
 function _M.get_config_info()
 	return _config_info
 end

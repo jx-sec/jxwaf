@@ -12,30 +12,29 @@ function _M.limit_req_rate(rule,process_key)
 	local key = process_key 
 	local lim, err = limit_req.new(limit_store, rate, burst)
 	if not lim then
-    local error_info = request.request['HTTP_FULL_INFO']()
-    error_info['log_type'] = "error_log"
-    error_info['error_type'] = "limitreq_check"
-    error_info['error_info'] = "limit_req_rate,failed to instantiate a resty.limit.req object: "..err.." limit_store is: "..limit_store
-    ngx.ctx.error_log = error_info
+    local waf_log = {}
+    waf_log['log_type'] = "error"
+    waf_log['protecion_type'] = "limitreq_check"
+    waf_log['protecion_info'] = "limit_req_rate,failed to instantiate a resty.limit.req object: "..err.." limit_store is: "..limit_store
+    ngx.ctx.waf_log = waf_log
 		ngx.log(ngx.ERR,"limit_req_rate,failed to instantiate a resty.limit.req object: ", err," limit_store is: ",limit_store)
 		exit_code.return_error()
 	end
 	local delay, err_incoming = lim:incoming(key, true)
 	if not delay then
 		if err_incoming == "rejected" then
-      local limit_req_rate_log_info = request.request['HTTP_FULL_INFO']()
-      limit_req_rate_log_info['log_type'] = "protection_log"
-      limit_req_rate_log_info['protection_type'] = "limitreq_check"
-      limit_req_rate_log_info['protection_info'] = "limit_req_rate"
-      ngx.ctx.rule_log = limit_req_rate_log_info
-			--exit_code.return_limit()
+      local waf_log = {}
+      waf_log['log_type'] = "attack"
+      waf_log['protecion_type'] = "limitreq_check"
+      waf_log['protecion_info'] =  "limit_req_rate"
+      ngx.ctx.waf_log = waf_log
       return true
 		else
-      local error_info = request.request['HTTP_FULL_INFO']()
-      error_info['log_type'] = "error_log"
-      error_info['error_type'] = "limit_req_rate"
-      error_info['error_info'] = "limit_req_rate,failed to limit req: "..err_incoming
-      ngx.ctx.error_log = error_info
+      local waf_log = {}
+      waf_log['log_type'] = "error"
+      waf_log['protecion_type'] = "limit_req_rate"
+      waf_log['protecion_info'] =  "limit_req_rate,failed to limit req: "..err_incoming
+      ngx.ctx.waf_log = waf_log
       ngx.log(ngx.ERR, "limit_req_rate,failed to limit req: ", err_incoming)
       exit_code.return_error()
     end
@@ -52,30 +51,30 @@ function _M.limit_req_count(rule,process_key)
 	local key = process_key 
 	local lim, err = limit_count.new(limit_store, count, time)
 	if not lim then
-    local error_info = request.request['HTTP_FULL_INFO']()
-    error_info['log_type'] = "error_log"
-    error_info['error_type'] = "limitreq_check"
-    error_info['error_info'] = "limit_req_count,failed to instantiate a resty.limit.count object: "..err.." limit_store is: "..limit_store
-    ngx.ctx.error_log = error_info
+    local waf_log = {}
+    waf_log['log_type'] = "error"
+    waf_log['protecion_type'] = "limitreq_check"
+    waf_log['protecion_info'] = "limit_req_rate,failed to instantiate a resty.limit.count object: "..err.." limit_store is: "..limit_store
+    ngx.ctx.waf_log = waf_log
 		ngx.log(ngx.ERR,"limit_req_count,failed to instantiate a resty.limit.count object: ", err," limit_store is: ",limit_store)
 		exit_code.return_error()
 	end
 	local delay, err_incoming = lim:incoming(key, true)
 	if not delay then
 		if err_incoming == "rejected" then
-      local limit_req_count_log_info = request.request['HTTP_FULL_INFO']()
-      limit_req_count_log_info['log_type'] = "protection_log"
-      limit_req_count_log_info['protection_type'] = "limitreq_check"
-      limit_req_count_log_info['protection_info'] = "limit_req_count"
-      ngx.ctx.rule_log = limit_req_count_log_info
+      local waf_log = {}
+      waf_log['log_type'] = "attack"
+      waf_log['protecion_type'] = "limitreq_check"
+      waf_log['protecion_info'] =  "limit_req_count"
+      ngx.ctx.waf_log = waf_log
 			--exit_code.return_limit()
       return true
 		else
-      local error_info = request.request['HTTP_FULL_INFO']()
-      error_info['log_type'] = "error_log"
-      error_info['error_type'] = "limitreq_check"
-      error_info['error_info'] = "limit_req_count,failed to limit count: "..err_incoming
-      ngx.ctx.error_log = error_info
+      local waf_log = {}
+      waf_log['log_type'] = "error"
+      waf_log['protecion_type'] = "limit_req_rate"
+      waf_log['protecion_info'] =  "limit_req_count,failed to limit count: "..err_incoming
+      ngx.ctx.waf_log = waf_log
       ngx.log(ngx.ERR, "limit_req_count,failed to limit count: ", err_incoming)
       exit_code.return_error()
     end
@@ -89,11 +88,11 @@ function _M.limit_req_domain_rate(rule,process_key)
   local key = process_key 
   local lim, err = limit_req.new(limit_store, rate, burst)
   if not lim then
-    local error_info = request.request['HTTP_FULL_INFO']()
-    error_info['log_type'] = "error_log"
-    error_info['error_type'] = "limitreq_check"
-    error_info['error_info'] = "limit_req_domain,failed to instantiate a resty.limit.req object: "..err.." limit_store is: "..limit_store
-    ngx.ctx.error_log = error_info
+    local waf_log = {}
+    waf_log['log_type'] = "error"
+    waf_log['protecion_type'] = "limitreq_check"
+    waf_log['protecion_info'] = "limit_req_domain,failed to instantiate a resty.limit.req object: "..err.." limit_store is: "..limit_store
+    ngx.ctx.waf_log = waf_log
     ngx.log(ngx.ERR,"limit_req_domain,failed to instantiate a resty.limit.req object: ", err," limit_store is: ",limit_store)
     exit_code.return_error()
   end
@@ -102,11 +101,11 @@ function _M.limit_req_domain_rate(rule,process_key)
     if err_incoming == "rejected" then
       return true
     else
-      local error_info = request.request['HTTP_FULL_INFO']()
-      error_info['log_type'] = "error_log"
-      error_info['error_type'] = "limitreq_check"
-      error_info['error_info'] = "limit_req_domain,failed to limit rate: "..err_incoming
-      ngx.ctx.error_log = error_info
+      local waf_log = {}
+      waf_log['log_type'] = "error"
+      waf_log['protecion_type'] = "limit_req_rate"
+      waf_log['protecion_info'] =  "limit_req_domain,failed to limit rate: "..err_incoming
+      ngx.ctx.waf_log = waf_log
       ngx.log(ngx.ERR, "limit_req_domain,failed to limit req: ", err_incoming)
       exit_code.return_error()
     end

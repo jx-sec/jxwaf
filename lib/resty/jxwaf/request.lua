@@ -19,12 +19,11 @@ end
 local function _get_headers()
 	local t,err = ngx.req.get_headers()
   if err == "truncated" then
-    local error_info = {}
-    error_info['log_type'] = "error_log"
-    error_info['error_type'] = "parse_request_body"
-    error_info['error_info'] = "post args count error,is attack!"
-    error_info['remote_addr'] = ngx.var.remote_addr
-    ngx.ctx.error_log = error_info
+    local waf_log = {}
+    waf_log['log_type'] = "error"
+    waf_log['protecion_type'] = "parse_request_body"
+    waf_log['protecion_info'] = "post args count error,is attack!"
+    ngx.ctx.waf_log = waf_log
 		ngx.log(ngx.ERR,"post args count error,is attack!")
 		exit_code.return_error()
   end
@@ -79,14 +78,12 @@ end
 local function _parse_request_uri()
 	local t,err = ngx.req.get_uri_args(200)
   if err == "truncated" then
-    local error_info = {}
-    error_info['headers'] = ngx.ctx.request_get_headers or _get_headers()
-    error_info['log_type'] = "error_log"
-    error_info['error_type'] = "parse_request_body"
-    error_info['error_info'] = "post args count error,is attack!"
-    error_info['remote_addr'] = ngx.var.remote_addr
-    ngx.ctx.error_log = error_info
-		ngx.log(ngx.ERR,"post args count error,is attack!")
+    local waf_log = {}
+    waf_log['log_type'] = "error"
+    waf_log['protecion_type'] = "parse_request_uri"
+    waf_log['protecion_info'] = "uri args count error,is attack!"
+    ngx.ctx.waf_log = waf_log
+		ngx.log(ngx.ERR,"uri args count error,is attack!")
 		exit_code.return_error()
   end
 	ngx.ctx.parse_request_uri = t
@@ -97,13 +94,11 @@ local function _parse_request_body()
 
 	local content_type = ngx.req.get_headers()["Content-type"]
 	if (type(content_type) == "table") then
-    local error_info = {}
-    error_info['headers'] = ngx.ctx.request_get_headers or _get_headers()
-    error_info['log_type'] = "error_log"
-    error_info['error_type'] = "parse_request_body"
-    error_info['error_info'] = "Request contained multiple content-type headers"
-    error_info['remote_addr'] = ngx.var.remote_addr
-    ngx.ctx.error_log = error_info
+    local waf_log = {}
+    waf_log['log_type'] = "error"
+    waf_log['protecion_type'] = "parse_request_body"
+    waf_log['protecion_info'] = "Request contained multiple content-type headers"
+    ngx.ctx.waf_log = waf_log
 		ngx.log(ngx.ERR,"Request contained multiple content-type headers")
 		exit_code.return_exit()
 	end
@@ -114,13 +109,11 @@ local function _parse_request_body()
   end
 
   if  ngx.req.get_body_file() then
-    local error_info = {}
-    error_info['headers'] = ngx.ctx.request_get_headers or _get_headers()
-    error_info['log_type'] = "error_log"
-    error_info['error_type'] = "parse_request_body"
-    error_info['error_info'] = "request body size larger than client_body_buffer_size, refuse request "
-    error_info['remote_addr'] = ngx.var.remote_addr
-    ngx.ctx.error_log = error_info
+    local waf_log = {}
+    waf_log['log_type'] = "error"
+    waf_log['protecion_type'] = "parse_request_body"
+    waf_log['protecion_info'] = "request body size larger than client_body_buffer_size, refuse request "
+    ngx.ctx.waf_log = waf_log
 		ngx.log(ngx.ERR,"request body size larger than client_body_buffer_size, refuse request ")
 		exit_code.return_error()
 	end
@@ -135,13 +128,11 @@ local function _parse_request_body()
 
 		local json_args,err = cjson.decode(json_args_raw)
 		if json_args == nil then
-      local error_info = {}
-      error_info['headers'] = ngx.ctx.request_get_headers or _get_headers()
-      error_info['log_type'] = "error_log"
-      error_info['error_type'] = "parse_request_body"
-      error_info['error_info'] = "failed to decode json args :"..err
-      error_info['remote_addr'] = ngx.var.remote_addr
-      ngx.ctx.error_log = error_info
+      local waf_log = {}
+      waf_log['log_type'] = "error"
+      waf_log['protecion_type'] = "parse_request_body"
+      waf_log['protecion_info'] = "failed to decode json args :"..err
+      ngx.ctx.waf_log = waf_log
       ngx.log(ngx.ERR,"failed to decode json args :",err)
       exit_code.return_error()
 		end
@@ -153,24 +144,21 @@ local function _parse_request_body()
 
 	local post_args,err = ngx.req.get_post_args(200)
   if err == "truncated" then
-    local error_info = {}
-    error_info['log_type'] = "error_log"
-    error_info['error_type'] = "parse_request_body"
-    error_info['error_info'] = "post args count error,is attack!"
-    error_info['remote_addr'] = ngx.var.remote_addr
-    ngx.ctx.error_log = error_info
-		ngx.log(ngx.ERR,"post args count error,is attack!")
+    local waf_log = {}
+    waf_log['log_type'] = "error"
+    waf_log['protecion_type'] = "parse_request_body"
+    waf_log['protecion_info'] = "failed to get post args: "..err
+    ngx.ctx.waf_log = waf_log
+		ngx.log(ngx.ERR,"failed to get post args: ", err)
 		exit_code.return_error()
   end
 	if not post_args then
-    local error_info = {}
-    error_info['headers'] = ngx.ctx.request_get_headers or _get_headers()
-    error_info['log_type'] = "error_log"
-    error_info['error_type'] = "parse_request_body"
-    error_info['error_info'] = "failed to get post args: "..err
-    error_info['remote_addr'] = ngx.var.remote_addr
-    ngx.ctx.error_log = error_info
-		ngx.log(ngx.ERR,"failed to get post args: ", err)
+    local waf_log = {}
+    waf_log['log_type'] = "error"
+    waf_log['protecion_type'] = "parse_request_body"
+    waf_log['protecion_info'] = "post args count error,is attack!"
+    ngx.ctx.waf_log = waf_log
+		ngx.log(ngx.ERR,"post args count error,is attack!")
 		exit_code.return_error()
 	end
 	local json_check = cjson.decode(ngx.req.get_body_data())
@@ -277,12 +265,11 @@ end
 local function _get_headers_names()
   local get_headers,err = ngx.req.get_headers()
   if err == "truncated" then
-    local error_info = {}
-    error_info['log_type'] = "error_log"
-    error_info['error_type'] = "parse_request_body"
-    error_info['error_info'] = "post args count error,is attack!"
-    error_info['remote_addr'] = ngx.var.remote_addr
-    ngx.ctx.error_log = error_info
+    local waf_log = {}
+    waf_log['log_type'] = "error"
+    waf_log['protecion_type'] = "parse_request_body"
+    waf_log['protecion_info'] = "header args count error,is attack!"
+    ngx.ctx.waf_log = waf_log
 		ngx.log(ngx.ERR,"post args count error,is attack!")
 		exit_code.return_error()
   end
@@ -293,13 +280,11 @@ end
 
 local function _http_body()
 	if  ngx.req.get_body_file() then
-    local error_info = {}
-    error_info['headers'] = ngx.ctx.request_get_headers or _get_headers()
-    error_info['log_type'] = "error_log"
-    error_info['error_type'] = "http_body"
-    error_info['error_info'] = "request body size larger than client_body_buffer_size, refuse request "
-    error_info['remote_addr'] = ngx.var.remote_addr
-    ngx.ctx.error_log = error_info
+    local waf_log = {}
+    waf_log['log_type'] = "error"
+    waf_log['protecion_type'] = "http_body"
+    waf_log['protecion_info'] = "request body size larger than client_body_buffer_size, refuse request "
+    ngx.ctx.waf_log = waf_log
 		ngx.log(ngx.ERR,"request body size larger than client_body_buffer_size, refuse request ")
 		exit_code.return_error()
 	end
