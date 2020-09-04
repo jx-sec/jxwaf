@@ -2,7 +2,6 @@ local logger = require "resty.jxwaf.socket"
 local cjson = require "cjson.safe"
 local waf = require "resty.jxwaf.waf"
 local random_uuid = require "resty.jxwaf.uuid"
-local aliyun_log = require "resty.jxwaf.aliyun_log"
 local waf_rule = waf.get_waf_rule()
 local host = ngx.var.host
 local string_sub = string.sub
@@ -11,6 +10,8 @@ local ngx_req_get_headers = ngx.req.get_headers
 local config_info = waf.get_config_info()
 local table_concat = table.concat
 local log_config = waf.get_log_config()
+local request = require "resty.jxwaf.request"
+
 
 if log_host then
   local localtime = ngx.localtime()
@@ -71,7 +72,7 @@ if log_host then
   if log_config['log_remote'] == "true" then
     local ok,err = logger.init{
       host = log_config['log_ip'],
-      port = tonumber(log_config['port']),
+      port = tonumber(log_config['log_port']),
       sock_type = "tcp",
       flush_limit = 1,
       pool_size = 100,
