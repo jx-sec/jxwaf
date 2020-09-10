@@ -2,6 +2,7 @@ local cookiejar = require "resty.jxwaf.cookie"
 local cjson = require "cjson.safe"
 local exit_code = require "resty.jxwaf.exit_code"
 local table_insert = table.insert
+local random_uuid = require "resty.jxwaf.uuid"
 local _M = {}
 _M.version = "2.0"
 
@@ -31,6 +32,7 @@ local function _get_headers()
   return t
 end
 
+--[[
 local function _process_json_args(json_args,t)
         local t = t or {}
         if type(json_args) ~= "table" then
@@ -73,6 +75,42 @@ local function _process_json_args(json_args,t)
                 end
         end
         return t
+end
+--]]
+
+local function _process_json_args(json_args)
+  local t = {}
+  if type(json_args) ~= "table" then
+    local waf_log = {}
+    waf_log['log_type'] = "error"
+    waf_log['protecion_type'] = "_process_json_args"
+    waf_log['protecion_info'] = "process_json_args error"
+    ngx.ctx.waf_log = waf_log
+    return json_args
+  end
+  for k,v in pairs(json_args) do
+    if type(v) == 'table' then
+      if t[k] then
+        local uuid = random_uuid.generate_random()
+        local key = {}
+        key[1] = k
+        key[2] = uuid
+        t[table.concat(key)] = cjson.encode(v)
+      else
+        t[k] = cjson.encode(v)
+      end
+    else
+      if t[k] then
+        local uuid = random_uuid.generate_random()
+        local key = {}
+        key[1] = k
+        key[2] = uuid
+        t[table.concat(key)] = v
+      else
+        t[k] = v
+      end
+    end
+  end
 end
 
 local function _parse_request_uri()
@@ -125,7 +163,11 @@ local function _parse_request_body()
 			ngx.ctx.parse_request_body = {}
 			return {}
 		end 
-
+    
+    if #json_args_raw == 0 then
+      ngx.ctx.parse_request_body = {}
+      return {}
+    end
 		local json_args,err = cjson.decode(json_args_raw)
 		if json_args == nil then
       local waf_log = {}

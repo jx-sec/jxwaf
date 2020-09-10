@@ -39,9 +39,9 @@ function _M.limit_req_rate(rule,process_key)
       exit_code.return_error()
     end
 	end
-  --if delay >= 0.001 then
-  --  ngx.sleep(delay)
-  --end
+  if delay >= 0.001 then
+    ngx.sleep(delay)
+  end
 end 
 
 function _M.limit_req_count(rule,process_key)

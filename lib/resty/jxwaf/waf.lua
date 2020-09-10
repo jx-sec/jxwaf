@@ -26,7 +26,7 @@ local process = require "ngx.process"
 local ngx_decode_base64 = ngx.decode_base64
 local aes = require "resty.aes"
 local _M = {}
-_M.version = "3.0"
+_M.version = "20200910"
 
 
 local _config_path = "/opt/jxwaf/nginx/conf/jxwaf/jxwaf_config.json"
@@ -723,7 +723,7 @@ function _M.jxcheck_protection()
     local directory_traversal_check = req_host['owasp_check_set']['directory_traversal_check']
     local virtual_patch_check = req_host['owasp_check_set']['virtual_patch_check']
     local webshell_check = req_host['owasp_check_set']['webshell_check']
-    local owasp_result,owasp_type,request_arg = _jxcheck.owasp_check(sql_check,xss_check,command_inject_check,directory_traversal_check,virtual_patch_check,webshell_check)
+    local owasp_result,owasp_type = _jxcheck.owasp_check(sql_check,xss_check,command_inject_check,directory_traversal_check,virtual_patch_check,webshell_check)
     if owasp_result then
       local waf_log = {}
       waf_log['log_type'] = "attack"
@@ -740,6 +740,35 @@ function _M.jxcheck_protection()
   end  
  
 end
+
+
+function _M.black_ip_check()
+  local host = ngx.var.host or ngx.ctx.wildcard_host
+  local req_host = _update_waf_rule[host]
+	if req_host then
+    local ip_addr = request.request['REMOTE_ADDR']()
+    local attack_ip_check = ngx.shared.black_attack_ip
+    local result,err = attack_ip_check:get(ip_addr)
+    if err then
+      ngx.log(ngx.ERR, "black ip check shared get err ", err)
+    end
+    if result then
+      local rule_log = request.request['HTTP_FULL_INFO']()
+      rule_log['log_type'] = "protection_log"
+      rule_log['protection_type'] = "black_ip_check"
+      rule_log['protection_info'] = "black_ip_deny"
+      rule_log['black_ip'] = ip_addr
+      ngx.ctx.rule_log = rule_log
+      if req_host['protection_set']['page_custom'] == "true"  then
+        exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
+      end
+      exit_code.return_attack_ip()
+    end
+	end
+end
+
+
+
 
 function _M.access_init()
   local req_host = ngx.ctx.req_host
@@ -860,8 +889,8 @@ function _M.access_init()
           if req_host['owasp_check_set']['owasp_protection_mode'] == "true" then
             local waf_log = {}
             waf_log['log_type'] = "attack"
-            waf_log['protecion_type'] = "upload_protection"
-            waf_log['protecion_info'] = "error_upload_suffix,file_name ".._file_name
+            waf_log['protecion_type'] = "jxcheck"
+            waf_log['protecion_info'] = "upload_file_suffix_protection"
             ngx.ctx.waf_log = waf_log
             exit_code.return_exit()
           end
