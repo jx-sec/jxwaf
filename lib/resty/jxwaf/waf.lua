@@ -74,6 +74,39 @@ function _M.get_update_waf_rule()
 	return _update_waf_rule
 end
 
+
+local function _owasp_black_ip_stat(req_host,check_mode)
+  if req_host['protection_set']['evil_ip_handle'] == "true" then
+    if req_host['evil_ip_handle_set']['block_option'][check_mode] then
+      local period = req_host['evil_ip_handle_set']['period']
+      local count = req_host['evil_ip_handle_set']['count']
+      local mode = req_host['evil_ip_handle_set']['mode']
+      local handle = req_host['evil_ip_handle_set']['handle']
+      local attack_ip_check = ngx.shared.black_attack_ip
+      local ip_addr = request.request['REMOTE_ADDR']()
+      local check_black_ip = {}
+      check_black_ip[1] = "black_ip"
+      check_black_ip[2] =  ip_addr
+      local key_check_black_ip = table_concat(check_black_ip)
+      local check_black_ip_count = attack_ip_check:incr(key_check_black_ip, 1, 0, tonumber(period)) 
+      if check_black_ip_count and check_black_ip_count > tonumber(count) then
+        local black_ip_info = {}
+        black_ip_info['protecion_type'] = check_mode
+        black_ip_info['protecion_info'] = mode
+        black_ip_info['protecion_handle'] = handle
+        attack_ip_check:set(ip_addr,cjson.encode(black_ip_info),86400)
+        local waf_log = {}
+        waf_log['log_type'] = "black_ip"
+        waf_log['protecion_type'] = check_mode
+        waf_log['protecion_info'] = mode
+        ngx.ctx.waf_log = waf_log
+      end
+    end
+    
+    
+  end
+end
+
 local function _process_request(var)
 	local t = request.request[var.rule_var]()
 	if type(t) ~= "string" and type(t) ~= "table" then
@@ -500,7 +533,7 @@ function _M.init_worker()
           ngx.log(ngx.ERR, "failed to create the init timer: ", worker_init_err)
         end
       end
-      local hdl, err = ngx.timer.every(10,_worker_update_rule)
+      local hdl, err = ngx.timer.every(5,_worker_update_rule)
       if err then
           ngx.log(ngx.ERR, "failed to create the worker update timer: ", err)
       end
@@ -743,8 +776,8 @@ end
 
 
 function _M.black_ip_check()
-  local host = ngx.var.host or ngx.ctx.wildcard_host
-  local req_host = _update_waf_rule[host]
+  local host = ngx.var.host 
+  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
 	if req_host then
     local ip_addr = request.request['REMOTE_ADDR']()
     local attack_ip_check = ngx.shared.black_attack_ip
@@ -752,26 +785,39 @@ function _M.black_ip_check()
     if err then
       ngx.log(ngx.ERR, "black ip check shared get err ", err)
     end
+    attack_ip_check:delete(ip_addr)
     if result then
-      local rule_log = request.request['HTTP_FULL_INFO']()
-      rule_log['log_type'] = "protection_log"
-      rule_log['protection_type'] = "black_ip_check"
-      rule_log['protection_info'] = "black_ip_deny"
-      rule_log['black_ip'] = ip_addr
-      ngx.ctx.rule_log = rule_log
-      if req_host['protection_set']['page_custom'] == "true"  then
-        exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
+      local black_ip_info = cjson.decode(result)
+      local waf_log = {}
+      waf_log['log_type'] = "black_ip"
+      waf_log['protecion_type'] = black_ip_info['protecion_type']
+      waf_log['protecion_info'] = black_ip_info['protecion_info']
+      ngx.ctx.waf_log = waf_log
+      if black_ip_info['protecion_info'] == "block"  then
+        return ngx.exit(code)
+      elseif black_ip_info['protecion_info'] == "network_layer_block"  then
+        local shell_cmd = {}
+        shell_cmd[1] = "/usr/sbin/ipset add jxwaf "
+        shell_cmd[2] = ip_addr
+        shell_cmd[3] = " timeout "
+        shell_cmd[4] = black_ip_info['protecion_handle']
+        local ok, stdout, stderr, reason, status =  shell.run(table_concat(shell_cmd), nil, 2000, 4069)
+        if not ok then
+          ngx.log(ngx.ERR,stdout, stderr, reason, status)
+        end
+        return ngx.exit(444)
+      elseif black_ip_info['protecion_info'] == "bot_check"  then
+        --return ngx.exit(444)
       end
-      exit_code.return_attack_ip()
+      
     end
 	end
 end
 
 
-
-
 function _M.access_init()
-  local req_host = ngx.ctx.req_host
+  local host = ngx.var.host 
+  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
   local xff = ngx.req.get_headers()['X-Forwarded-For'] or ngx.req.get_headers()['X-REAL-IP']
   if xff and req_host['domain_set']['proxy'] == "true" then
     local xff_result
@@ -793,7 +839,7 @@ function _M.access_init()
   local content_length = ngx.req.get_headers()["Content-Length"]
   if content_type and  ngx.re.find(content_type, [=[^multipart/form-data]=],"oij") and content_length and tonumber(content_length) ~= 0 then
     ngx.ctx.upload_request = true
-    if req_host and req_host['protection_set']['owasp_protection'] == "true" and req_host['owasp_check_set']['upload_check'] == "true" then
+    if req_host and req_host['protection_set']['owasp_protection'] == "true" and req_host['owasp_check_set']['upload_check'] ~= "close" then
     local form, err = upload:new()
     local _file_name = {}
     local _form_name = {}
@@ -883,17 +929,21 @@ function _M.access_init()
     end
     form:read()
     ngx.req.finish_body()
-    if req_host and req_host['protection_set']['owasp_protection'] == "true" and req_host['owasp_check_set']['upload_check'] == "true" then
-      for _,v in ipairs(_file_name) do
-        if not ngx.re.find(v,req_host['owasp_check_set']['upload_check_rule'],"oij") then
-          if req_host['owasp_check_set']['owasp_protection_mode'] == "true" then
-            local waf_log = {}
-            waf_log['log_type'] = "attack"
-            waf_log['protecion_type'] = "jxcheck"
-            waf_log['protecion_info'] = "upload_file_suffix_protection"
-            ngx.ctx.waf_log = waf_log
-            exit_code.return_exit()
-          end
+    for _,v in ipairs(_file_name) do
+      if not ngx.re.find(v,req_host['owasp_check_set']['upload_check_rule'],"oij") then
+        local waf_log = {}
+        waf_log['log_type'] = "attack"
+        waf_log['protecion_type'] = "jxcheck"
+        waf_log['protecion_info'] = "upload_file_suffix_protection"
+        ngx.ctx.waf_log = waf_log
+        if req_host['owasp_check_set']['upload_check'] ==  'block' then
+          _owasp_black_ip_stat(req_host,'upload_check')
+          if req_host['protection_set']['page_custom'] == "true"  then
+            exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
+          end 
+          exit_code.return_exit()
+        elseif req_host['owasp_check_set']['upload_check'] ==  'stat' then
+          _owasp_black_ip_stat(req_host,'upload_check')
         end
       end
     end

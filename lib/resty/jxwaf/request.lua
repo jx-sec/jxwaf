@@ -342,7 +342,6 @@ end
 local function _remote_addr()
 	local result
   result = ngx.var.remote_addr
-	ngx.ctx.remote_addr = result
 	return result
 end
 
@@ -398,7 +397,7 @@ _M.request = {
 	HTTP_REFERER = function() return ngx.var.http_referer or ""  end,
 	FILE_NAMES = function() return ngx.ctx.form_file_name or {} end,
 	FILE_TYPES = function() return ngx.ctx.form_file_type or {} end ,
-	REMOTE_ADDR = function() return ngx.ctx.remote_addr or _remote_addr() end, --ip xff
+	REMOTE_ADDR = function() return ngx.ctx.remote_addr or ngx.var.remote_addr end, --ip xff
 	REAL_REMOTE_ADDR = function() return ngx.var.remote_addr end,
 	TIME_STAMP = function() return tonumber(ngx.time()) end,
   --HTTP_FULL_INFO = function() return ngx.ctx.http_full_info or _http_full_info() end,
