@@ -685,7 +685,7 @@ end
 
 function _M.bot_auth_check()
   local host = ngx.var.host
-  local req_host = _update_waf_rule[host] or ngx.ctx.wildcard_host
+  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
   if _bot_check and req_host then
     _bot_check.bot_commit_auth(_config_info.waf_api_key,bot_check_info)
   end
@@ -841,27 +841,130 @@ end
 end
 
 
-
-function _M.access_init()
+function _M.file_upload_check()
   local host = ngx.var.host 
   local req_host = _update_waf_rule[host] or ngx.ctx.req_host
-  local xff = ngx.req.get_headers()['X-Forwarded-For'] or ngx.req.get_headers()['X-REAL-IP']
-  if xff and req_host['domain_set']['proxy'] == "true" then
-    local xff_result
-    local iplist = iputils.parse_cidrs(req_host['domain_set']['proxy_ip'])
-    if iputils.ip_in_cidrs(ngx.var.remote_addr, iplist) then
-      local ip = ngx.re.match(xff,[=[^\d{1,3}+\.\d{1,3}+\.\d{1,3}+\.\d{1,3}+]=],'oj')[0] or ngx.req.get_headers()['X-REAL-IP']
-      if ip and #ip > 6 then
-        xff_result = ip 
-      else
-        xff_result = ngx.var.remote_addr
+  local content_type = ngx.req.get_headers()["Content-type"]
+  local content_length = ngx.req.get_headers()["Content-Length"]
+  if content_type and  ngx.re.find(content_type, [=[^multipart/form-data]=],"oij") and content_length and tonumber(content_length) ~= 0 then
+    ngx.ctx.upload_request = true
+    if req_host and req_host['protection_set']['owasp_protection'] == "true" and req_host['owasp_check_set']['upload_check'] ~= "close" then
+      local form, err = upload:new()
+      local _file_name = {}
+      local _form_name = {}
+      local _file_type = {}
+      local t ={}
+      local _type_flag = "false"
+      if not form then
+        local waf_log = {}
+        waf_log['log_type'] = "error"
+        waf_log['protecion_type'] = "upload_error"
+        waf_log['protecion_info'] = "failed to new upload: "..err
+        ngx.ctx.waf_log = waf_log
+        exit_code.return_error()
       end
-    else
-      xff_result = ngx.var.remote_addr
+      ngx.req.init_body()
+      ngx.req.append_body("--" .. form.boundary)
+      local lasttype, chunk
+      local count = 0
+      while true do
+        count = count + 1
+        local typ, res, err = form:read()
+        if not typ then
+          local waf_log = {}
+          waf_log['log_type'] = "error"
+          waf_log['protecion_type'] = "upload_error"
+          waf_log['protecion_info'] = "failed to read: "..err
+          ngx.ctx.waf_log = waf_log
+          exit_code.return_error()
+        end
+        if typ == "header" then
+          if res[1] == "Content-Disposition" then
+            local _tmp_form_name = ngx.re.match(res[2],[=[(.+)\bname=[" ']*?([^"]+)[" ']*?]=],"oij")
+            local _tmp_file_name =  ngx.re.match(res[2],[=[(.+)filename=[" ']*?([^"]+)[" ']*?]=],"oij")
+            if _tmp_form_name  then
+              table.insert(_form_name,_tmp_form_name[2]..count)
+            end
+            if _tmp_file_name  then
+              table.insert(_file_name,_tmp_file_name[2])
+            end
+            if _tmp_form_name and _tmp_file_name then
+              chunk = string.format([=[Content-Disposition: form-data; name="%s"; filename="%s"]=],_tmp_form_name[2],_tmp_file_name[2])
+              ngx.req.append_body("\r\n" .. chunk)
+            elseif _tmp_form_name then
+              chunk = string.format([=[Content-Disposition: form-data; name="%s"]=],_tmp_form_name[2])
+              ngx.req.append_body("\r\n" .. chunk)
+            else
+              local waf_log = {}
+              waf_log['log_type'] = "error"
+              waf_log['protecion_type'] = "upload_error"
+              waf_log['protecion_info'] = "Content-Disposition ERR!"
+              ngx.ctx.waf_log = waf_log
+              exit_code.return_error()	
+            end
+          end
+          if res[1] == "Content-Type" then
+            table.insert(_file_type,res[2])
+            _type_flag = "true"
+            chunk = string.format([=[Content-Type: %s]=],res[2])
+            ngx.req.append_body("\r\n" .. chunk)
+          end
+        end
+        if typ == "body" then
+          chunk = res
+          if lasttype == "header" then
+            ngx.req.append_body("\r\n\r\n")
+          end
+          ngx.req.append_body(chunk)
+          if _type_flag == "true" then
+            _type_flag = "false"
+            t[_form_name[#_form_name]] = ""
+          else
+            if lasttype == "header" then
+              t[_form_name[#_form_name]] = res
+            else
+              t[_form_name[#_form_name]] = ""
+            end
+          end
+        end
+        if typ == "part_end" then 
+          ngx.req.append_body("\r\n--" .. form.boundary)
+        end
+        if typ == "eof" then
+          ngx.req.append_body("--\r\n")
+          break
+        end
+        lasttype = typ
+      end
+      form:read()
+      ngx.req.finish_body()
+      for _,v in ipairs(_file_name) do
+        if not ngx.re.find(v,req_host['owasp_check_set']['upload_check_rule'],"oij") then
+          local waf_log = {}
+          waf_log['log_type'] = "attack"
+          waf_log['protecion_type'] = "jxcheck"
+          waf_log['protecion_info'] = "upload_file_suffix_protection"
+          ngx.ctx.waf_log = waf_log
+          if req_host['owasp_check_set']['upload_check'] ==  'block' then
+            _owasp_black_ip_stat(req_host,'upload_check')
+            if req_host['protection_set']['page_custom'] == "true"  then
+              exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
+            end 
+            exit_code.return_exit()
+          elseif req_host['owasp_check_set']['upload_check'] ==  'stat' then
+            _owasp_black_ip_stat(req_host,'upload_check')
+          end
+        end
+      end
     end
-    ngx.ctx.remote_addr = xff_result
+  else
+    ngx.req.read_body()
   end
+end
 
+function _M.ip_config_check()
+  local host = ngx.var.host 
+  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
   if req_host['protection_set'] and req_host['protection_set']['ip_config'] == "true" then
     local ip_config = req_host['ip_config_set'] 
     local ip_addr = request.request['REMOTE_ADDR']()
@@ -899,123 +1002,27 @@ function _M.access_init()
     end
   end
   
-  
-  
-  local content_type = ngx.req.get_headers()["Content-type"]
-  local content_length = ngx.req.get_headers()["Content-Length"]
-  if content_type and  ngx.re.find(content_type, [=[^multipart/form-data]=],"oij") and content_length and tonumber(content_length) ~= 0 then
-    ngx.ctx.upload_request = true
-    if req_host and req_host['protection_set']['owasp_protection'] == "true" and req_host['owasp_check_set']['upload_check'] ~= "close" then
-    local form, err = upload:new()
-    local _file_name = {}
-    local _form_name = {}
-    local _file_type = {}
-    local t ={}
-    local _type_flag = "false"
-    if not form then
-      local waf_log = {}
-      waf_log['log_type'] = "error"
-      waf_log['protecion_type'] = "upload_error"
-      waf_log['protecion_info'] = "failed to new upload: "..err
-      ngx.ctx.waf_log = waf_log
-      exit_code.return_error()
+end
+
+
+function _M.access_init()
+  local host = ngx.var.host 
+  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
+  local xff = ngx.req.get_headers()['X-Forwarded-For'] or ngx.req.get_headers()['X-REAL-IP']
+  if xff and req_host['domain_set']['proxy'] == "true" then
+    local xff_result
+    local iplist = iputils.parse_cidrs(req_host['domain_set']['proxy_ip'])
+    if iputils.ip_in_cidrs(ngx.var.remote_addr, iplist) then
+      local ip = ngx.re.match(xff,[=[^\d{1,3}+\.\d{1,3}+\.\d{1,3}+\.\d{1,3}+]=],'oj')[0] or ngx.req.get_headers()['X-REAL-IP']
+      if ip and #ip > 6 then
+        xff_result = ip 
+      else
+        xff_result = ngx.var.remote_addr
+      end
+    else
+      xff_result = ngx.var.remote_addr
     end
-    ngx.req.init_body()
-    ngx.req.append_body("--" .. form.boundary)
-    local lasttype, chunk
-    local count = 0
-    while true do
-      count = count + 1
-      local typ, res, err = form:read()
-      if not typ then
-        local waf_log = {}
-        waf_log['log_type'] = "error"
-        waf_log['protecion_type'] = "upload_error"
-        waf_log['protecion_info'] = "failed to read: "..err
-        ngx.ctx.waf_log = waf_log
-        exit_code.return_error()
-      end
-      if typ == "header" then
-        if res[1] == "Content-Disposition" then
-          local _tmp_form_name = ngx.re.match(res[2],[=[(.+)\bname=[" ']*?([^"]+)[" ']*?]=],"oij")
-          local _tmp_file_name =  ngx.re.match(res[2],[=[(.+)filename=[" ']*?([^"]+)[" ']*?]=],"oij")
-          if _tmp_form_name  then
-            table.insert(_form_name,_tmp_form_name[2]..count)
-          end
-          if _tmp_file_name  then
-            table.insert(_file_name,_tmp_file_name[2])
-          end
-          if _tmp_form_name and _tmp_file_name then
-            chunk = string.format([=[Content-Disposition: form-data; name="%s"; filename="%s"]=],_tmp_form_name[2],_tmp_file_name[2])
-            ngx.req.append_body("\r\n" .. chunk)
-          elseif _tmp_form_name then
-            chunk = string.format([=[Content-Disposition: form-data; name="%s"]=],_tmp_form_name[2])
-            ngx.req.append_body("\r\n" .. chunk)
-          else
-            local waf_log = {}
-            waf_log['log_type'] = "error"
-            waf_log['protecion_type'] = "upload_error"
-            waf_log['protecion_info'] = "Content-Disposition ERR!"
-            ngx.ctx.waf_log = waf_log
-            exit_code.return_error()	
-          end
-        end
-        if res[1] == "Content-Type" then
-          table.insert(_file_type,res[2])
-          _type_flag = "true"
-          chunk = string.format([=[Content-Type: %s]=],res[2])
-          ngx.req.append_body("\r\n" .. chunk)
-        end
-      end
-      if typ == "body" then
-        chunk = res
-        if lasttype == "header" then
-          ngx.req.append_body("\r\n\r\n")
-        end
-        ngx.req.append_body(chunk)
-        if _type_flag == "true" then
-          _type_flag = "false"
-          t[_form_name[#_form_name]] = ""
-        else
-          if lasttype == "header" then
-            t[_form_name[#_form_name]] = res
-          else
-            t[_form_name[#_form_name]] = ""
-          end
-        end
-      end
-      if typ == "part_end" then 
-        ngx.req.append_body("\r\n--" .. form.boundary)
-      end
-      if typ == "eof" then
-        ngx.req.append_body("--\r\n")
-        break
-      end
-      lasttype = typ
-    end
-    form:read()
-    ngx.req.finish_body()
-    for _,v in ipairs(_file_name) do
-      if not ngx.re.find(v,req_host['owasp_check_set']['upload_check_rule'],"oij") then
-        local waf_log = {}
-        waf_log['log_type'] = "attack"
-        waf_log['protecion_type'] = "jxcheck"
-        waf_log['protecion_info'] = "upload_file_suffix_protection"
-        ngx.ctx.waf_log = waf_log
-        if req_host['owasp_check_set']['upload_check'] ==  'block' then
-          _owasp_black_ip_stat(req_host,'upload_check')
-          if req_host['protection_set']['page_custom'] == "true"  then
-            exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
-          end 
-          exit_code.return_exit()
-        elseif req_host['owasp_check_set']['upload_check'] ==  'stat' then
-          _owasp_black_ip_stat(req_host,'upload_check')
-        end
-      end
-    end
-    end
-  else
-    ngx.req.read_body()
+    ngx.ctx.remote_addr = xff_result
   end
 end
 

@@ -339,11 +339,6 @@ local function _http_body()
 	return result
 end
 
-local function _remote_addr()
-	local result
-  result = ngx.var.remote_addr
-	return result
-end
 
 local function _http_full_info()
   local full_info = {}
