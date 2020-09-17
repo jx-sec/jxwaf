@@ -94,7 +94,12 @@ local function _owasp_black_ip_stat(req_host,check_mode)
         black_ip_info['protecion_type'] = check_mode
         black_ip_info['protecion_info'] = mode
         black_ip_info['protecion_handle'] = handle
-        attack_ip_check:set(ip_addr,cjson.encode(black_ip_info),86400)
+        if (mode == 'block' or mode == 'network_layer_block') and tonumber(handle) > 0 then
+          attack_ip_check:set(ip_addr,cjson.encode(black_ip_info),tonumber(handle))
+        end
+        if (mode == 'block' or mode == 'network_layer_block') and tonumber(handle) == 0 then
+          attack_ip_check:set(ip_addr,cjson.encode(black_ip_info))
+        end
         local waf_log = {}
         waf_log['log_type'] = "black_ip"
         waf_log['protecion_type'] = check_mode
@@ -693,7 +698,7 @@ end
 
 function _M.limitreq_check()
   local host = ngx.var.host
-  local req_host = _update_waf_rule[host] or ngx.ctx.wildcard_host
+  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
   if req_host and  req_host["protection_set"]["cc_protection"] == "true" and req_host["cc_protection_set"]["all_request_bot_check"] and req_host["cc_protection_set"]["all_request_bot_check"] == "true" then
     if _bot_check  and #bot_check_key > 0 then
       _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key)
@@ -785,7 +790,6 @@ function _M.black_ip_check()
     if err then
       ngx.log(ngx.ERR, "black ip check shared get err ", err)
     end
-    attack_ip_check:delete(ip_addr)
     if result then
       local black_ip_info = cjson.decode(result)
       local waf_log = {}
@@ -797,10 +801,15 @@ function _M.black_ip_check()
         return ngx.exit(code)
       elseif black_ip_info['protecion_info'] == "network_layer_block"  then
         local shell_cmd = {}
-        shell_cmd[1] = "/usr/sbin/ipset add jxwaf "
-        shell_cmd[2] = ip_addr
-        shell_cmd[3] = " timeout "
-        shell_cmd[4] = black_ip_info['protecion_handle']
+        if tonumber(black_ip_info['protecion_handle']) > 0 then
+          shell_cmd[1] = "/usr/sbin/ipset add jxwaf "
+          shell_cmd[2] = ip_addr
+          shell_cmd[3] = " timeout "
+          shell_cmd[4] = black_ip_info['protecion_handle']
+        elseif tonumber(black_ip_info['protecion_handle']) == 0
+          shell_cmd[1] = "/usr/sbin/ipset add jxwaf "
+          shell_cmd[2] = ip_addr
+        end
         local ok, stdout, stderr, reason, status =  shell.run(table_concat(shell_cmd), nil, 2000, 4069)
         if not ok then
           ngx.log(ngx.ERR,stdout, stderr, reason, status)
