@@ -798,7 +798,7 @@ function _M.black_ip_check()
       waf_log['protecion_info'] = black_ip_info['protecion_info']
       ngx.ctx.waf_log = waf_log
       if black_ip_info['protecion_info'] == "block"  then
-        return ngx.exit(code)
+        return ngx.exit(444)
       elseif black_ip_info['protecion_info'] == "network_layer_block"  then
         local shell_cmd = {}
         if tonumber(black_ip_info['protecion_handle']) > 0 then
@@ -806,7 +806,7 @@ function _M.black_ip_check()
           shell_cmd[2] = ip_addr
           shell_cmd[3] = " timeout "
           shell_cmd[4] = black_ip_info['protecion_handle']
-        elseif tonumber(black_ip_info['protecion_handle']) == 0
+        elseif tonumber(black_ip_info['protecion_handle']) == 0 then
           shell_cmd[1] = "/usr/sbin/ipset add jxwaf "
           shell_cmd[2] = ip_addr
         end
@@ -815,8 +815,6 @@ function _M.black_ip_check()
           ngx.log(ngx.ERR,stdout, stderr, reason, status)
         end
         return ngx.exit(444)
-      elseif black_ip_info['protecion_info'] == "bot_check"  then
-        --return ngx.exit(444)
       end
       
     end
