@@ -636,7 +636,7 @@ end
 function _M.custom_rule_check()
 	local host = ngx.var.host
   local scheme = ngx.var.scheme
-  local req_host = _update_waf_rule[host] or ngx.ctx.wildcard_host
+  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
 	if req_host then
 		if req_host["protection_set"]["custom_protection"] == "true"  and #req_host["custom_rule_set"]  ~= 0 then
       local result,match_rule = _custom_rule_match(req_host["custom_rule_set"])
@@ -813,6 +813,35 @@ function _M.black_ip_check()
     end
 	end
 end
+
+
+
+function _M.ip_config_check()
+  local host = ngx.var.host 
+  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
+  if req_host['protection_set'] and req_host['protection_set']['ip_config'] == "true" then
+    local ip_config = req_host['ip_config_set'] 
+    local ip_addr = request.request['REMOTE_ADDR']()
+    if ip_config[ip_addr] then
+      if ip_config[ip_addr] == "deny" then
+        local rule_log = request.request['HTTP_UPLOAD_INFO']()
+        rule_log['log_type'] = "attack"
+        rule_log['protection_type'] = "ip_config"
+        rule_log['protection_info'] = "black_ip"
+        ngx.ctx.rule_log = rule_log
+        return ngx.exit(444)
+      elseif ip_config[ip_addr] == "allow" then
+        local rule_log = request.request['HTTP_UPLOAD_INFO']()
+        rule_log['log_type'] = "attack"
+        rule_log['protection_type'] = "ip_config"
+        rule_log['protection_info'] = "white_ip"
+        ngx.ctx.rule_log = rule_log
+        return ngx.exit(0)
+      end
+    end
+  end
+end
+
 
 
 function _M.access_init()
