@@ -1,5 +1,4 @@
 local waf = require "resty.jxwaf.waf"
-waf.ip_config_check()
 waf.access_init()
 waf.custom_rule_check()
 waf.black_ip_check()

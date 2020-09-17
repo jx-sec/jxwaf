@@ -815,8 +815,6 @@ function _M.black_ip_check()
 end
 
 
-
-function _M.ip_config_check()
   local host = ngx.var.host 
   local req_host = _update_waf_rule[host] or ngx.ctx.req_host
   if req_host['protection_set'] and req_host['protection_set']['ip_config'] == "true" then
@@ -863,6 +861,45 @@ function _M.access_init()
     end
     ngx.ctx.remote_addr = xff_result
   end
+
+  if req_host['protection_set'] and req_host['protection_set']['ip_config'] == "true" then
+    local ip_config = req_host['ip_config_set'] 
+    local ip_addr = request.request['REMOTE_ADDR']()
+    if ip_config[ip_addr] then
+      if ip_config[ip_addr] == "block" then
+        local waf_log = {}
+        waf_log['log_type'] = "black_ip"
+        rule_log['protection_type'] = "ip_config"
+        rule_log['protection_info'] = "block"
+        ngx.ctx.waf_log = waf_log
+        return ngx.exit(444)
+      elseif ip_config[ip_addr] == "network_layer_block" then
+        local waf_log = {}
+        waf_log['log_type'] = "black_ip"
+        rule_log['protection_type'] = "ip_config"
+        rule_log['protection_info'] = "network_layer_block"
+        ngx.ctx.waf_log = waf_log
+        local shell_cmd = {}
+        shell_cmd[1] = "/usr/sbin/ipset add jxwaf "
+        shell_cmd[2] = ip_addr
+        shell_cmd[3] = " timeout 3600"
+        local ok, stdout, stderr, reason, status =  shell.run(table_concat(shell_cmd), nil, 2000, 4069)
+        if not ok then
+          ngx.log(ngx.ERR,stdout, stderr, reason, status)
+        end
+        return ngx.exit(444)
+      elseif ip_config[ip_addr] == "allow" then
+        local waf_log = {}
+        waf_log['log_type'] = "attack"
+        rule_log['protection_type'] = "ip_config"
+        rule_log['protection_info'] = "white_ip"
+        ngx.ctx.waf_log = waf_log
+        return ngx.exit(0)
+      end
+    end
+  end
+  
+  
   
   local content_type = ngx.req.get_headers()["Content-type"]
   local content_length = ngx.req.get_headers()["Content-Length"]
