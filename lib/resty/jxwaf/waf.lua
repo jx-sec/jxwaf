@@ -26,7 +26,7 @@ local process = require "ngx.process"
 local ngx_decode_base64 = ngx.decode_base64
 local aes = require "resty.aes"
 local _M = {}
-_M.version = "20200910"
+_M.version = "20200918"
 
 
 local _config_path = "/opt/jxwaf/nginx/conf/jxwaf/jxwaf_config.json"

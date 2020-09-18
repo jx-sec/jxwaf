@@ -3,7 +3,7 @@ local limit_req = require "resty.limit.req"
 local limit_count = require "resty.limit.count"
 local request = require "resty.jxwaf.request"
 local exit_code = require "resty.jxwaf.exit_code"
-_M.version = "2.0"
+_M.version = "20200918"
 
 function _M.limit_req_rate(ip_qps,ip_expire_qps,process_key)
 	local limit_store = "limit_req"
