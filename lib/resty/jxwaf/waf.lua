@@ -82,28 +82,27 @@ local function _owasp_black_ip_stat(req_host,check_mode)
       local count = req_host['evil_ip_handle_set']['count']
       local mode = req_host['evil_ip_handle_set']['mode']
       local handle = req_host['evil_ip_handle_set']['handle']
-      local attack_ip_check = ngx.shared.black_attack_ip
+      local attack_ip_check = ngx.shared.black_owasp_attack_ip
       local ip_addr = request.request['REMOTE_ADDR']()
       local check_black_ip = {}
-      check_black_ip[1] = "black_ip"
+      check_black_ip[1] = "owasp_black_ip"
       check_black_ip[2] =  ip_addr
       local key_check_black_ip = table_concat(check_black_ip)
       local check_black_ip_count = attack_ip_check:incr(key_check_black_ip, 1, 0, tonumber(period)) 
       if check_black_ip_count and check_black_ip_count > tonumber(count) then
         local black_ip_info = {}
-        black_ip_info['protecion_type'] = check_mode
         black_ip_info['protecion_info'] = mode
         black_ip_info['protecion_handle'] = handle
-        if (mode == 'block' or mode == 'network_layer_block') and tonumber(handle) > 0 then
+        if (mode == 'block' ) and tonumber(handle) > 0 then
           attack_ip_check:set(ip_addr,cjson.encode(black_ip_info),tonumber(handle))
         end
-        if (mode == 'block' or mode == 'network_layer_block') and tonumber(handle) == 0 then
+        if (mode == 'block' ) and tonumber(handle) == 0 then
           attack_ip_check:set(ip_addr,cjson.encode(black_ip_info))
         end
         local waf_log = {}
-        waf_log['log_type'] = "black_ip"
+        waf_log['log_type'] = "owasp_attack"
         waf_log['protecion_type'] = check_mode
-        waf_log['protecion_info'] = mode
+        waf_log['protecion_info'] = "add_black_ip"
         ngx.ctx.waf_log = waf_log
       end
     end
@@ -648,21 +647,10 @@ local function _custom_rule_match(rules)
       end
     end
     if matchs_result and rule.rule_log == "true" then                       
-      local rule_log = {}
-      rule_log['rule_id'] = rule.rule_id
-      rule_log['rule_name'] = rule.rule_name
-      rule_log['rule_level'] = rule.rule_level
-      rule_log['rule_action'] = rule.rule_action
-      rule_log['rule_var'] = ctx_rule_log.rule_var
-      rule_log['rule_operator'] = ctx_rule_log.rule_operator
-      rule_log['rule_transform'] = ctx_rule_log.rule_transform
-      rule_log['rule_pattern'] = ctx_rule_log.rule_pattern
-      rule_log['rule_match_var'] = ctx_rule_log.rule_match_var
-      rule_log['rule_match_key'] = ctx_rule_log.rule_match_key
       local waf_log = {}
-      waf_log['log_type'] = "attack"
-      waf_log['protecion_type'] = "custom_rule"
-      waf_log['protecion_info'] = cjson.encode(rule_log)
+      waf_log['log_type'] = "owasp_attack"
+      waf_log['protecion_type'] = "custom_protection"
+      waf_log['protecion_info'] = rule.rule_action
       ngx.ctx.waf_log = waf_log
     end
     if rule.rule_action == "pass" and matchs_result then
@@ -935,6 +923,34 @@ function _M.cc_black_ip_check()
 end
 
 
+function _M.owasp_black_ip_check()
+  local host = ngx.var.host 
+  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
+	if req_host then
+    local ip_addr = request.request['REMOTE_ADDR']()
+    local attack_ip_check = ngx.shared.black_owasp_attack_ip
+    local result,err = attack_ip_check:get(ip_addr)
+    if err then
+      ngx.log(ngx.ERR, "black owasp ip check shared get err ", err)
+    end
+    if result then
+      local black_ip_info = cjson.decode(result)
+      local waf_log = {}
+      waf_log['log_type'] = "owasp_attack"
+      waf_log['protecion_type'] = "black_ip"
+      waf_log['protecion_info'] = black_ip_info['protecion_info']
+      ngx.ctx.waf_log = waf_log
+      if black_ip_info['protecion_info'] == "block"  then
+        if req_host['protection_set']['page_custom'] == "true"  then
+          exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
+        end 
+        exit_code.return_exit()
+      end
+    end
+	end
+end
+
+
 function _M.file_upload_check()
   local host = ngx.var.host 
   local req_host = _update_waf_rule[host] or ngx.ctx.req_host
@@ -1035,9 +1051,9 @@ function _M.file_upload_check()
       for _,v in ipairs(_file_name) do
         if not ngx.re.find(v,req_host['owasp_check_set']['upload_check_rule'],"oij") then
           local waf_log = {}
-          waf_log['log_type'] = "attack"
-          waf_log['protecion_type'] = "jxcheck"
-          waf_log['protecion_info'] = "upload_file_suffix_protection"
+          waf_log['log_type'] = "owasp_attack"
+          waf_log['protecion_type'] = "upload_check"
+          waf_log['protecion_info'] = req_host['owasp_check_set']['upload_check']
           ngx.ctx.waf_log = waf_log
           if req_host['owasp_check_set']['upload_check'] ==  'block' then
             _owasp_black_ip_stat(req_host,'upload_check')
