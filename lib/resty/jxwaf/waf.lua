@@ -107,10 +107,47 @@ local function _owasp_black_ip_stat(req_host,check_mode)
         ngx.ctx.waf_log = waf_log
       end
     end
-    
-    
   end
 end
+
+
+local function _cc_black_ip_stat(req_host,check_mode)
+  if req_host['protection_set']['cc_attack_ip_protection'] == "true" then
+    if req_host['cc_attack_ip_set']['block_option'][check_mode] then
+      local check_period = req_host['cc_attack_ip_set']['check_period']
+      local check_count = req_host['cc_attack_ip_set']['check_count']
+      local block_time = req_host['cc_attack_ip_set']['block_time']
+      local block_mode = req_host['cc_attack_ip_set']['block_mode']
+      local attack_ip_check = ngx.shared.black_cc_attack_ip
+      local ip_addr = request.request['REMOTE_ADDR']()
+      local check_black_ip = {}
+      check_black_ip[1] = "cc_black_ip"
+      check_black_ip[2] =  ip_addr
+      local key_check_black_ip = table_concat(check_black_ip)
+      local check_black_ip_count = attack_ip_check:incr(key_check_black_ip, 1, 0, tonumber(check_period)) 
+      if check_black_ip_count and check_black_ip_count > tonumber(check_count) then
+        local black_ip_info = {}
+        black_ip_info['protecion_info'] = block_mode
+        black_ip_info['protecion_handle'] = block_time
+        if (block_mode == 'block' or block_mode == 'network_layer_block') and tonumber(block_time) > 0 then
+          attack_ip_check:set(ip_addr,cjson.encode(black_ip_info),tonumber(handle))
+        end
+        if (block_mode == 'block' or block_mode == 'network_layer_block') and tonumber(block_time) == 0 then
+          attack_ip_check:set(ip_addr,cjson.encode(black_ip_info))
+        end
+        local waf_log = {}
+        waf_log['log_type'] = "cc_attack"
+        waf_log['protecion_type'] = check_mode
+        waf_log['protecion_info'] = "add_black_ip"
+        ngx.ctx.waf_log = waf_log
+      end
+    end
+  end
+end
+
+
+
+
 
 local function _process_request(var)
 	local t = request.request[var.rule_var]()
@@ -699,32 +736,109 @@ end
 function _M.limitreq_check()
   local host = ngx.var.host
   local req_host = _update_waf_rule[host] or ngx.ctx.req_host
-  if req_host and  req_host["protection_set"]["cc_protection"] == "true" and req_host["cc_protection_set"]["all_request_bot_check"] and req_host["cc_protection_set"]["all_request_bot_check"] == "true" then
-    if _bot_check  and #bot_check_key > 0 then
-      _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key)
-    end
-  end
-  if req_host and req_host["protection_set"]["cc_protection"] == "true" then
-    local req_rate_rule = {}
-    local req_count_rule = {}
-    local req_domain_rule = {}
-    req_count_rule['rule_rate_count'] = req_host['cc_protection_set']['count']
-    req_count_rule['rule_burst_time'] = req_host['cc_protection_set']['black_ip_time']
-    req_rate_rule['rule_rate_count'] = req_host['cc_protection_set']['ip_qps']
-    req_rate_rule['rule_burst_time'] = req_host['cc_protection_set']['ip_expire_qps']
-    req_domain_rule['domain_qps'] = req_host['cc_protection_set']['domain_qps']
-    local limit_req_count_result = limitreq.limit_req_count(req_count_rule,ngx_md5(request.request['REMOTE_ADDR']()))
-    if limit_req_count_result  then
+  if req_host["protection_set"]["cc_protection"] == "true" then
+    local ip_addr = request.request['REMOTE_ADDR']()
+    if req_host["cc_protection_set"]["emergency_mode_check"] == "true" then
+      local waf_log = {}
+      waf_log['log_type'] = "cc_attack"
+      waf_log['protecion_type'] = "emergency_mode_check"
+      waf_log['protecion_info'] =  req_host["protection_set"]["emergency_handle_mode"] 
+      ngx.ctx.waf_log = waf_log
+      if req_host["protection_set"]["emergency_handle_mode"] == "block"  and 
+        _cc_black_ip_stat(req_host,'emergency_handle_mode')
         return ngx.exit(444)
-    end
-    local limit_req_rate_result = limitreq.limit_req_rate(req_rate_rule,ngx_md5(request.request['REMOTE_ADDR']()))
-    if limit_req_rate_result then
+      elseif req_host["protection_set"]["emergency_handle_mode"] == "bot_check" then
+        if _bot_check  and #bot_check_key > 0 then
+          _cc_black_ip_stat(req_host,'emergency_handle_mode')
+          local bot_check_mode = req_host["protection_set"]["bot_check_mode"]
+          _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key,bot_check_mode)
+        end
+      elseif req_host["protection_set"]["emergency_handle_mode"] == "network_layer_block" then
+        local ip_addr = request.request['REMOTE_ADDR']()
+        local shell_cmd = {}
+        shell_cmd[1] = "/usr/sbin/ipset add jxwaf "
+        shell_cmd[2] = ip_addr
+        shell_cmd[3] = " timeout "
+        shell_cmd[4] = "3600"
+        local ok, stdout, stderr, reason, status =  shell.run(table_concat(shell_cmd), nil, 2000, 4069)
+        if not ok then
+          ngx.log(ngx.ERR,stdout, stderr, reason, status)
+        end
         return ngx.exit(444)
+      end
     end
-    if _bot_check and req_host['cc_protection_set']['bot_check'] == "true" and #bot_check_key > 0 then
-      local limit_req_domain_rate_result = limitreq.limit_req_domain_rate(req_domain_rule,ngx_md5(host))
-      if limit_req_domain_rate_result then
-        _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key)
+    if req_host["cc_protection_set"]["count_check"] == "true" then then
+      local count = req_host["cc_protection_set"]["count"]
+      local black_ip_time = req_host["cc_protection_set"]["black_ip_time"]
+      local req_count_handle_mode = req_host["cc_protection_set"]["req_count_handle_mode"]
+      local limit_req_count_result = limitreq.limit_req_count(count,black_ip_time,ngx_md5(ip_addr))
+      if limit_req_count_result  then
+        local waf_log = {}
+        waf_log['log_type'] = "cc_attack"
+        waf_log['protecion_type'] = "count_check"
+        waf_log['protecion_info'] =  req_count_handle_mode
+        ngx.ctx.waf_log = waf_log
+        if req_count_handle_mode == "block" then
+          _cc_black_ip_stat(req_host,'count_check')
+          return ngx.exit(444)
+        elseif req_count_handle_mode == "bot_check" then
+          if _bot_check  and #bot_check_key > 0 then
+            _cc_black_ip_stat(req_host,'count_check')
+            local bot_check_mode = req_host["protection_set"]["bot_check_mode"]
+            _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key,bot_check_mode)
+          end
+        elseif req_count_handle_mode == "stat" then
+          _cc_black_ip_stat(req_host,'count_check')
+        end
+      end
+    end
+    if req_host["protection_set"]["cc_protection"] == "true" and  req_host["cc_protection_set"]["qps_check"] == "true" then then
+      local ip_qps = req_host["cc_protection_set"]["ip_qps"]
+      local ip_expire_qps = req_host["cc_protection_set"]["ip_expire_qps"]
+      local req_freq_handle_mode = req_host["cc_protection_set"]["req_freq_handle_mode"]
+      local limit_req_rate_result = limitreq.limit_req_rate(ip_qps,ip_expire_qps,ngx_md5(ip_addr))
+      if limit_req_rate_result  then
+        local waf_log = {}
+        waf_log['log_type'] = "cc_attack"
+        waf_log['protecion_type'] = "qps_check"
+        waf_log['protecion_info'] =  req_freq_handle_mode
+        ngx.ctx.waf_log = waf_log
+        if req_freq_handle_mode == "block" then
+          _cc_black_ip_stat(req_host,'qps_check')
+          return ngx.exit(444)
+        elseif req_freq_handle_mode == "bot_check" then
+          if _bot_check  and #bot_check_key > 0 then
+            _cc_black_ip_stat(req_host,'qps_check')
+            local bot_check_mode = req_host["protection_set"]["bot_check_mode"]
+            _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key,bot_check_mode)
+          end
+        elseif req_freq_handle_mode == "stat" then
+          _cc_black_ip_stat(req_host,'qps_check')
+        end
+      end
+    end
+    if req_host["cc_protection_set"]["domain_qps_check"] == "true" then then
+      local domain_qps = req_host["cc_protection_set"]["domain_qps"]
+      local domin_qps_handle_mode = req_host["cc_protection_set"]["domin_qps_handle_mode"]
+      local limit_req_domain_rate_result = limitreq.limit_req_domain_rate(domain_qps,ngx_md5(host))
+      if limit_req_domain_rate_result  then
+        local waf_log = {}
+        waf_log['log_type'] = "cc_attack"
+        waf_log['protecion_type'] = "domain_qps_check"
+        waf_log['protecion_info'] =  domin_qps_handle_mode
+        ngx.ctx.waf_log = waf_log
+        if domin_qps_handle_mode == "block" then
+          _cc_black_ip_stat(req_host,'domain_qps_check')
+          return ngx.exit(444)
+        elseif domin_qps_handle_mode == "bot_check" then
+          if _bot_check  and #bot_check_key > 0 then
+            _cc_black_ip_stat(req_host,'domain_qps_check')
+            local bot_check_mode = req_host["protection_set"]["bot_check_mode"]
+            _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key,bot_check_mode)
+          end
+        elseif domin_qps_handle_mode == "stat" then
+          _cc_black_ip_stat(req_host,'domain_qps_check')
+        end
       end
     end
   end
@@ -764,8 +878,8 @@ function _M.jxcheck_protection()
     local owasp_result,owasp_type = _jxcheck.owasp_check(sql_check,xss_check,command_inject_check,directory_traversal_check,virtual_patch_check,webshell_check)
     if owasp_result then
       local waf_log = {}
-      waf_log['log_type'] = "attack"
-      waf_log['protecion_type'] = "jxcheck"
+      waf_log['log_type'] = "owasp_attack"
+      waf_log['protecion_type'] = "jxcheck-"..owasp_type
       waf_log['protecion_info'] = owasp_type
       ngx.ctx.waf_log = waf_log
       if req_host['protection_set']['page_custom'] == "true"  and req_host['owasp_check_set']['owasp_protection_mode'] == "true" then
@@ -780,21 +894,21 @@ function _M.jxcheck_protection()
 end
 
 
-function _M.black_ip_check()
+function _M.cc_black_ip_check()
   local host = ngx.var.host 
   local req_host = _update_waf_rule[host] or ngx.ctx.req_host
 	if req_host then
     local ip_addr = request.request['REMOTE_ADDR']()
-    local attack_ip_check = ngx.shared.black_attack_ip
+    local attack_ip_check = ngx.shared.black_cc_attack_ip
     local result,err = attack_ip_check:get(ip_addr)
     if err then
-      ngx.log(ngx.ERR, "black ip check shared get err ", err)
+      ngx.log(ngx.ERR, "black cc ip check shared get err ", err)
     end
     if result then
       local black_ip_info = cjson.decode(result)
       local waf_log = {}
-      waf_log['log_type'] = "black_ip"
-      waf_log['protecion_type'] = black_ip_info['protecion_type']
+      waf_log['log_type'] = "cc_attack"
+      waf_log['protecion_type'] = "black_ip"
       waf_log['protecion_info'] = black_ip_info['protecion_info']
       ngx.ctx.waf_log = waf_log
       if black_ip_info['protecion_info'] == "block"  then
@@ -816,35 +930,8 @@ function _M.black_ip_check()
         end
         return ngx.exit(444)
       end
-      
     end
 	end
-end
-
-
-  local host = ngx.var.host 
-  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
-  if req_host['protection_set'] and req_host['protection_set']['ip_config'] == "true" then
-    local ip_config = req_host['ip_config_set'] 
-    local ip_addr = request.request['REMOTE_ADDR']()
-    if ip_config[ip_addr] then
-      if ip_config[ip_addr] == "deny" then
-        local rule_log = request.request['HTTP_UPLOAD_INFO']()
-        rule_log['log_type'] = "attack"
-        rule_log['protection_type'] = "ip_config"
-        rule_log['protection_info'] = "black_ip"
-        ngx.ctx.rule_log = rule_log
-        return ngx.exit(444)
-      elseif ip_config[ip_addr] == "allow" then
-        local rule_log = request.request['HTTP_UPLOAD_INFO']()
-        rule_log['log_type'] = "attack"
-        rule_log['protection_type'] = "ip_config"
-        rule_log['protection_info'] = "white_ip"
-        ngx.ctx.rule_log = rule_log
-        return ngx.exit(0)
-      end
-    end
-  end
 end
 
 
@@ -978,14 +1065,14 @@ function _M.ip_config_check()
     if ip_config[ip_addr] then
       if ip_config[ip_addr] == "block" then
         local waf_log = {}
-        waf_log['log_type'] = "black_ip"
+        waf_log['log_type'] = "cc_attack"
         rule_log['protection_type'] = "ip_config"
         rule_log['protection_info'] = "block"
         ngx.ctx.waf_log = waf_log
         return ngx.exit(444)
       elseif ip_config[ip_addr] == "network_layer_block" then
         local waf_log = {}
-        waf_log['log_type'] = "black_ip"
+        waf_log['log_type'] = "cc_attack"
         rule_log['protection_type'] = "ip_config"
         rule_log['protection_info'] = "network_layer_block"
         ngx.ctx.waf_log = waf_log
@@ -1000,7 +1087,7 @@ function _M.ip_config_check()
         return ngx.exit(444)
       elseif ip_config[ip_addr] == "allow" then
         local waf_log = {}
-        waf_log['log_type'] = "attack"
+        waf_log['log_type'] = "cc_attack"
         rule_log['protection_type'] = "ip_config"
         rule_log['protection_info'] = "white_ip"
         ngx.ctx.waf_log = waf_log
