@@ -837,44 +837,28 @@ function _M.jxcheck_protection()
   local host = ngx.var.host
   local req_host = _update_waf_rule[host] or ngx.ctx.wildcard_host
   if req_host and  req_host['protection_set']['owasp_protection'] == "true" and _jxcheck then
-    -- sensitive_file_check
-    local sensitive_file_check = req_host['owasp_check_set']['sensitive_file_check']
-    local sensitive_file_check_result,sensitive_file_check_type,sensitive_file_check_request_arg = _jxcheck.sensitive_file_check(sensitive_file_check)
-    if sensitive_file_check_result then
-      if req_host['owasp_check_set']['attack_request_log'] == "true" then
-        ngx.ctx.rule_log = rule_log
-        local waf_log = {}
-        waf_log['log_type'] = "attack"
-        waf_log['protecion_type'] = "jxcheck"
-        waf_log['protecion_info'] = sensitive_file_check_type
-        ngx.ctx.waf_log = waf_log
-      end
-      if req_host['protection_set']['page_custom'] == "true"  and req_host['owasp_check_set']['owasp_protection_mode'] == "true" then
-        exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
-      end
-      if req_host['owasp_check_set']['owasp_protection_mode'] == "true" then
-        exit_code.return_exit()
-      end
-    end
     -- owasp_check
     local sql_check = req_host['owasp_check_set']['sql_check']
     local xss_check = req_host['owasp_check_set']['xss_check']
     local command_inject_check = req_host['owasp_check_set']['command_inject_check']
     local directory_traversal_check = req_host['owasp_check_set']['directory_traversal_check']
-    local virtual_patch_check = req_host['owasp_check_set']['virtual_patch_check']
-    local webshell_check = req_host['owasp_check_set']['webshell_check']
-    local owasp_result,owasp_type = _jxcheck.owasp_check(sql_check,xss_check,command_inject_check,directory_traversal_check,virtual_patch_check,webshell_check)
+    local sensitive_file_check = req_host['owasp_check_set']['sensitive_file_check']
+    local code_exec_check = req_host['owasp_check_set']['code_exec_check']
+    local owasp_result,owasp_type,owasp_action = _jxcheck.owasp_check(sql_check,xss_check,command_inject_check,directory_traversal_check,sensitive_file_check,code_exec_check)
     if owasp_result then
       local waf_log = {}
       waf_log['log_type'] = "owasp_attack"
-      waf_log['protecion_type'] = "jxcheck-"..owasp_type
-      waf_log['protecion_info'] = owasp_type
+      waf_log['protecion_type'] = "jxwaf-"..owasp_type
+      waf_log['protecion_info'] = owasp_action
       ngx.ctx.waf_log = waf_log
-      if req_host['protection_set']['page_custom'] == "true"  and req_host['owasp_check_set']['owasp_protection_mode'] == "true" then
-        exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
-      end
-      if req_host['owasp_check_set']['owasp_protection_mode'] == "true" then
+      if owasp_action == "block" then
+        _owasp_black_ip_stat(req_host,owasp_type)
+        if req_host['protection_set']['page_custom'] == "true"  and req_host['owasp_check_set']['owasp_protection_mode'] == "true" then
+          exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
+        end
         exit_code.return_exit()
+      elseif owasp_action == "stat" then
+        _owasp_black_ip_stat(req_host,owasp_type)
       end
     end
   end  
