@@ -792,7 +792,7 @@ function _M.limitreq_check()
         return ngx.exit(444)
       end
     end
-    if req_host["cc_protection_set"]["count_check"] == "true" then then
+    if req_host["cc_protection_set"]["count_check"] == "true" then
       local count = req_host["cc_protection_set"]["count"]
       local black_ip_time = req_host["cc_protection_set"]["black_ip_time"]
       local req_count_handle_mode = req_host["cc_protection_set"]["req_count_handle_mode"]
