@@ -823,7 +823,7 @@ function _M.limitreq_check()
         end
       end
     end
-    if req_host["protection_set"]["cc_protection"] == "true" and  req_host["cc_protection_set"]["qps_check"] == "true" then then
+    if req_host["protection_set"]["cc_protection"] == "true" and  req_host["cc_protection_set"]["qps_check"] == "true" then
       local ip_qps = req_host["cc_protection_set"]["ip_qps"]
       local ip_expire_qps = req_host["cc_protection_set"]["ip_expire_qps"]
       local req_freq_handle_mode = req_host["cc_protection_set"]["req_freq_handle_mode"]
