@@ -333,7 +333,12 @@ local function _http_body()
 	local result = ""
 	local data = ngx.req.get_body_data()
 	if data then
-		result = data
+    if ngx.ctx.upload_request then
+      local upload_data = string.sub(data,1,65535)
+      result = upload_data
+    else
+      result = data
+    end
 	end
 	ngx.ctx.http_body = result
 	return result

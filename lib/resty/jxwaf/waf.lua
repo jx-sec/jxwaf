@@ -37,8 +37,12 @@ local _config_info = {}
 local _jxcheck = nil
 local _bot_check = nil
 local _md5 = ""
-local bot_check_info = {}
-local bot_check_key = {}
+local bot_check_standard_info = {}
+local bot_check_image_info = {}
+local bot_check_slipper_info = {}
+local bot_check_standard_key = {}
+local bot_check_image_key = {}
+local bot_check_slipper_key = {}
 local _log_conf = {}
 local _auto_update = "true"
 local _auto_update_period = "60"
@@ -454,12 +458,22 @@ local function _global_update_rule()
         end
       end
       if res_body['bot_auth_key'] then
-        bot_check_key = {}
-        bot_check_info = res_body['bot_auth_key']
-        for k,_ in pairs(bot_check_info) do
-          table.insert(bot_check_key,k)
+        local bot_check_info = res_body['bot_auth_key']
+        bot_check_standard_info = bot_check_info['standard']
+        bot_check_image_info = bot_check_info['image']
+        bot_check_slipper_info = bot_check_info['slipper']
+        for k,_ in pairs(bot_check_standard_info) do
+          table.insert(bot_check_standard_key,k)
         end
-        ngx.log(ngx.ERR, "bot check key count is ",#bot_check_key)
+        for k,_ in pairs(bot_check_slipper_info) do
+          table.insert(bot_check_slipper_key,k)
+        end
+        for k,_ in pairs(bot_check_image_info) do
+          table.insert(bot_check_image_key,k)
+        end
+        ngx.log(ngx.ERR, "bot check standard key count is ",#bot_check_standard_key)
+        ngx.log(ngx.ERR, "bot check key image count is ",#bot_check_slipper_key)
+        ngx.log(ngx.ERR, "bot check key slipper count is ",#bot_check_image_key)
       end
       if res_body['log_conf']  then
         _log_conf = res_body['log_conf']
@@ -530,12 +544,22 @@ local function _worker_update_rule()
     end
 
     if res_body['bot_auth_key'] then
-      bot_check_key = {}
-      bot_check_info = res_body['bot_auth_key']
-      for k,_ in pairs(bot_check_info) do
-        table.insert(bot_check_key,k)
+      local bot_check_info = res_body['bot_auth_key']
+      bot_check_standard_info = bot_check_info['standard']
+      bot_check_image_info = bot_check_info['image']
+      bot_check_slipper_info = bot_check_info['slipper']
+      for k,_ in pairs(bot_check_standard_info) do
+        table.insert(bot_check_standard_key,k)
       end
-      ngx.log(ngx.ERR, "bot check key count is ",#bot_check_key)
+      for k,_ in pairs(bot_check_slipper_info) do
+        table.insert(bot_check_slipper_key,k)
+      end
+      for k,_ in pairs(bot_check_image_info) do
+        table.insert(bot_check_image_key,k)
+      end
+      ngx.log(ngx.ERR, "bot check standard key count is ",#bot_check_standard_key)
+      ngx.log(ngx.ERR, "bot check key image count is ",#bot_check_slipper_key)
+      ngx.log(ngx.ERR, "bot check key slipper count is ",#bot_check_image_key)
     end
     
     if res_body['log_conf']  then
@@ -716,8 +740,15 @@ end
 function _M.bot_auth_check()
   local host = ngx.var.host
   local req_host = _update_waf_rule[host] or ngx.ctx.req_host
-  if _bot_check and req_host then
-    _bot_check.bot_commit_auth(_config_info.waf_api_key,bot_check_info)
+  if _bot_check and req_host and req_host["protection_set"]["cc_protection"] == "true" then
+    local bot_check_mode = req_host["protection_set"]["bot_check_mode"]
+    if bot_check_mode == 'standard' then 
+      _bot_check.bot_commit_auth(_config_info.waf_api_key,bot_check_standard_info)
+    elseif bot_check_mode == 'image' then 
+      _bot_check.bot_commit_auth(_config_info.waf_api_key,bot_check_image_info)
+    elseif bot_check_mode == 'slipper' then 
+      _bot_check.bot_commit_auth(_config_info.waf_api_key,bot_check_slipper_info)
+    end
   end
 end
 
@@ -739,7 +770,13 @@ function _M.limitreq_check()
         if _bot_check  and #bot_check_key > 0 then
           _cc_black_ip_stat(req_host,'emergency_handle_mode')
           local bot_check_mode = req_host["protection_set"]["bot_check_mode"]
-          _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key,bot_check_mode)
+          if bot_check_mode == 'standard' then
+            _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_standard_info,bot_check_standard_key,bot_check_mode)
+          elseif bot_check_mode == 'image' then
+            _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_image_info,bot_check_image_key,bot_check_mode)
+          elseif bot_check_mode == 'slipper' then
+            _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_slipper_info,bot_check_slipper_key,bot_check_mode)
+          end
         end
       elseif req_host["protection_set"]["emergency_handle_mode"] == "network_layer_block" then
         local ip_addr = request.request['REMOTE_ADDR']()
@@ -773,7 +810,13 @@ function _M.limitreq_check()
           if _bot_check  and #bot_check_key > 0 then
             _cc_black_ip_stat(req_host,'count_check')
             local bot_check_mode = req_host["protection_set"]["bot_check_mode"]
-            _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key,bot_check_mode)
+            if bot_check_mode == 'standard' then
+              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_standard_info,bot_check_standard_key,bot_check_mode)
+            elseif bot_check_mode == 'image' then
+              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_image_info,bot_check_image_key,bot_check_mode)
+            elseif bot_check_mode == 'slipper' then
+              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_slipper_info,bot_check_slipper_key,bot_check_mode)
+            end
           end
         elseif req_count_handle_mode == "stat" then
           _cc_black_ip_stat(req_host,'count_check')
@@ -798,7 +841,13 @@ function _M.limitreq_check()
           if _bot_check  and #bot_check_key > 0 then
             _cc_black_ip_stat(req_host,'qps_check')
             local bot_check_mode = req_host["protection_set"]["bot_check_mode"]
-            _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key,bot_check_mode)
+            if bot_check_mode == 'standard' then
+              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_standard_info,bot_check_standard_key,bot_check_mode)
+            elseif bot_check_mode == 'image' then
+              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_image_info,bot_check_image_key,bot_check_mode)
+            elseif bot_check_mode == 'slipper' then
+              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_slipper_info,bot_check_slipper_key,bot_check_mode)
+            end
           end
         elseif req_freq_handle_mode == "stat" then
           _cc_black_ip_stat(req_host,'qps_check')
@@ -822,7 +871,13 @@ function _M.limitreq_check()
           if _bot_check  and #bot_check_key > 0 then
             _cc_black_ip_stat(req_host,'domain_qps_check')
             local bot_check_mode = req_host["protection_set"]["bot_check_mode"]
-            _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_info,bot_check_key,bot_check_mode)
+            if bot_check_mode == 'standard' then
+              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_standard_info,bot_check_standard_key,bot_check_mode)
+            elseif bot_check_mode == 'image' then
+              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_image_info,bot_check_image_key,bot_check_mode)
+            elseif bot_check_mode == 'slipper' then
+              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_slipper_info,bot_check_slipper_key,bot_check_mode)
+            end
           end
         elseif domin_qps_handle_mode == "stat" then
           _cc_black_ip_stat(req_host,'domain_qps_check')
