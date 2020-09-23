@@ -854,7 +854,7 @@ function _M.limitreq_check()
         end
       end
     end
-    if req_host["cc_protection_set"]["domain_qps_check"] == "true" then then
+    if req_host["cc_protection_set"]["domain_qps_check"] == "true" then
       local domain_qps = req_host["cc_protection_set"]["domain_qps"]
       local domin_qps_handle_mode = req_host["cc_protection_set"]["domin_qps_handle_mode"]
       local limit_req_domain_rate_result = limitreq.limit_req_domain_rate(domain_qps,ngx_md5(host))
