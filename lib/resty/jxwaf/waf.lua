@@ -763,7 +763,7 @@ function _M.limitreq_check()
       waf_log['protecion_type'] = "emergency_mode_check"
       waf_log['protecion_info'] =  req_host["protection_set"]["emergency_handle_mode"] 
       ngx.ctx.waf_log = waf_log
-      if req_host["protection_set"]["emergency_handle_mode"] == "block"  and 
+      if req_host["protection_set"]["emergency_handle_mode"] == "block"  then
         _cc_black_ip_stat(req_host,'emergency_handle_mode')
         return ngx.exit(444)
       elseif req_host["protection_set"]["emergency_handle_mode"] == "bot_check" then
