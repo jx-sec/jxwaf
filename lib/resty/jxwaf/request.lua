@@ -339,7 +339,7 @@ local function _http_body()
 	return result
 end
 
-
+--[[
 local function _http_full_info()
   local full_info = {}
   full_info['host'] = ngx.var.host
@@ -369,6 +369,7 @@ local function _http_upload_info()
   full_info['xxf_addr'] = ngx.ctx.remote_addr or _remote_addr()
   return full_info
 end
+--]]
 
 _M.request = {
 	ARGS_GET = function() return ngx.ctx.request_args_get or _args_get() end,
@@ -396,8 +397,8 @@ _M.request = {
 	REAL_REMOTE_ADDR = function() return ngx.var.remote_addr end,
 	TIME_STAMP = function() return tonumber(ngx.time()) end,
   --HTTP_FULL_INFO = function() return ngx.ctx.http_full_info or _http_full_info() end,
-  HTTP_FULL_INFO = function() return _http_full_info() end,
-  HTTP_UPLOAD_INFO = function() return  _http_upload_info() end,
+  --HTTP_FULL_INFO = function() return _http_full_info() end,
+  --HTTP_UPLOAD_INFO = function() return  _http_upload_info() end,
 }
 
 
