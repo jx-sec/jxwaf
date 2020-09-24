@@ -927,7 +927,7 @@ end
 function _M.cc_black_ip_check()
   local host = ngx.var.host 
   local req_host = _update_waf_rule[host] or ngx.ctx.req_host
-	if req_host then
+	if req_host and req_host['protection_set']['cc_attack_ip_protection'] == "true" then
     local ip_addr = request.request['REMOTE_ADDR']()
     local attack_ip_check = ngx.shared.black_cc_attack_ip
     local result,err = attack_ip_check:get(ip_addr)
