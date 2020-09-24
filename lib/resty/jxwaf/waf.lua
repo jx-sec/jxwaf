@@ -968,7 +968,7 @@ end
 function _M.owasp_black_ip_check()
   local host = ngx.var.host 
   local req_host = _update_waf_rule[host] or ngx.ctx.req_host
-	if req_host then
+	if req_host and req_host['protection_set']['evil_ip_handle'] == "true" then
     local ip_addr = request.request['REMOTE_ADDR']()
     local attack_ip_check = ngx.shared.black_owasp_attack_ip
     local result,err = attack_ip_check:get(ip_addr)
