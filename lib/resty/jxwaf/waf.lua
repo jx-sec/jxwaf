@@ -490,7 +490,7 @@ local function _global_update_rule()
         return _update_at(tonumber(_auto_update_period),_global_update_rule)
       end
       _md5 = res_body['md5']
-      ngx.log(ngx.ALERT,"config info md5 is ".._md5..",update config info success")
+      ngx.log(ngx.ALERT,"global config info md5 is ".._md5..",update config info success")
     end
     _auto_update = res_body['auto_update'] or _auto_update
     _auto_update_period = res_body['auto_update_period'] or _auto_update_period
