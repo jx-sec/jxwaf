@@ -1124,15 +1124,15 @@ function _M.ip_config_check()
       if ip_config[ip_addr] == "block" then
         local waf_log = {}
         waf_log['log_type'] = "cc_attack"
-        rule_log['protection_type'] = "ip_config"
-        rule_log['protection_info'] = "block"
+        waf_log['protection_type'] = "ip_config"
+        waf_log['protection_info'] = "block"
         ngx.ctx.waf_log = waf_log
         return ngx.exit(444)
       elseif ip_config[ip_addr] == "network_layer_block" then
         local waf_log = {}
         waf_log['log_type'] = "cc_attack"
-        rule_log['protection_type'] = "ip_config"
-        rule_log['protection_info'] = "network_layer_block"
+        waf_log['protection_type'] = "ip_config"
+        waf_log['protection_info'] = "network_layer_block"
         ngx.ctx.waf_log = waf_log
         local shell_cmd = {}
         shell_cmd[1] = "/usr/sbin/ipset add jxwaf "
