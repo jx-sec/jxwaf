@@ -1146,8 +1146,8 @@ function _M.ip_config_check()
       elseif ip_config[ip_addr] == "allow" then
         local waf_log = {}
         waf_log['log_type'] = "cc_attack"
-        rule_log['protection_type'] = "ip_config"
-        rule_log['protection_info'] = "white_ip"
+        waf_log['protection_type'] = "ip_config"
+        waf_log['protection_info'] = "white_ip"
         ngx.ctx.waf_log = waf_log
         return ngx.exit(0)
       end
