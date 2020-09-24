@@ -103,6 +103,9 @@ local function _owasp_black_ip_stat(req_host,check_mode)
         if (mode == 'block' ) and tonumber(handle) == 0 then
           attack_ip_check:set(ip_addr,cjson.encode(black_ip_info))
         end
+        if mode == 'observe'  then
+          attack_ip_check:set(ip_addr,cjson.encode(black_ip_info))
+        end
         local waf_log = {}
         waf_log['log_type'] = "owasp_attack"
         waf_log['protecion_type'] = check_mode
