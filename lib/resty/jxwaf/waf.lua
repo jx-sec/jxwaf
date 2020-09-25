@@ -766,12 +766,13 @@ function _M.limitreq_check()
       waf_log['protection_type'] = "emergency_mode_check"
       waf_log['protection_info'] =  req_host["cc_protection_set"]["emergency_handle_mode"] 
       ngx.ctx.waf_log = waf_log
+      _cc_black_ip_stat(req_host,'emergency_handle_mode')
       if req_host["cc_protection_set"]["emergency_handle_mode"] == "block"  then
-        _cc_black_ip_stat(req_host,'emergency_handle_mode')
+        --_cc_black_ip_stat(req_host,'emergency_handle_mode')
         return ngx.exit(444)
       elseif req_host["protection_set"]["emergency_handle_mode"] == "bot_check" then
         if _bot_check  and #bot_check_standard_key > 0 and #bot_check_image_key > 0 and #bot_check_slipper_key > 0 then
-          _cc_black_ip_stat(req_host,'emergency_handle_mode')
+          --_cc_black_ip_stat(req_host,'emergency_handle_mode')
           local bot_check_mode = req_host["cc_protection_set"]["bot_check_mode"]
           if bot_check_mode == 'standard' then
             _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_standard_info,bot_check_standard_key,bot_check_mode)
