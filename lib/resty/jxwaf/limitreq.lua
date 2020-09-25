@@ -94,8 +94,8 @@ function _M.limit_req_domain_rate(domain_qps,process_key)
     else
       local waf_log = {}
       waf_log['log_type'] = "error"
-      waf_log['protecion_type'] = "limit_req_rate"
-      waf_log['protecion_info'] =  "limit_req_domain,failed to limit rate: "..err_incoming
+      waf_log['protection_type'] = "limit_req_rate"
+      waf_log['protection_info'] =  "limit_req_domain,failed to limit rate: "..err_incoming
       ngx.ctx.waf_log = waf_log
       ngx.log(ngx.ERR, "limit_req_domain,failed to limit req: ", err_incoming)
       exit_code.return_error()
