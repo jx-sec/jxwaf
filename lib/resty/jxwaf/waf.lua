@@ -744,7 +744,7 @@ function _M.bot_auth_check()
   local host = ngx.var.host
   local req_host = _update_waf_rule[host] or ngx.ctx.req_host
   if _bot_check and req_host and req_host["protection_set"]["cc_protection"] == "true" then
-    local bot_check_mode = req_host["protection_set"]["bot_check_mode"]
+    local bot_check_mode = req_host["cc_protection_set"]["bot_check_mode"]
     if bot_check_mode == 'standard' then 
       _bot_check.bot_commit_auth(_config_info.waf_api_key,bot_check_standard_info)
     elseif bot_check_mode == 'image' then 
