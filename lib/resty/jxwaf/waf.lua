@@ -772,7 +772,7 @@ function _M.limitreq_check()
       elseif req_host["protection_set"]["emergency_handle_mode"] == "bot_check" then
         if _bot_check  and #bot_check_key > 0 then
           _cc_black_ip_stat(req_host,'emergency_handle_mode')
-          local bot_check_mode = req_host["protection_set"]["bot_check_mode"]
+          local bot_check_mode = req_host["cc_protection_set"]["bot_check_mode"]
           if bot_check_mode == 'standard' then
             _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_standard_info,bot_check_standard_key,bot_check_mode)
           elseif bot_check_mode == 'image' then
