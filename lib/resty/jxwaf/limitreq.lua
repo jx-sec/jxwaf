@@ -42,10 +42,10 @@ end
 
 function _M.limit_req_count(count,black_ip_time,process_key)
 	local limit_store = "limit_req_count"
-	local limit_count = tonumber(count)
-	local limit_time = tonumber(black_ip_time)
+	local _count = tonumber(count)
+	local _time = tonumber(black_ip_time)
 	local key = process_key 
-	local lim, err = limit_count.new(limit_store, limit_count, limit_time)
+	local lim, err = limit_count.new(limit_store, _count, _time)
 	if not lim then
     local waf_log = {}
     waf_log['log_type'] = "error"
