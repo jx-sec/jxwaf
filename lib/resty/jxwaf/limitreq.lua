@@ -14,8 +14,8 @@ function _M.limit_req_rate(ip_qps,ip_expire_qps,process_key)
 	if not lim then
     local waf_log = {}
     waf_log['log_type'] = "error"
-    waf_log['protecion_type'] = "limit_req_rate"
-    waf_log['protecion_info'] = "limit_req_rate,failed to instantiate a resty.limit.req object: "..err.." limit_store is: "..limit_store
+    waf_log['protection_type'] = "limit_req_rate"
+    waf_log['protection_info'] = "limit_req_rate,failed to instantiate a resty.limit.req object: "..err.." limit_store is: "..limit_store
     ngx.ctx.waf_log = waf_log
 		ngx.log(ngx.ERR,"limit_req_rate,failed to instantiate a resty.limit.req object: ", err," limit_store is: ",limit_store)
 		exit_code.return_error()
@@ -27,8 +27,8 @@ function _M.limit_req_rate(ip_qps,ip_expire_qps,process_key)
 		else
       local waf_log = {}
       waf_log['log_type'] = "error"
-      waf_log['protecion_type'] = "limit_req_rate"
-      waf_log['protecion_info'] =  "limit_req_rate,failed to limit req: "..err_incoming
+      waf_log['protection_type'] = "limit_req_rate"
+      waf_log['protection_info'] =  "limit_req_rate,failed to limit req: "..err_incoming
       ngx.ctx.waf_log = waf_log
       ngx.log(ngx.ERR, "limit_req_rate,failed to limit req: ", err_incoming)
       exit_code.return_error()
@@ -49,8 +49,8 @@ function _M.limit_req_count(count,black_ip_time,process_key)
 	if not lim then
     local waf_log = {}
     waf_log['log_type'] = "error"
-    waf_log['protecion_type'] = "limit_req_count"
-    waf_log['protecion_info'] = "limit_req_count,failed to instantiate a resty.limit.count object: "..err.." limit_store is: "..limit_store
+    waf_log['protection_type'] = "limit_req_count"
+    waf_log['protection_info'] = "limit_req_count,failed to instantiate a resty.limit.count object: "..err.." limit_store is: "..limit_store
     ngx.ctx.waf_log = waf_log
 		ngx.log(ngx.ERR,"limit_req_count,failed to instantiate a resty.limit.count object: ", err," limit_store is: ",limit_store)
 		exit_code.return_error()
@@ -62,8 +62,8 @@ function _M.limit_req_count(count,black_ip_time,process_key)
 		else
       local waf_log = {}
       waf_log['log_type'] = "error"
-      waf_log['protecion_type'] = "limit_req_count"
-      waf_log['protecion_info'] =  "limit_req_count,failed to limit count: "..err_incoming
+      waf_log['protection_type'] = "limit_req_count"
+      waf_log['protection_info'] =  "limit_req_count,failed to limit count: "..err_incoming
       ngx.ctx.waf_log = waf_log
       ngx.log(ngx.ERR, "limit_req_count,failed to limit count: ", err_incoming)
       exit_code.return_error()
@@ -81,8 +81,8 @@ function _M.limit_req_domain_rate(domain_qps,process_key)
   if not lim then
     local waf_log = {}
     waf_log['log_type'] = "error"
-    waf_log['protecion_type'] = "limitreq_check"
-    waf_log['protecion_info'] = "limit_req_domain,failed to instantiate a resty.limit.req object: "..err.." limit_store is: "..limit_store
+    waf_log['protection_type'] = "limitreq_check"
+    waf_log['protection_info'] = "limit_req_domain,failed to instantiate a resty.limit.req object: "..err.." limit_store is: "..limit_store
     ngx.ctx.waf_log = waf_log
     ngx.log(ngx.ERR,"limit_req_domain,failed to instantiate a resty.limit.req object: ", err," limit_store is: ",limit_store)
     exit_code.return_error()

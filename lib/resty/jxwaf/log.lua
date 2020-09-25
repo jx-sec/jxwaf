@@ -54,12 +54,12 @@ if log_host then
   if ngx.ctx.waf_log  then
     local tmp_waf_log = ngx.ctx.waf_log
     waf_log['log_type'] = tmp_waf_log['log_type']
-    waf_log['protecion_type'] = tmp_waf_log['protecion_type']
-    waf_log['protecion_info'] =  tmp_waf_log['protecion_info']
+    waf_log['protection_type'] = tmp_waf_log['protection_type']
+    waf_log['protection_info'] =  tmp_waf_log['protection_info']
   else
       waf_log['log_type'] = "access"
-      waf_log['protecion_type'] = ""
-      waf_log['protecion_info'] = ""
+      waf_log['protection_type'] = ""
+      waf_log['protection_info'] = ""
       if log_config['all_request_log'] == "false" then
         return nil
       end

@@ -18,8 +18,8 @@ if balance_host and balance_host['domain_set'][scheme] == "true" then
     if not set_more_tries_ok then
         local waf_log = {}
         waf_log['log_type'] = "error"
-        waf_log['protecion_type'] = "balancer"
-        waf_log['protecion_info'] = "failed to set the current peer: ",set_more_tries_err
+        waf_log['protection_type'] = "balancer"
+        waf_log['protection_info'] = "failed to set the current peer: ",set_more_tries_err
         ngx.ctx.waf_log = waf_log
         ngx.log(ngx.ERR,"failed to set the current peer: ",set_more_tries_err)
         exit_code.return_error()
@@ -59,8 +59,8 @@ if balance_host and balance_host['domain_set'][scheme] == "true" then
     exit_code.return_error()
     local waf_log = {}
     waf_log['log_type'] = "error"
-    waf_log['protecion_type'] = "balancer"
-    waf_log['protecion_info'] = "failed to set the current peer: "..err
+    waf_log['protection_type'] = "balancer"
+    waf_log['protection_info'] = "failed to set the current peer: "..err
     ngx.ctx.waf_log = waf_log
     ngx.log(ngx.ERR,"failed to set the current peer: ",err)
     exit_code.return_error()

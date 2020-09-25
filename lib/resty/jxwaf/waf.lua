@@ -95,7 +95,7 @@ local function _owasp_black_ip_stat(req_host,check_mode)
       local check_black_ip_count = attack_ip_check:incr(key_check_black_ip, 1, 0, tonumber(period)) 
       if check_black_ip_count and check_black_ip_count > tonumber(count) then
         local black_ip_info = {}
-        black_ip_info['protecion_info'] = mode
+        black_ip_info['protection_info'] = mode
         black_ip_info['protecion_handle'] = handle
         if (mode == 'block' ) and tonumber(handle) > 0 then
           attack_ip_check:set(ip_addr,cjson.encode(black_ip_info),tonumber(handle))
@@ -108,8 +108,8 @@ local function _owasp_black_ip_stat(req_host,check_mode)
         end
         local waf_log = {}
         waf_log['log_type'] = "owasp_attack"
-        waf_log['protecion_type'] = check_mode
-        waf_log['protecion_info'] = "add_black_ip"
+        waf_log['protection_type'] = check_mode
+        waf_log['protection_info'] = "add_black_ip"
         ngx.ctx.waf_log = waf_log
       end
     end
@@ -133,7 +133,7 @@ local function _cc_black_ip_stat(req_host,check_mode)
       local check_black_ip_count = attack_ip_check:incr(key_check_black_ip, 1, 0, tonumber(check_period)) 
       if check_black_ip_count and check_black_ip_count > tonumber(check_count) then
         local black_ip_info = {}
-        black_ip_info['protecion_info'] = block_mode
+        black_ip_info['protection_info'] = block_mode
         black_ip_info['protecion_handle'] = block_time
         if (block_mode == 'block' or block_mode == 'network_layer_block') and tonumber(block_time) > 0 then
           attack_ip_check:set(ip_addr,cjson.encode(black_ip_info),tonumber(handle))
@@ -143,8 +143,8 @@ local function _cc_black_ip_stat(req_host,check_mode)
         end
         local waf_log = {}
         waf_log['log_type'] = "cc_attack"
-        waf_log['protecion_type'] = check_mode
-        waf_log['protecion_info'] = "add_black_ip"
+        waf_log['protection_type'] = check_mode
+        waf_log['protection_info'] = "add_black_ip"
         ngx.ctx.waf_log = waf_log
       end
     end
@@ -160,8 +160,8 @@ local function _process_request(var)
 	if type(t) ~= "string" and type(t) ~= "table" then
     local waf_log = {}
     waf_log['log_type'] = "error"
-    waf_log['protecion_type'] = "process_request"
-    waf_log['protecion_info'] = "run fail,can not decode http args ",type(t).."   "..var.rule_var
+    waf_log['protection_type'] = "process_request"
+    waf_log['protection_info'] = "run fail,can not decode http args ",type(t).."   "..var.rule_var
     ngx.ctx.waf_log = waf_log
 		ngx.log(ngx.ERR,"run fail,can not decode http args ",type(t).."   "..var.rule_var)
 		ngx.log(ngx.ERR,ngx.req.raw_header())
@@ -211,8 +211,8 @@ local function _process_transform(process_request,rule_transform,var)
   if type(process_request) ~= "string" and type(process_request) ~= "table" then
     local waf_log = {}
     waf_log['log_type'] = "error"
-    waf_log['protecion_type'] = "process_transform"
-    waf_log['protecion_info'] = "run fail,can not transfrom http args"
+    waf_log['protection_type'] = "process_transform"
+    waf_log['protection_info'] = "run fail,can not transfrom http args"
     ngx.ctx.waf_log = waf_log
     ngx.log(ngx.ERR,"run fail,can not transfrom http args")
     exit_code.return_error()
@@ -221,8 +221,8 @@ local function _process_transform(process_request,rule_transform,var)
 	if  type(rule_transform) ~= "table" then
     local waf_log = {}
     waf_log['log_type'] = "error"
-    waf_log['protecion_type'] = "process_transform"
-    waf_log['protecion_info'] = "run fail,can not decode config file,transfrom error"
+    waf_log['protection_type'] = "process_transform"
+    waf_log['protection_info'] = "run fail,can not decode config file,transfrom error"
     ngx.ctx.waf_log = waf_log
     ngx.log(ngx.ERR,"run fail,can not decode config file,transfrom error")
     exit_code.return_error()
@@ -284,8 +284,8 @@ local function _process_operator( process_transform , match , var , rule )
 	if type(process_transform) ~= "string" and type(process_transform) ~= "table" then
     local waf_log = {}
     waf_log['log_type'] = "error"
-    waf_log['protecion_type'] = "process_operator"
-    waf_log['protecion_info'] = "run fail,can not operator http args"
+    waf_log['protection_type'] = "process_operator"
+    waf_log['protection_info'] = "run fail,can not operator http args"
     ngx.ctx.waf_log = waf_log
 		ngx.log(ngx.ERR,"run fail,can not operator http args")
     exit_code.return_error()
@@ -293,8 +293,8 @@ local function _process_operator( process_transform , match , var , rule )
 	if type(rule_operator) ~= "string" and type(rule_pattern) ~= "string" then
     local waf_log = {}
     waf_log['log_type'] = "error"
-    waf_log['protecion_type'] = "process_operator"
-    waf_log['protecion_info'] = "rule_operator and rule_pattern error"
+    waf_log['protection_type'] = "process_operator"
+    waf_log['protection_info'] = "rule_operator and rule_pattern error"
     ngx.ctx.waf_log = waf_log
 		ngx.log(ngx.ERR,"rule_operator and rule_pattern error")
 		exit_code.return_error()
@@ -676,8 +676,8 @@ local function _custom_rule_match(rules)
     if matchs_result and rule.rule_log == "true" then                       
       local waf_log = {}
       waf_log['log_type'] = "owasp_attack"
-      waf_log['protecion_type'] = "custom_protection"
-      waf_log['protecion_info'] = rule.rule_action
+      waf_log['protection_type'] = "custom_protection"
+      waf_log['protection_info'] = rule.rule_action
       ngx.ctx.waf_log = waf_log
     end
     if rule.rule_action == "pass" and matchs_result then
@@ -763,8 +763,8 @@ function _M.limitreq_check()
     if req_host["cc_protection_set"]["emergency_mode_check"] == "true" then
       local waf_log = {}
       waf_log['log_type'] = "cc_attack"
-      waf_log['protecion_type'] = "emergency_mode_check"
-      waf_log['protecion_info'] =  req_host["protection_set"]["emergency_handle_mode"] 
+      waf_log['protection_type'] = "emergency_mode_check"
+      waf_log['protection_info'] =  req_host["protection_set"]["emergency_handle_mode"] 
       ngx.ctx.waf_log = waf_log
       if req_host["protection_set"]["emergency_handle_mode"] == "block"  then
         _cc_black_ip_stat(req_host,'emergency_handle_mode')
@@ -803,8 +803,8 @@ function _M.limitreq_check()
       if limit_req_count_result  then
         local waf_log = {}
         waf_log['log_type'] = "cc_attack"
-        waf_log['protecion_type'] = "count_check"
-        waf_log['protecion_info'] =  req_count_handle_mode
+        waf_log['protection_type'] = "count_check"
+        waf_log['protection_info'] =  req_count_handle_mode
         ngx.ctx.waf_log = waf_log
         if req_count_handle_mode == "block" then
           _cc_black_ip_stat(req_host,'count_check')
@@ -834,8 +834,8 @@ function _M.limitreq_check()
       if limit_req_rate_result  then
         local waf_log = {}
         waf_log['log_type'] = "cc_attack"
-        waf_log['protecion_type'] = "qps_check"
-        waf_log['protecion_info'] =  req_freq_handle_mode
+        waf_log['protection_type'] = "qps_check"
+        waf_log['protection_info'] =  req_freq_handle_mode
         ngx.ctx.waf_log = waf_log
         if req_freq_handle_mode == "block" then
           _cc_black_ip_stat(req_host,'qps_check')
@@ -864,8 +864,8 @@ function _M.limitreq_check()
       if limit_req_domain_rate_result  then
         local waf_log = {}
         waf_log['log_type'] = "cc_attack"
-        waf_log['protecion_type'] = "domain_qps_check"
-        waf_log['protecion_info'] =  domin_qps_handle_mode
+        waf_log['protection_type'] = "domain_qps_check"
+        waf_log['protection_info'] =  domin_qps_handle_mode
         ngx.ctx.waf_log = waf_log
         if domin_qps_handle_mode == "block" then
           _cc_black_ip_stat(req_host,'domain_qps_check')
@@ -906,8 +906,8 @@ function _M.jxcheck_protection()
     if owasp_result then
       local waf_log = {}
       waf_log['log_type'] = "owasp_attack"
-      waf_log['protecion_type'] = "jxwaf-"..owasp_type
-      waf_log['protecion_info'] = owasp_action
+      waf_log['protection_type'] = "jxwaf-"..owasp_type
+      waf_log['protection_info'] = owasp_action
       ngx.ctx.waf_log = waf_log
       if owasp_action == "block" then
         _owasp_black_ip_stat(req_host,owasp_type)
@@ -938,12 +938,12 @@ function _M.cc_black_ip_check()
       local black_ip_info = cjson.decode(result)
       local waf_log = {}
       waf_log['log_type'] = "cc_attack"
-      waf_log['protecion_type'] = "black_ip"
-      waf_log['protecion_info'] = black_ip_info['protecion_info']
+      waf_log['protection_type'] = "black_ip"
+      waf_log['protection_info'] = black_ip_info['protection_info']
       ngx.ctx.waf_log = waf_log
-      if black_ip_info['protecion_info'] == "block"  then
+      if black_ip_info['protection_info'] == "block"  then
         return ngx.exit(444)
-      elseif black_ip_info['protecion_info'] == "network_layer_block"  then
+      elseif black_ip_info['protection_info'] == "network_layer_block"  then
         local shell_cmd = {}
         if tonumber(black_ip_info['protecion_handle']) > 0 then
           shell_cmd[1] = "/usr/sbin/ipset add jxwaf "
@@ -979,10 +979,10 @@ function _M.owasp_black_ip_check()
       local black_ip_info = cjson.decode(result)
       local waf_log = {}
       waf_log['log_type'] = "owasp_attack"
-      waf_log['protecion_type'] = "black_ip"
-      waf_log['protecion_info'] = black_ip_info['protecion_info']
+      waf_log['protection_type'] = "black_ip"
+      waf_log['protection_info'] = black_ip_info['protection_info']
       ngx.ctx.waf_log = waf_log
-      if black_ip_info['protecion_info'] == "block"  then
+      if black_ip_info['protection_info'] == "block"  then
         if req_host['protection_set']['page_custom'] == "true"  then
           exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
         end 
@@ -1010,8 +1010,8 @@ function _M.file_upload_check()
       if not form then
         local waf_log = {}
         waf_log['log_type'] = "error"
-        waf_log['protecion_type'] = "upload_error"
-        waf_log['protecion_info'] = "failed to new upload: "..err
+        waf_log['protection_type'] = "upload_error"
+        waf_log['protection_info'] = "failed to new upload: "..err
         ngx.ctx.waf_log = waf_log
         exit_code.return_error()
       end
@@ -1025,8 +1025,8 @@ function _M.file_upload_check()
         if not typ then
           local waf_log = {}
           waf_log['log_type'] = "error"
-          waf_log['protecion_type'] = "upload_error"
-          waf_log['protecion_info'] = "failed to read: "..err
+          waf_log['protection_type'] = "upload_error"
+          waf_log['protection_info'] = "failed to read: "..err
           ngx.ctx.waf_log = waf_log
           exit_code.return_error()
         end
@@ -1049,8 +1049,8 @@ function _M.file_upload_check()
             else
               local waf_log = {}
               waf_log['log_type'] = "error"
-              waf_log['protecion_type'] = "upload_error"
-              waf_log['protecion_info'] = "Content-Disposition ERR!"
+              waf_log['protection_type'] = "upload_error"
+              waf_log['protection_info'] = "Content-Disposition ERR!"
               ngx.ctx.waf_log = waf_log
               exit_code.return_error()	
             end
@@ -1094,8 +1094,8 @@ function _M.file_upload_check()
         if not ngx.re.find(v,req_host['owasp_check_set']['upload_check_rule'],"oij") then
           local waf_log = {}
           waf_log['log_type'] = "owasp_attack"
-          waf_log['protecion_type'] = "upload_check"
-          waf_log['protecion_info'] = req_host['owasp_check_set']['upload_check']
+          waf_log['protection_type'] = "upload_check"
+          waf_log['protection_info'] = req_host['owasp_check_set']['upload_check']
           ngx.ctx.waf_log = waf_log
           if req_host['owasp_check_set']['upload_check'] ==  'block' then
             _owasp_black_ip_stat(req_host,'upload_check')
