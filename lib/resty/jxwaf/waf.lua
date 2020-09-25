@@ -770,7 +770,7 @@ function _M.limitreq_check()
         _cc_black_ip_stat(req_host,'emergency_handle_mode')
         return ngx.exit(444)
       elseif req_host["protection_set"]["emergency_handle_mode"] == "bot_check" then
-        if _bot_check  and #bot_check_key > 0 then
+        if _bot_check  and #bot_check_standard_key > 0 and #bot_check_image_key > 0 and #bot_check_slipper_key > 0 then
           _cc_black_ip_stat(req_host,'emergency_handle_mode')
           local bot_check_mode = req_host["cc_protection_set"]["bot_check_mode"]
           if bot_check_mode == 'standard' then
