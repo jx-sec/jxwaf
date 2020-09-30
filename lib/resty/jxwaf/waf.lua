@@ -557,15 +557,21 @@ local function _worker_update_rule()
       bot_check_standard_info = bot_check_info['standard']
       bot_check_image_info = bot_check_info['image']
       bot_check_slipper_info = bot_check_info['slipper']
+      local standard_key = {}
+      local slipper_key = {}
+      local image_key = {}
       for k,_ in pairs(bot_check_standard_info) do
-        table.insert(bot_check_standard_key,k)
+        table.insert(standard_key,k)
       end
+      bot_check_standard_key = standard_key
       for k,_ in pairs(bot_check_slipper_info) do
-        table.insert(bot_check_slipper_key,k)
+        table.insert(slipper_key,k)
       end
+      bot_check_slipper_key = slipper_key 
       for k,_ in pairs(bot_check_image_info) do
-        table.insert(bot_check_image_key,k)
+        table.insert(image_key,k)
       end
+      bot_check_image_key = image_key
       ngx.log(ngx.ERR, "bot check standard key count is ",#bot_check_standard_key)
       ngx.log(ngx.ERR, "bot check key image count is ",#bot_check_slipper_key)
       ngx.log(ngx.ERR, "bot check key slipper count is ",#bot_check_image_key)
@@ -777,7 +783,7 @@ function _M.limitreq_check()
       if req_host["cc_protection_set"]["emergency_handle_mode"] == "block"  then
         --_cc_black_ip_stat(req_host,'emergency_handle_mode')
         return ngx.exit(444)
-      elseif req_host["protection_set"]["emergency_handle_mode"] == "bot_check" then
+      elseif req_host["cc_protection_set"]["emergency_handle_mode"] == "bot_check" then
         if _bot_check  and #bot_check_standard_key > 0 and #bot_check_image_key > 0 and #bot_check_slipper_key > 0 then
           --_cc_black_ip_stat(req_host,'emergency_handle_mode')
           local bot_check_mode = req_host["cc_protection_set"]["bot_check_mode"]
@@ -789,7 +795,7 @@ function _M.limitreq_check()
             _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_slipper_info,bot_check_slipper_key,bot_check_mode)
           end
         end
-      elseif req_host["protection_set"]["emergency_handle_mode"] == "network_layer_block" then
+      elseif req_host["cc_protection_set"]["emergency_handle_mode"] == "network_layer_block" then
         local ip_addr = request.request['REMOTE_ADDR']()
         local shell_cmd = {}
         shell_cmd[1] = "/usr/sbin/ipset add jxwaf "
