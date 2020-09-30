@@ -744,6 +744,7 @@ function _M.bot_auth_check()
   local host = ngx.var.host
   local req_host = _update_waf_rule[host] or ngx.ctx.req_host
   if _bot_check and req_host and req_host["protection_set"]["cc_protection"] == "true" then
+    _cc_black_ip_stat(req_host,'bot_auth')
     local bot_check_mode = req_host["cc_protection_set"]["bot_check_mode"]
     if bot_check_mode == 'standard' then 
       _bot_check.bot_commit_auth(_config_info.waf_api_key,bot_check_standard_info)
@@ -912,7 +913,7 @@ function _M.jxcheck_protection()
       ngx.ctx.waf_log = waf_log
       if owasp_action == "block" then
         _owasp_black_ip_stat(req_host,owasp_type)
-        if req_host['protection_set']['page_custom'] == "true"  and req_host['owasp_check_set']['owasp_protection_mode'] == "true" then
+        if req_host['protection_set']['page_custom'] == "true"  then
           exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
         end
         exit_code.return_exit()
