@@ -465,15 +465,21 @@ local function _global_update_rule()
         bot_check_standard_info = bot_check_info['standard']
         bot_check_image_info = bot_check_info['image']
         bot_check_slipper_info = bot_check_info['slipper']
+        local standard_key = {}
+        local slipper_key = {}
+        local image_key = {}
         for k,_ in pairs(bot_check_standard_info) do
-          table.insert(bot_check_standard_key,k)
+          table.insert(standard_key,k)
         end
+        bot_check_standard_key = standard_key
         for k,_ in pairs(bot_check_slipper_info) do
-          table.insert(bot_check_slipper_key,k)
+          table.insert(slipper_key,k)
         end
+        bot_check_slipper_key = slipper_key 
         for k,_ in pairs(bot_check_image_info) do
-          table.insert(bot_check_image_key,k)
+          table.insert(image_key,k)
         end
+        bot_check_image_key = image_key
         ngx.log(ngx.ERR, "bot check standard key count is ",#bot_check_standard_key)
         ngx.log(ngx.ERR, "bot check key image count is ",#bot_check_slipper_key)
         ngx.log(ngx.ERR, "bot check key slipper count is ",#bot_check_image_key)
