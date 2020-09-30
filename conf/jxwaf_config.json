@@ -5,10 +5,6 @@
     "waf_monitor_website": "http://update2.jxwaf.com/waf_monitor",
     "waf_local":"false",
     "server_info":"server_info_detail",
-    "waf_node_monitor":"true",
-    "aes_enc_key":"jxwaf_aes_enc_key",
-    "aes_enc_iv":"jxwaf_aes_enc_iv",
-    "aliyun_access_id":"",
-    "aliyun_access_secret":""
+    "waf_node_monitor":"true"
 }
 

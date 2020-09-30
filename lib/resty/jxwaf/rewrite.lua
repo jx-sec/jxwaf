@@ -14,7 +14,6 @@ else
     local wildcard_host = "*"..string_sub(host,dot_pos)
     if update_waf_rule[wildcard_host] then
         req_host = update_waf_rule[wildcard_host]
-        ngx.ctx.wildcard_host = req_host
     end
   end
 end
@@ -27,4 +26,4 @@ if req_host['domain_set']['proxy_pass_https'] == "true" then
   ngx.var.proxy_pass_https_flag = "true"
 end
 
-
+ngx.ctx.req_host = req_host
