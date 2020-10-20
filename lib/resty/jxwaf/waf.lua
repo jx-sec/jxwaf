@@ -108,7 +108,7 @@ local function _owasp_black_ip_stat(req_host,check_mode)
         end
         local waf_log = {}
         waf_log['log_type'] = "owasp_attack"
-        waf_log['protection_type'] = check_mode
+        waf_log['protection_type'] = "black_ip-"..check_mode
         waf_log['protection_info'] = "add_black_ip"
         ngx.ctx.waf_log = waf_log
       end
@@ -143,7 +143,7 @@ local function _cc_black_ip_stat(req_host,check_mode)
         end
         local waf_log = {}
         waf_log['log_type'] = "cc_attack"
-        waf_log['protection_type'] = check_mode
+        waf_log['protection_type'] = "black_ip-"..check_mode
         waf_log['protection_info'] = "add_black_ip"
         ngx.ctx.waf_log = waf_log
       end
