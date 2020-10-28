@@ -111,6 +111,7 @@ local function _process_json_args(json_args)
       end
     end
   end
+  return t 
 end
 
 local function _parse_request_uri()
