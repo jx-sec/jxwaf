@@ -40,7 +40,9 @@ if log_host then
         if type(data_get) == 'table' then
           local req_get = request.request['ARGS_GET']()
           for _,v in ipairs(data_get) do
-            req_get[v] = '*'
+            if req_get[v] then
+              req_get[v] = '*'
+            end
           end
           raw_get = ngx.encode_args(req_get)
         else
@@ -51,7 +53,9 @@ if log_host then
         if type(data_post) == 'table' then
           local req_post = request.request['ARGS_POST']()
           for _,v in ipairs(data_post) do
-            req_post[v] = '*'
+            if req_post[v] then
+              req_post[v] = '*'
+            end
           end
           raw_body = ngx.encode_args(req_post)
         else
@@ -63,7 +67,9 @@ if log_host then
         if type(data_header) == 'table' then
           local req_header = request.request['ARGS_HEADERS']()
           for _,v in ipairs(data_header) do
-            req_header[v] = '*'
+            if req_header[v] then
+              req_header[v] = '*'
+            end
           end
           raw_header = ngx.encode_args(req_header)
         else
