@@ -26,7 +26,7 @@ if log_host then
   local status= ngx.var.status
   local request_process_time = ngx.var.request_time
   local client_ip = request.request['REMOTE_ADDR']()
-  local raw_header = ngx.req.raw_header(true)
+  local raw_header = cjson.encode(request.request['ARGS_HEADERS']())
   local raw_body = request.request['HTTP_BODY']()
   local raw_get = ngx.var.query_string or ""
   local req_uri = ngx.var.uri
@@ -71,7 +71,7 @@ if log_host then
               req_header[v] = '*'
             end
           end
-          raw_header = ngx.encode_args(req_header)
+          raw_header = cjson.encode((req_header)
         else
           raw_header = '*'
         end
