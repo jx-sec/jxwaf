@@ -5,7 +5,7 @@ local random_uuid = require "resty.jxwaf.uuid"
 local waf_rule = waf.get_waf_rule()
 local host = ngx.var.host
 local string_sub = string.sub
-local log_host = waf_rule[host] or ngx.ctx.wildcard_host
+local log_host = waf_rule[host] or ngx.ctx.req_host
 local ngx_req_get_headers = ngx.req.get_headers
 local config_info = waf.get_config_info()
 local table_concat = table.concat
@@ -26,6 +26,58 @@ if log_host then
   local status= ngx.var.status
   local request_process_time = ngx.var.request_time
   local client_ip = request.request['REMOTE_ADDR']()
+  local raw_header = cjson.encode(request.request['ARGS_HEADERS']())
+  local raw_body = request.request['HTTP_BODY']()
+  local raw_get = ngx.var.query_string or ""
+  local req_uri = ngx.var.uri
+  if log_host['protection_set'] and log_host['protection_set']['data_mask'] == "true"  then
+    local data_mask_set = log_host['data_mask_set'] 
+    if data_mask_set[req_uri] then
+      local data_header = data_mask_set[req_uri]['header']
+      local data_post = data_mask_set[req_uri]['post']
+      local data_get = data_mask_set[req_uri]['get']
+      if data_get  then
+        if type(data_get) == 'table' then
+          local req_get = request.request['ARGS_GET']()
+          for _,v in ipairs(data_get) do
+            if req_get[v] then
+              req_get[v] = '*'
+            end
+          end
+          raw_get = ngx.encode_args(req_get)
+        else
+          raw_get = '*'
+        end
+      end
+      if data_post  then
+        if type(data_post) == 'table' then
+          local req_post = request.request['ARGS_POST']()
+          for _,v in ipairs(data_post) do
+            if req_post[v] then
+              req_post[v] = '*'
+            end
+          end
+          raw_body = ngx.encode_args(req_post)
+        else
+          raw_body = '*'
+        end
+        
+      end
+      if data_header  then
+        if type(data_header) == 'table' then
+          local req_header = request.request['ARGS_HEADERS']()
+          for _,v in ipairs(data_header) do
+            if req_header[v] then
+              req_header[v] = '*'
+            end
+          end
+          raw_header = cjson.encode((req_header)
+        else
+          raw_header = '*'
+        end
+      end
+    end
+  end
   local waf_log = {}
   waf_log['host'] = host
   waf_log['uuid'] = uuid
@@ -40,13 +92,13 @@ if log_host then
   waf_log['status'] =  status
   waf_log['upstream_status'] =  upstream_status or "-"
   waf_log['request_time'] = localtime
-  waf_log['raw_header'] = ngx.req.raw_header(true)
+  waf_log['raw_header'] = raw_header
   waf_log['scheme'] = ngx.var.scheme
   waf_log['version'] = tostring(ngx.req.http_version())
-  waf_log['uri'] = ngx.var.uri
+  waf_log['uri'] = req_uri
   waf_log['method'] = ngx.req.get_method()
-  waf_log['query_string'] = ngx.var.query_string or ""
-  waf_log['body'] = request.request['HTTP_BODY']()
+  waf_log['query_string'] = raw_get
+  waf_log['body'] = raw_body
   waf_log['client_ip'] = client_ip
   waf_log['user_agent'] = ngx.var.http_user_agent or ""
   waf_log['connections_active'] = ngx.var.connections_active
