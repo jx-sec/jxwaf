@@ -480,9 +480,9 @@ local function _global_update_rule()
           table.insert(image_key,k)
         end
         bot_check_image_key = image_key
-        ngx.log(ngx.ERR, "bot check standard key count is ",#bot_check_standard_key)
-        ngx.log(ngx.ERR, "bot check key image count is ",#bot_check_slipper_key)
-        ngx.log(ngx.ERR, "bot check key slipper count is ",#bot_check_image_key)
+        ngx.log(ngx.ALERT, "bot check standard key count is ",#bot_check_standard_key)
+        ngx.log(ngx.ALERT, "bot check key image count is ",#bot_check_slipper_key)
+        ngx.log(ngx.ALERT, "bot check key slipper count is ",#bot_check_image_key)
       end
       if res_body['log_conf']  then
         _log_conf = res_body['log_conf']
@@ -572,9 +572,9 @@ local function _worker_update_rule()
         table.insert(image_key,k)
       end
       bot_check_image_key = image_key
-      ngx.log(ngx.ERR, "bot check standard key count is ",#bot_check_standard_key)
-      ngx.log(ngx.ERR, "bot check key image count is ",#bot_check_slipper_key)
-      ngx.log(ngx.ERR, "bot check key slipper count is ",#bot_check_image_key)
+      ngx.log(ngx.ALERT, "bot check standard key count is ",#bot_check_standard_key)
+      ngx.log(ngx.ALERT, "bot check key image count is ",#bot_check_slipper_key)
+      ngx.log(ngx.ALERT, "bot check key slipper count is ",#bot_check_image_key)
     end
     
     if res_body['log_conf']  then

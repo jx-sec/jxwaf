@@ -47,7 +47,7 @@ JXWAF 由 jxwaf 节点与 jxwaf 管理中心组成:
   - Python 2.7
   - Django 1.9.2
 
-### Quick Deploy 快速部署 (已包含 openresty 安装包)
+### Quick Deploy 快速部署 (源代码部署)
 
 #### 环境依赖
 
@@ -63,7 +63,7 @@ JXWAF 由 jxwaf 节点与 jxwaf 管理中心组成:
 6.  \$ python manage.py makemigrations
 7.  \$ python manage.py migrate
 8.  \$ nohup python manage.py runserver 0.0.0.0:80 &
-9.  假设管理中心 IP 为 10.0.0.1,则打开网址 http://10.0.0.1 进行注册,注册完后登录账号,在 WAF 更新-> 语义引擎更新 中选择 语义引擎版本 加载。在 WAF 更新-> 人机识别更新 中 选择 人机识别版本 加载，同时点击 KEY 更新 加载人机识别对应的 KEY
+9.  假设管理中心 IP 为 10.0.0.1,则打开网址 http://10.0.0.1 进行注册,注册完后登录账号,在 WAF 更新-> 语义引擎更新 中选择 语义引擎版本 加载。在 WAF 更新-> 人机识别更新 中 选择 人机识别版本 加载，同时点击 随机KEY 更新 加载人机识别对应的 KEY
 
 #### 节点部署
 
@@ -71,7 +71,7 @@ JXWAF 由 jxwaf 节点与 jxwaf 管理中心组成:
 2.  \$ git clone https://github.com/jx-sec/jxwaf.git
 
 ```
-提示: 国内服务器github下载较慢，提供百度网盘下载
+提示: 国内服务器github下载较慢，提供百度网盘下载，该资源不常更新
 https://pan.baidu.com/s/1WAt077rrOSNZj1E4X1u6pw 提取码: vcgw
 ```
 
@@ -99,6 +99,51 @@ try to connect jxwaf server auth api_key and api_password,result is True
 
 10. \$ /opt/jxwaf/nginx/sbin/nginx
 11. 启动 openresty,openresty 会在启动或者 reload 的时候自动到 jxwaf 管理中心拉取用户配置的最新规则,之后会定期同步配置,周期可在全局配置页面设置。
+
+### Quick Deploy 快速部署 (Docker部署)
+
+#### 环境依赖
+
+- Docker  
+
+docker安装文档: https://docs.docker.com/get-docker/
+
+#### 管理中心部署
+
+1. docker pull jxwaf/jxwaf-mini-server:v20201102
+2. docker run -p 80:80 -d jxwaf/jxwaf-mini-server:v20201102
+3.  假设管理中心 IP 为 10.0.0.1,则打开网址 http://10.0.0.1 进行注册,注册完后登录账号,在 WAF 更新-> 语义引擎更新 中选择 语义引擎版本 加载。在 WAF 更新-> 人机识别更新 中 选择 人机识别版本 加载，同时点击 随机KEY 更新 加载人机识别对应的 KEY
+
+
+
+
+#### 节点部署
+
+1. docker pull jxwaf/jxwaf:v20201102
+2. 假设管理中心 IP 为 10.0.0.1,则打开网址 http://10.0.0.1 进行注册,注册完后登录账号,在 WAF 管理下的全局配置页面获取"api key"和"api password"
+3. docker run -p80:80 --env JXWAF_API_KEY=193b002d-5f3e-45a0-85d1-dba8f7c27b64 --env JXWAF_API_PASSWD=c7a648c3-48f3-459a-bc93-1bbc7932f60e --env WAF_UPDATE_WEBSITE=http://10.0.0.1 jxwaf/jxwaf:v2020110
+4. JXWAF_API_KEY 为全局配置页面中"api key"JXWAF_API_PASSWD 为"api password"的值，WAF_UPDATE_WEBSITE为管理中心的地址，假设运行后的容器ID为efda21c02e72，则执行下面命令后显示类似信息即正常运行。
+5. docker logs efda21c02e72
+
+```
+{
+    "waf_api_key": "193b002d-5f3e-45a0-85d1-dba8f7c27b64",
+    "waf_api_password": "c7a648c3-48f3-459a-bc93-1bbc7932f60e",
+    "waf_update_website": "http://10.0.0.1/waf_update",
+    "waf_monitor_website": "http://10.0.0.1/waf_monitor",
+    "waf_local":"false",
+    "server_info":"|efda21c02e72",
+    "waf_node_monitor":"true"
+}
+nginx: [alert] [lua] waf.lua:647: init(): jxwaf init success,waf node uuid is ad7b29de-858a-4781-ba1c-53ca92506bfd
+2020/11/02 17:01:44 [alert] 20#0: [lua] waf.lua:647: init(): jxwaf init success,waf node uuid is ad7b29de-858a-4781-ba1c-53ca92506bfd
+2020/11/02 17:01:45 [alert] 23#0: *2 [lua] waf.lua:401: monitor report success, context: ngx.timer
+2020/11/02 17:01:45 [error] 23#0: *4 [lua] waf.lua:483: bot check standard key count is 10, context: ngx.timer
+2020/11/02 17:01:45 [error] 23#0: *4 [lua] waf.lua:484: bot check key image count is 10, context: ngx.timer
+2020/11/02 17:01:45 [error] 23#0: *4 [lua] waf.lua:485: bot check key slipper count is 10, context: ngx.timer
+2020/11/02 17:01:45 [alert] 23#0: *4 [lua] waf.lua:502: global config info md5 is 0f1515005b96d11464bbd130ceb6b902,update config info success, context: ngx.timer
+
+```
 
 ### Bast Practice 最佳实践
 
