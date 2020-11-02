@@ -71,7 +71,7 @@ if log_host then
               req_header[v] = '*'
             end
           end
-          raw_header = cjson.encode((req_header)
+          raw_header = cjson.encode((req_header))
         else
           raw_header = '*'
         end
