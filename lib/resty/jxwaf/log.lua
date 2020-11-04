@@ -31,8 +31,9 @@ if log_host then
   local raw_get = ngx.var.query_string or ""
   local req_uri = ngx.var.uri
   if log_host['protection_set'] and log_host['protection_set']['data_mask'] == "true"  then
-    local data_mask_set = log_host['data_mask_set'] 
-    if data_mask_set[req_uri] then
+    local data_mask_set = log_host['data_mask_set']
+    local data_mask_global_set = log_host['data_mask_global_set']
+    if data_mask_set and data_mask_set[req_uri] then
       local data_header = data_mask_set[req_uri]['header']
       local data_post = data_mask_set[req_uri]['post']
       local data_get = data_mask_set[req_uri]['get']
@@ -76,7 +77,44 @@ if log_host then
           raw_header = '*'
         end
       end
-    end
+    elseif data_mask_global_set then
+      local global_data_get = data_mask_global_set['get']
+      local global_data_post = data_mask_global_set['post']
+      local global_data_header = data_mask_global_set['header']
+      if global_data_get then
+        if type(global_data_get) == 'table' then
+          local req_get = request.request['ARGS_GET']()
+          for _,v in ipairs(global_data_get) do
+            if req_get[v] then
+              req_get[v] = '*'
+            end
+          end
+          raw_get = ngx.encode_args(req_get)
+        end
+      end
+      if global_data_post then
+        if type(global_data_post) == 'table' then
+          local req_post = request.request['ARGS_POST']()
+          for _,v in ipairs(global_data_post) do
+            if req_post[v] then
+              req_post[v] = '*'
+            end
+          end
+          raw_body = ngx.encode_args(req_post)
+        end
+      end
+      if global_data_header then
+        if type(global_data_header) == 'table' then
+          local req_header = request.request['ARGS_HEADERS']()
+          for _,v in ipairs(global_data_header) do
+            if req_header[v] then
+              req_header[v] = '*'
+            end
+          end
+          raw_header = cjson.encode((req_header))
+        end
+      end
+    end    
   end
   local waf_log = {}
   waf_log['host'] = host
