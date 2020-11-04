@@ -111,15 +111,15 @@ Docker installation documentation: https://docs.docker.com/get-docker/
 
 #### Management center deployment
 
-1. docker pull jxwaf/jxwaf-mini-server:v20201102
-2. docker run -p 80:80 -d jxwaf/jxwaf-mini-server:v20201102
+1. docker pull jxwaf/jxwaf-mini-server:v20201104
+2. docker run -p 80:80 -d jxwaf/jxwaf-mini-server:v20201104
 3. Assuming that the Central Administration IP is 10.0.0.1, open URL http://10.0.0.1 to register, log in to the account after registration, and select the Semantic Engine version to load in the WAF Update-> Semantic Engine Update. In WAF Update-> Human Machine Identification Update, select The Human Machine Identification Version Load, and click Random KEY Update Loader Identification for KEY
 
 #### Node deployment
 
-1. docker pull jxwaf/jxwaf:v20201102
+1. docker pull jxwaf/jxwaf:v20201104
 2. Assuming that the Central Administration IP is 10.0.0.1, open URL http://10.0.0.1 to register, log in to your account after registration, and get "api key" and "api password" on the global configuration page managed by WAF
-3. docker run -p80:80 --env JXWAF_API_KEY=193b002d-5f3e-45a0-85d1-dba8f7c27b64 --env JXWAF_API_PASSWD=c7a648 c3-48f3-459a-bc93-1bbc7932f60e-env WAF_UPDATE_WEBSITE-http://10.0.0.1 jxwaf/jxwaf:v2020110
+3. docker run -p80:80 --env JXWAF_API_KEY=193b002d-5f3e-45a0-85d1-dba8f7c27b64 --env JXWAF_API_PASSWD=c7a648 c3-48f3-459a-bc93-1bbc7932f60e-env WAF_UPDATE_WEBSITE-http://10.0.0.1 jxwaf/jxwaf:v20201104
 4. The JXWAF_API_KEY provides a value of "api key" JXWAF_API_PASSWD as "api password" on the global configuration page, and WAF_UPDATE_WEBSITE is the address of the management center, assuming that the running container ID is efda21c02e72, the following command is executed and similar information is displayed.
 5. docker logs efda21c02e72
 

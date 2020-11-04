@@ -110,8 +110,8 @@ docker安装文档: https://docs.docker.com/get-docker/
 
 #### 管理中心部署
 
-1. docker pull jxwaf/jxwaf-mini-server:v20201102
-2. docker run -p 80:80 -d jxwaf/jxwaf-mini-server:v20201102
+1. docker pull jxwaf/jxwaf-mini-server:v20201104
+2. docker run -p 80:80 -d jxwaf/jxwaf-mini-server:v20201104
 3.  假设管理中心 IP 为 10.0.0.1,则打开网址 http://10.0.0.1 进行注册,注册完后登录账号,在 WAF 更新-> 语义引擎更新 中选择 语义引擎版本 加载。在 WAF 更新-> 人机识别更新 中 选择 人机识别版本 加载，同时点击 随机KEY 更新 加载人机识别对应的 KEY
 
 
@@ -119,9 +119,9 @@ docker安装文档: https://docs.docker.com/get-docker/
 
 #### 节点部署
 
-1. docker pull jxwaf/jxwaf:v20201102
+1. docker pull jxwaf/jxwaf:v20201104
 2. 假设管理中心 IP 为 10.0.0.1,则打开网址 http://10.0.0.1 进行注册,注册完后登录账号,在 WAF 管理下的全局配置页面获取"api key"和"api password"
-3. docker run -p80:80 --env JXWAF_API_KEY=193b002d-5f3e-45a0-85d1-dba8f7c27b64 --env JXWAF_API_PASSWD=c7a648c3-48f3-459a-bc93-1bbc7932f60e --env WAF_UPDATE_WEBSITE=http://10.0.0.1 jxwaf/jxwaf:v2020110
+3. docker run -p80:80 --env JXWAF_API_KEY=193b002d-5f3e-45a0-85d1-dba8f7c27b64 --env JXWAF_API_PASSWD=c7a648c3-48f3-459a-bc93-1bbc7932f60e --env WAF_UPDATE_WEBSITE=http://10.0.0.1 jxwaf/jxwaf:v20201104
 4. JXWAF_API_KEY 为全局配置页面中"api key"JXWAF_API_PASSWD 为"api password"的值，WAF_UPDATE_WEBSITE为管理中心的地址，假设运行后的容器ID为efda21c02e72，则执行下面命令后显示类似信息即正常运行。
 5. docker logs efda21c02e72
 
