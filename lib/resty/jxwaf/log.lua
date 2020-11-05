@@ -58,6 +58,10 @@ if log_host then
               req_post[v] = '*'
             end
           end
+          for k,v in ipairs(req_post) do
+            req_post[k] = nil
+            req_post[tostring(k)] = v
+          end
           raw_body = ngx.encode_args(req_post)
         else
           raw_body = '*'
@@ -99,6 +103,10 @@ if log_host then
             if req_post[v] then
               req_post[v] = '*'
             end
+          end
+          for k,v in ipairs(req_post) do
+            req_post[k] = nil
+            req_post[tostring(k)] = v
           end
           raw_body = ngx.encode_args(req_post)
         end
