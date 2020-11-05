@@ -177,7 +177,19 @@ local function _parse_request_body()
       waf_log['protection_info'] = "failed to decode json args :"..err
       ngx.ctx.waf_log = waf_log
       ngx.log(ngx.ERR,"failed to decode json args :",err)
-      exit_code.return_error()
+      --exit_code.return_error()
+      local post_args,err = ngx.req.get_post_args(200) or {}
+      if err == "truncated" then
+        local waf_log = {}
+        waf_log['log_type'] = "error"
+        waf_log['protection_type'] = "parse_request_body"
+        waf_log['protection_info'] = "failed to get post args: "..err
+        ngx.ctx.waf_log = waf_log
+        ngx.log(ngx.ERR,"failed to get post args: ", err)
+        exit_code.return_error()
+      end
+      ngx.ctx.parse_request_body = post_args
+      return post_args
 		end
 		local t = {}
 		t = _process_json_args(json_args)
