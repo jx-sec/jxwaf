@@ -45,7 +45,7 @@ if log_host then
               req_get[v] = '*'
             end
           end
-          raw_get = ngx.encode_args(req_get)
+          raw_get = cjson.encode(req_get)
         else
           raw_get = '*'
         end
@@ -58,11 +58,7 @@ if log_host then
               req_post[v] = '*'
             end
           end
-          for k,v in ipairs(req_post) do
-            req_post[k] = nil
-            req_post[tostring(k)] = v
-          end
-          raw_body = ngx.encode_args(req_post)
+          raw_body = cjson.encode(req_post)
         else
           raw_body = '*'
         end
@@ -76,7 +72,7 @@ if log_host then
               req_header[v] = '*'
             end
           end
-          raw_header = cjson.encode((req_header))
+          raw_header = cjson.encode(req_header)
         else
           raw_header = '*'
         end
@@ -93,7 +89,7 @@ if log_host then
               req_get[v] = '*'
             end
           end
-          raw_get = ngx.encode_args(req_get)
+          raw_get = cjson.encode(req_get)
         end
       end
       if global_data_post then
@@ -104,11 +100,7 @@ if log_host then
               req_post[v] = '*'
             end
           end
-          for k,v in ipairs(req_post) do
-            req_post[k] = nil
-            req_post[tostring(k)] = v
-          end
-          raw_body = ngx.encode_args(req_post)
+          raw_body = cjson.encode(req_post)
         end
       end
       if global_data_header then
@@ -119,7 +111,7 @@ if log_host then
               req_header[v] = '*'
             end
           end
-          raw_header = cjson.encode((req_header))
+          raw_header = cjson.encode(req_header)
         end
       end
     end    
