@@ -741,7 +741,7 @@ function _M.redirect_https()
     return
   end
   local host = ngx.var.host
-  local req_host = _update_waf_rule[host] or ngx.ctx.wildcard_host
+  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
 	if req_host and  req_host['domain_set']['redirect_https'] == "true"  then
     local force_https = {}
     force_https[1] = 'https://'
@@ -910,7 +910,7 @@ end
 
 function _M.jxcheck_protection()
   local host = ngx.var.host
-  local req_host = _update_waf_rule[host] or ngx.ctx.wildcard_host
+  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
   if req_host and  req_host['protection_set']['owasp_protection'] == "true" and _jxcheck then
     -- owasp_check
     local sql_check = req_host['owasp_check_set']['sql_check']
