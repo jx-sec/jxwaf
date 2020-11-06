@@ -11,9 +11,10 @@ local config_info = waf.get_config_info()
 local table_concat = table.concat
 local log_config = waf.get_log_config()
 local request = require "resty.jxwaf.request"
+local scheme = ngx.var.scheme
 
 
-if log_host then
+if log_host and log_host["domain_set"][scheme] == "true" then
   local localtime = ngx.localtime()
   local uuid = random_uuid.generate_random()
   local bytes_sent = ngx.var.bytes_sent or "-"
