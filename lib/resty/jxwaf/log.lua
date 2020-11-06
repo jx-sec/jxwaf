@@ -164,9 +164,7 @@ if log_host and log_host["domain_set"][scheme] == "true" then
     local ok,err = logger.init{
       host = log_config['log_ip'],
       port = tonumber(log_config['log_port']),
-      sock_type = "tcp",
-      flush_limit = 1,
-      pool_size = 100,
+      sock_type = "tcp"
     }
     if not ok then
       ngx.log(ngx.ERR,"failed to initialize the logger: ",err)
