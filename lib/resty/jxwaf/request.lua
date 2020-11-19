@@ -32,7 +32,7 @@ local function _get_headers()
   return t
 end
 
---[[
+
 local function _process_json_args(json_args,t)
         local t = t or {}
         if type(json_args) ~= "table" then
@@ -76,8 +76,8 @@ local function _process_json_args(json_args,t)
         end
         return t
 end
---]]
 
+--[[
 local function _process_json_args(json_args)
   local t = {}
   if type(json_args) ~= "table" then
@@ -113,7 +113,7 @@ local function _process_json_args(json_args)
   end
   return t 
 end
-
+--]]
 local function _parse_request_uri()
 	local t,err = ngx.req.get_uri_args(200)
   if err == "truncated" then
