@@ -48,6 +48,7 @@ local _auto_update = "true"
 local _auto_update_period = "60"
 local _waf_node_monitor = "true"
 local _waf_node_monitor_period = "60"
+local _jxwaf_website_default = {}
 
 local function _process_rule()
   for k,v in pairs(_update_waf_rule) do
@@ -78,6 +79,9 @@ function _M.get_update_waf_rule()
 	return _update_waf_rule
 end
 
+function _M.get_jxwaf_website_default()
+	return _jxwaf_website_default
+end
 
 local function _owasp_black_ip_stat(req_host,check_mode)
   if req_host['protection_set']['evil_ip_handle'] == "true" then
@@ -487,6 +491,11 @@ local function _global_update_rule()
       if res_body['log_conf']  then
         _log_conf = res_body['log_conf']
       end
+      
+      if res_body['jxwaf_website_default']  then
+        _jxwaf_website_default = res_body['jxwaf_website_default']
+      end
+      
       local waf_common_conf = ngx.shared.waf_common_conf
       local md5_succ, md5_err = waf_common_conf:set("md5",res_body['md5'])
       if md5_err then
@@ -579,6 +588,10 @@ local function _worker_update_rule()
     
     if res_body['log_conf']  then
       _log_conf = res_body['log_conf']
+    end
+    
+    if res_body['jxwaf_website_default']  then
+      _jxwaf_website_default = res_body['jxwaf_website_default']
     end
     
     _process_rule()
