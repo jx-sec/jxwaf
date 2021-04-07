@@ -51,14 +51,6 @@ local _waf_node_monitor = "true"
 local _waf_node_monitor_period = "60"
 local _jxwaf_website_default = {}
 
-local function _process_rule()
-  for k,v in pairs(_update_waf_rule) do
-    if v['domain_set'] and (v['domain_set']['enc_https'] == "true") then
-      local decrypt_private_key = _decrypt_https_key(v['domain_set']['private_key'])
-      _update_waf_rule[k]['domain_set']['private_key'] = decrypt_private_key
-    end
-  end
-end
 
 local function _sort_rules(a,b)
     if a.rule_level == b.rule_level then
@@ -141,7 +133,7 @@ local function _cc_black_ip_stat(req_host,check_mode)
         black_ip_info['protection_info'] = block_mode
         black_ip_info['protecion_handle'] = block_time
         if (block_mode == 'block' or block_mode == 'network_layer_block') and tonumber(block_time) > 0 then
-          attack_ip_check:set(ip_addr,cjson.encode(black_ip_info),tonumber(handle))
+          attack_ip_check:set(ip_addr,cjson.encode(black_ip_info),tonumber(block_time))
         end
         if (block_mode == 'block' or block_mode == 'network_layer_block') and tonumber(block_time) == 0 then
           attack_ip_check:set(ip_addr,cjson.encode(black_ip_info))
@@ -610,7 +602,7 @@ function _M.init_worker()
         local monitor_ok,monitor_err = ngx.timer.at(0,_momitor_update)
         if not monitor_ok then
           if monitor_err ~= "process exiting" then
-            ngx.log(ngx.ERR, "failed to create the init timer: ", init_err)
+            ngx.log(ngx.ERR, "failed to create the init timer: ", monitor_err)
           end
         end
       end
