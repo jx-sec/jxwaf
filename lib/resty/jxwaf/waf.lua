@@ -23,6 +23,7 @@ local tonumber = tonumber
 local type = type
 local string_lower = string.lower
 local process = require "ngx.process"
+local shell = require "resty.shell"
 local ngx_decode_base64 = ngx.decode_base64
 local aes = require "resty.aes"
 local _M = {}
