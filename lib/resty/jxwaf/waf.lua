@@ -587,7 +587,7 @@ local function _worker_update_rule()
       _jxwaf_website_default = res_body['jxwaf_website_default']
     end
     
-    _process_rule()
+    --_process_rule()
     _md5 = res_body['md5']
     ngx.log(ngx.ALERT,"worker config info md5 is ".._md5..",update config info success")
   end
