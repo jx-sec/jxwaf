@@ -76,6 +76,7 @@ def main(argv):
     print("try to connect jxwaf server auth api_key and api_password,result is "+str(req_result))
     if req_result ==  False:
         print "error message:"
+        print response.text
         print response.json()['message']
 if __name__ == '__main__':
     if len(sys.argv) == 1:
