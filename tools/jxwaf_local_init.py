@@ -74,6 +74,7 @@ def main(argv):
     req_result = response.json()['result']
     print "auth result:"
     print("try to connect jxwaf server auth api_key and api_password,result is "+str(req_result))
+    print response.text
     if req_result ==  False:
         print "error message:"
         print response.text
