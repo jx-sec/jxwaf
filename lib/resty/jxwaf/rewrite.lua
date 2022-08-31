@@ -25,7 +25,7 @@ if not req_host then
   if waf_group_domain_data[host] then
     local domain_data = waf_group_domain_data[host]
     local group_id =  waf_group_domain_data[host]['group_id']
-    local group_id_data = waf_group_id_data['group_id']
+    local group_id_data = waf_group_id_data[group_id]
     group_id_data['domain_data'] = domain_data
     req_host = group_id_data
     proxy_pass_https = waf_group_domain_data[host]['proxy_pass_https']
@@ -33,7 +33,7 @@ if not req_host then
     if waf_group_domain_data[wildcard_host] then
       local domain_data = waf_group_domain_data[wildcard_host]
       local group_id =  waf_group_domain_data[wildcard_host]['group_id']
-      local group_id_data = waf_group_id_data['group_id']
+      local group_id_data = waf_group_id_data[group_id]
       group_id_data['domain_data'] = domain_data
       req_host = group_id_data
       proxy_pass_https = waf_group_domain_data[wildcard_host]['proxy_pass_https']
