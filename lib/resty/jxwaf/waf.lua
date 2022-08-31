@@ -1,7 +1,6 @@
-require "resty.core"
 local cjson = require "cjson.safe"
 local request = require "resty.jxwaf.request"
-local transform = require "resty.jxwaf.transform"
+local preprocess = require "resty.jxwaf.preprocess"
 local operator = require "resty.jxwaf.operator"
 local resty_random = require "resty.random"
 local pairs = pairs
@@ -11,9 +10,7 @@ local table_sort = table.sort
 local table_concat = table.concat
 local http = require "resty.jxwaf.http"
 local upload = require "resty.upload"
-local limitreq = require "resty.jxwaf.limitreq"
-local iputils = require "resty.jxwaf.iputils"
-local exit_code = require "resty.jxwaf.exit_code"
+local unify_action = require "resty.jxwaf.unify_action"
 local uuid = require "resty.jxwaf.uuid"
 local ngx_md5 = ngx.md5
 local string_find = string.find
@@ -23,352 +20,103 @@ local tonumber = tonumber
 local type = type
 local string_lower = string.lower
 local process = require "ngx.process"
-local shell = require "resty.shell"
 local ngx_decode_base64 = ngx.decode_base64
-local aes = require "resty.aes"
+
 local _M = {}
-_M.version = "20200918"
+_M.version = "20220831"
 
-
-local _config_path = "/opt/jxwaf/nginx/conf/jxwaf/jxwaf_config.json"
-local _local_config_path = "/opt/jxwaf/nginx/conf/jxwaf/jxwaf_local_config.json"
-local _config_geo_path = "/opt/jxwaf/nginx/conf/jxwaf/GeoLite2-Country.mmdb"
-local _update_waf_rule = {}
 local _config_info = {}
-local _jxcheck = nil
-local _bot_check = nil
-local _md5 = ""
-local bot_check_standard_info = {}
-local bot_check_image_info = {}
-local bot_check_slipper_info = {}
-local bot_check_standard_key = {}
-local bot_check_image_key = {}
-local bot_check_slipper_key = {}
-local _log_conf = {}
-local _auto_update = "true"
-local _auto_update_period = "60"
-local _waf_node_monitor = "true"
-local _waf_node_monitor_period = "60"
-local _jxwaf_website_default = {}
-
-
-local function _sort_rules(a,b)
-    if a.rule_level == b.rule_level then
-      return tonumber(a.rule_id)<tonumber(b.rule_id)
-    else
-      return tonumber(a.rule_level)>tonumber(b.rule_level)
-    end
-end
-
-function _M.get_log_config()
-  return _log_conf
-end
+local _conf_md5 = ""
+local _name_list_item_conf_md5 = ""
+local _fail_update_period = "60"
+local _auto_update_period = "5"
+local _waf_node_monitor_period = "5"
+local _waf_domain_data = {}
+local _waf_group_domain_data = {}
+local _waf_group_id_data = {}
+local _sys_web_rule_protection_data = {}
+local _sys_web_white_rule_data = {}
+local _sys_flow_rule_protection_data = {}
+local _sys_flow_white_rule_data = {}
+local _sys_shared_dict_data = {}
+local _sys_name_list_data = {}
+local _sys_ssl_manage_data = {}
+local _sys_component_protection_data = {}
+local _sys_web_engine_protection_data = nil
+local _sys_flow_engine_protection_data = nil
+local _waf_global_name_list_data = {}
+local _waf_global_component_protection_data = {}
+local _waf_global_ssl_component_protection_data = {}
+local _waf_global_default_404_page_data = {}
+local _sys_name_list_item_data = {}
+local _sys_abnormal_handle_data = {}
+local _sys_global_default_page_data = {}
+local _sys_log_conf_data = {}
 
 function _M.get_config_info()
 	return _config_info
 end
 
-function _M.get_update_waf_rule()
-	return _update_waf_rule
+function _M.get_waf_domain_data()
+	return _waf_domain_data
 end
 
-function _M.get_jxwaf_website_default()
-	return _jxwaf_website_default
+function _M.get_waf_group_domain_data()
+	return _waf_group_domain_data
 end
 
-local function _owasp_black_ip_stat(req_host,check_mode)
-  if req_host['protection_set']['evil_ip_handle'] == "true" then
-    if req_host['evil_ip_handle_set']['block_option'][check_mode] then
-      local period = req_host['evil_ip_handle_set']['period']
-      local count = req_host['evil_ip_handle_set']['count']
-      local mode = req_host['evil_ip_handle_set']['mode']
-      local handle = req_host['evil_ip_handle_set']['handle']
-      local attack_ip_check = ngx.shared.black_owasp_attack_ip
-      local ip_addr = request.request['REMOTE_ADDR']()
-      local check_black_ip = {}
-      check_black_ip[1] = "owasp_black_ip"
-      check_black_ip[2] =  ip_addr
-      local key_check_black_ip = table_concat(check_black_ip)
-      local check_black_ip_count = attack_ip_check:incr(key_check_black_ip, 1, 0, tonumber(period)) 
-      if check_black_ip_count and check_black_ip_count > tonumber(count) then
-        local black_ip_info = {}
-        black_ip_info['protection_info'] = mode
-        black_ip_info['protecion_handle'] = handle
-        if (mode == 'block' ) and tonumber(handle) > 0 then
-          attack_ip_check:set(ip_addr,cjson.encode(black_ip_info),tonumber(handle))
-        end
-        if (mode == 'block' ) and tonumber(handle) == 0 then
-          attack_ip_check:set(ip_addr,cjson.encode(black_ip_info))
-        end
-        if mode == 'observe'  then
-          attack_ip_check:set(ip_addr,cjson.encode(black_ip_info))
-        end
-        local waf_log = {}
-        waf_log['log_type'] = "owasp_attack"
-        waf_log['protection_type'] = "black_ip-"..check_mode
-        waf_log['protection_info'] = "add_black_ip"
-        ngx.ctx.waf_log = waf_log
-      end
-    end
-  end
+function _M.get_waf_group_id_data()
+	return _waf_group_id_data
 end
 
-
-local function _cc_black_ip_stat(req_host,check_mode)
-  if req_host['protection_set']['cc_attack_ip_protection'] == "true" then
-    if req_host['cc_attack_ip_set']['block_option'][check_mode] then
-      local check_period = req_host['cc_attack_ip_set']['check_period']
-      local check_count = req_host['cc_attack_ip_set']['check_count']
-      local block_time = req_host['cc_attack_ip_set']['block_time']
-      local block_mode = req_host['cc_attack_ip_set']['block_mode']
-      local attack_ip_check = ngx.shared.black_cc_attack_ip
-      local ip_addr = request.request['REMOTE_ADDR']()
-      local check_black_ip = {}
-      check_black_ip[1] = "cc_black_ip"
-      check_black_ip[2] =  ip_addr
-      local key_check_black_ip = table_concat(check_black_ip)
-      local check_black_ip_count = attack_ip_check:incr(key_check_black_ip, 1, 0, tonumber(check_period)) 
-      if check_black_ip_count and check_black_ip_count > tonumber(check_count) then
-        local black_ip_info = {}
-        black_ip_info['protection_info'] = block_mode
-        black_ip_info['protecion_handle'] = block_time
-        if (block_mode == 'block' or block_mode == 'network_layer_block') and tonumber(block_time) > 0 then
-          attack_ip_check:set(ip_addr,cjson.encode(black_ip_info),tonumber(block_time))
-        end
-        if (block_mode == 'block' or block_mode == 'network_layer_block') and tonumber(block_time) == 0 then
-          attack_ip_check:set(ip_addr,cjson.encode(black_ip_info))
-        end
-        local waf_log = {}
-        waf_log['log_type'] = "cc_attack"
-        waf_log['protection_type'] = "black_ip-"..check_mode
-        waf_log['protection_info'] = "add_black_ip"
-        ngx.ctx.waf_log = waf_log
-      end
-    end
-  end
+function _M.get_sys_ssl_manage_data()
+	return _sys_ssl_manage_data
 end
 
-
-
-
-
-local function _process_request(var)
-	local t = request.request[var.rule_var]()
-	if type(t) ~= "string" and type(t) ~= "table" then
-    local waf_log = {}
-    waf_log['log_type'] = "error"
-    waf_log['protection_type'] = "process_request"
-    waf_log['protection_info'] = "run fail,can not decode http args ",type(t).."   "..var.rule_var
-    ngx.ctx.waf_log = waf_log
-		ngx.log(ngx.ERR,"run fail,can not decode http args ",type(t).."   "..var.rule_var)
-		ngx.log(ngx.ERR,ngx.req.raw_header())
-		exit_code.return_error()
-	end
-	if type(t) == "string" then
-		return t
-	end
-	
-	local rule_var = var.rule_var
-	if (rule_var == "ARGS_GET" or rule_var == "ARGS_POST" or rule_var == "ARGS_HEADERS" or rule_var == "ARGS_COOKIES" ) then
-		if( type(var.rule_specific) == "table" ) then
-			local specific_result = {}
-			for _,v in ipairs(var.rule_specific) do
-				local specific = t[v]
-				if specific ~= nil then
-					specific_result[v] = specific
-				end
-			end
-			return specific_result
-		end
-    
-		if( type(var.rule_ignore) == "table" ) then
-			local ignore_result = {}
-      for k,v in pairs(t) do
-				ignore_result[k] = v 
-			end
-			for _,v in ipairs(var.rule_ignore) do
-				ignore_result[string_lower(v)] = nil
-			end
-			return ignore_result
-		end				
-	end
-	
-	return t
+function _M.get_waf_global_name_list_data()
+	return _waf_global_name_list_data
 end
 
-
-
-function _M.process_request(var)
-	return _process_request(var)
+function _M.get_sys_name_list_item_data()
+	return _sys_name_list_item_data
 end
 
-
-
-local function _process_transform(process_request,rule_transform,var)
-  if type(process_request) ~= "string" and type(process_request) ~= "table" then
-    local waf_log = {}
-    waf_log['log_type'] = "error"
-    waf_log['protection_type'] = "process_transform"
-    waf_log['protection_info'] = "run fail,can not transfrom http args"
-    ngx.ctx.waf_log = waf_log
-    ngx.log(ngx.ERR,"run fail,can not transfrom http args")
-    exit_code.return_error()
-  end
-
-	if  type(rule_transform) ~= "table" then
-    local waf_log = {}
-    waf_log['log_type'] = "error"
-    waf_log['protection_type'] = "process_transform"
-    waf_log['protection_info'] = "run fail,can not decode config file,transfrom error"
-    ngx.ctx.waf_log = waf_log
-    ngx.log(ngx.ERR,"run fail,can not decode config file,transfrom error")
-    exit_code.return_error()
-  end
-
-	if type(process_request) == "string" then
-		local string_result = process_request
-		for _,v in ipairs(rule_transform) do
-			string_result = transform.request[v](string_result)				
-		end
-		return 	string_result
-	end
-
-	local result = {}
-	local rule_var = var.rule_var
-	if (rule_var == "ARGS_GET" or rule_var == "ARGS_POST" or rule_var == "ARGS_HEADERS" or rule_var == "ARGS_COOKIES" ) then
-		for k,v in pairs(process_request) do
-      if type(v) == "table" then
-      local _result_table = {}
-      for _,_v in ipairs(v) do
-        local _result = _v
-        for _,__v in ipairs(rule_transform) do
-          _result = transform.request[__v](_result)
-        end 
-        if type(_result) == "string" then
-          table_insert(_result_table,_result)
-        end
-      end
-      result[k] = _result_table
-      else
-        local _result = v
-        for _,_v in ipairs(rule_transform) do
-          _result = transform.request[_v](_result)
-        end
-        if type(_result) == "string" then
-          result[k] = _result
-        end
-      end
-    end
-	else
-		for _,v in ipairs(process_request) do
-			local _result = v
-			for _,_v in ipairs(rule_transform) do
-				_result = transform.request[_v](_result)
-			end
-			if type(_result) == "string" then
-				table_insert(result,_result)
-			end
-		end
-	end
-	return result 
+function _M.get_sys_name_list_data()
+	return _sys_name_list_data
 end
 
+function _M.get_sys_shared_dict_data()
+  return _sys_shared_dict_data
+end
 
-local function _process_operator( process_transform , match , var , rule )
-	local rule_operator = match.rule_operator
-	local rule_pattern = match.rule_pattern
-	local rule_var = var.rule_var
-	if type(process_transform) ~= "string" and type(process_transform) ~= "table" then
-    local waf_log = {}
-    waf_log['log_type'] = "error"
-    waf_log['protection_type'] = "process_operator"
-    waf_log['protection_info'] = "run fail,can not operator http args"
-    ngx.ctx.waf_log = waf_log
-		ngx.log(ngx.ERR,"run fail,can not operator http args")
-    exit_code.return_error()
-  end
-	if type(rule_operator) ~= "string" and type(rule_pattern) ~= "string" then
-    local waf_log = {}
-    waf_log['log_type'] = "error"
-    waf_log['protection_type'] = "process_operator"
-    waf_log['protection_info'] = "rule_operator and rule_pattern error"
-    ngx.ctx.waf_log = waf_log
-		ngx.log(ngx.ERR,"rule_operator and rule_pattern error")
-		exit_code.return_error()
-	end
-	
-	if type(process_transform) == "string" then
-		local result ,value
-		result,value = operator.request[rule_operator](process_transform,rule_pattern)
-		if result  then
-			return result,value,rule_var
-		else
-			return result
-		end
-	end
+function _M.get_sys_abnormal_handle_data()
+	return _sys_abnormal_handle_data
+end
 
-	if (rule_var == "ARGS_GET" or rule_var == "ARGS_POST" or rule_var == "ARGS_HEADERS" or rule_var == "ARGS_COOKIES" ) then
-		for k,v in pairs(process_transform) do
-			if type(v) == "table" then
-        --[[
-        if #v > 10 then
-          local rule_log = request.request['HTTP_FULL_INFO']()
-          rule_log['log_type'] = "protection_log"
-          rule_log['protection_type'] = "error_request"
-          rule_log['protection_info'] = "error_request"
-          ngx.ctx.rule_log = rule_log
-          exit_code.return_exit()
-        end
-        --]]
-				for _,_v in ipairs(v) do
-					local result,value
-					result,value = operator.request[rule_operator](_v,rule_pattern)	
-					if result  then
-						return result,value,k
-					end
-				end
-			else
-				local result,value
-				result,value = operator.request[rule_operator](v,rule_pattern) 
-        if result  then
-          return result,value,k
-        end
-			end
-		end	
-	else
-		for _,v in ipairs(process_transform) do
-			local result,value
-			result,value = operator.request[rule_operator](v,rule_pattern)
-			if result  then
-				return result,value,rule_var
-			end
-		end
-	end
-	return false
+function _M.get_sys_log_conf_data()
+	return _sys_log_conf_data
 end
 
 local function _update_at(auto_update_period,global_update_rule)
-    if _auto_update == "true" then
-      local global_ok, global_err = ngx.timer.at(tonumber(auto_update_period),global_update_rule)
-      if not global_ok then
-        if global_err ~= "process exiting" then
-          ngx.log(ngx.ERR, "failed to create the cycle timer: ", global_err)
-        end
-      end
+  local global_ok, global_err = ngx.timer.at(tonumber(auto_update_period),global_update_rule)
+  if not global_ok then
+    if global_err ~= "process exiting" then
+      ngx.log(ngx.ERR, "failed to create the cycle timer: ", global_err)
     end
+  end
 end
 
 local function _momitor_update()
-    local _update_website  =  _config_info.waf_monitor_website or "https://update2.jxwaf.com/waf_monitor"
+    local _update_website  =  _config_info.waf_monitor_website
     local httpc = http.new()
-    httpc:set_timeouts(5000, 5000, 30000)
-    local api_key = _config_info.waf_api_key or ""
-    local api_password = _config_info.waf_api_password or ""
-    local server_info = _config_info.server_info or ""
-    local waf_node_uuid = _config_info.waf_node_uuid or ""
+    local post_data = {}
+    post_data['api_key'] = _config_info.waf_api_key 
+    post_data['api_password'] = _config_info.waf_api_password
+    post_data['waf_node_uuid'] = _config_info.waf_node_uuid  
+    post_data['waf_node_hostname'] = _config_info.waf_node_hostname   
     local res, err = httpc:request_uri( _update_website , {
         method = "POST",
-        body = "api_key="..api_key.."&api_password="..api_password.."&waf_node_uuid="..waf_node_uuid.."&server_info="..server_info,
+        body = cjson.encode(post_data),
         headers = {
         ["Content-Type"] = "application/x-www-form-urlencoded",
         }
@@ -386,131 +134,295 @@ local function _momitor_update()
       ngx.log(ngx.ERR,"init fail,failed to request, ",res_body['message'])
       return _update_at(tonumber(_auto_update_period),_momitor_update)
     end
-    _waf_node_monitor = res_body['waf_node_monitor'] or _waf_node_monitor
-    if _waf_node_monitor == "true" then
-      local global_ok, global_err = ngx.timer.at(tonumber(_waf_node_monitor_period),_momitor_update)
-      if not global_ok then
-        if global_err ~= "process exiting" then
-          ngx.log(ngx.ERR, "failed to create the cycle timer: ", global_err)
-        end
+    local global_ok, global_err = ngx.timer.at(tonumber(_waf_node_monitor_period),_momitor_update)
+    if not global_ok then
+      if global_err ~= "process exiting" then
+        ngx.log(ngx.ERR, "failed to create the cycle timer: ", global_err)
       end
     end
-    ngx.log(ngx.ALERT,"monitor report success")
+   -- ngx.log(ngx.ALERT,"monitor report success")
 end
 
-
-
 local function _global_update_rule()
-    local _update_website  =  _config_info.waf_update_website or "https://update2.jxwaf.com/yun/waf_update"
+    local _update_website  =  _config_info.waf_update_website
     local httpc = http.new()
     httpc:set_timeouts(5000, 5000, 30000)
     local api_key = _config_info.waf_api_key or ""
     local api_password = _config_info.waf_api_password or ""
+    local post_data = {}
+    post_data['api_key'] = api_key
+    post_data['api_password'] = api_password
+    post_data['conf_md5'] = _conf_md5 
+    post_data['waf_node_uuid'] = _config_info.waf_node_uuid
     local res, err = httpc:request_uri( _update_website , {
         method = "POST",
-        body = "api_key="..api_key.."&api_password="..api_password.."&md5=".._md5,
-        headers = {
-        ["Content-Type"] = "application/x-www-form-urlencoded",
-        }
+        body = cjson.encode(post_data)
     })
+  
     if not res then
       ngx.log(ngx.ERR,"failed to request: ", err)
-      return _update_at(tonumber(_auto_update_period),_global_update_rule)
+      ngx.log(ngx.ERR,"60 seconds and try again ")
+      return _update_at(tonumber(_fail_update_period),_global_update_rule)
     end
+    
 		local res_body = cjson.decode(res.body)
 		if not res_body then
       ngx.log(ngx.ERR,"init fail,failed to decode resp body " )
-      return _update_at(tonumber(_auto_update_period),_global_update_rule)
+      ngx.log(ngx.ERR,"60 seconds and try again ")
+      return _update_at(tonumber(_fail_update_period),_global_update_rule)
 		end
-    if  res_body['result'] == false then
+    
+    if  res_body['result'] ~= true  then
       ngx.log(ngx.ERR,"init fail,failed to request, ",res_body['message'])
-      return _update_at(tonumber(_auto_update_period),_global_update_rule)
+      ngx.log(ngx.ERR,"60 seconds and try again ")
+      return _update_at(tonumber(_fail_update_period),_global_update_rule)
     end
-    if not res_body['no_update'] then
-      local tmp_waf_rule = res_body['waf_rule']
-      if tmp_waf_rule == nil  then
-        ngx.log(ngx.ERR,"init fail,can not decode waf rule")
-        return _update_at(tonumber(_auto_update_period),_global_update_rule)
+    
+    if not res_body['configure_without_change'] then
+      
+      local waf_conf_data = ngx.shared.waf_conf_data
+      
+      local waf_domain_data = res_body['waf_domain_data'] 
+      if waf_domain_data == nil then
+        ngx.log(ngx.ERR,"waf_domain_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+      
+      local waf_group_domain_data = res_body['waf_group_domain_data'] 
+      if waf_group_domain_data == nil   then
+        ngx.log(ngx.ERR,"waf_group_domain_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+      
+      local waf_group_id_data = res_body['waf_group_id_data'] 
+      if waf_group_id_data == nil then
+        ngx.log(ngx.ERR,"waf_group_domain_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+      
+      local sys_web_rule_protection_data = res_body['sys_web_rule_protection_data'] 
+      if sys_web_rule_protection_data == nil then
+        ngx.log(ngx.ERR,"sys_web_rule_protection_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+      
+      local sys_web_white_rule_data = res_body['sys_web_white_rule_data'] 
+      if sys_web_white_rule_data == nil then
+        ngx.log(ngx.ERR,"sys_web_white_rule_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+      
+      local sys_flow_rule_protection_data = res_body['sys_flow_rule_protection_data'] 
+      if sys_flow_rule_protection_data == nil then
+        ngx.log(ngx.ERR,"sys_flow_rule_protection_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+      
+      local sys_flow_white_rule_data = res_body['sys_flow_white_rule_data'] 
+      if sys_flow_white_rule_data == nil then
+        ngx.log(ngx.ERR,"sys_flow_white_rule_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+      
+      local sys_shared_dict_data = res_body['sys_shared_dict_data'] 
+      if sys_shared_dict_data == nil then
+        ngx.log(ngx.ERR,"sys_shared_dict_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+      
+      local sys_name_list_data = res_body['sys_name_list_data'] 
+      if sys_name_list_data == nil then
+        ngx.log(ngx.ERR,"sys_name_list_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+      
+      local sys_ssl_manage_data = res_body['sys_ssl_manage_data'] 
+      if sys_ssl_manage_data == nil then
+        ngx.log(ngx.ERR,"sys_ssl_manage_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+      
+      local waf_global_name_list_data = res_body['waf_global_name_list_data'] 
+      if waf_global_name_list_data == nil then
+        ngx.log(ngx.ERR,"waf_global_name_list_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+      
+      local waf_global_component_protection_data = res_body['waf_global_component_protection_data'] 
+      if waf_global_component_protection_data == nil then
+        ngx.log(ngx.ERR,"waf_global_component_protection_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+      
+      local sys_web_engine_protection_data = res_body['sys_web_engine_protection_data'] 
+      if sys_web_engine_protection_data == nil then
+        ngx.log(ngx.ERR,"sys_web_engine_protection_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+      local load_sys_web_engine_protection_data = loadstring(ngx.decode_base64(res_body['sys_web_engine_protection_data']))()
+      if load_sys_web_engine_protection_data then
+        _sys_web_engine_protection_data = load_sys_web_engine_protection_data 
       else
-        _update_waf_rule = tmp_waf_rule
+        ngx.log(ngx.ERR,"load_sys_web_engine_protection_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
       end
       
-      if _update_waf_rule == nil  then
-        ngx.log(ngx.ERR,"init fail,can not decode waf rule")
-        return _update_at(tonumber(_auto_update_period),_global_update_rule)
+      local sys_flow_engine_protection_data = res_body['sys_flow_engine_protection_data'] 
+      if sys_flow_engine_protection_data == nil then
+        ngx.log(ngx.ERR,"sys_flow_engine_protection_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
       end
-      for k,v in pairs(_update_waf_rule) do
-        if type(v['custom_rule_set']) == "table" then
-        table_sort(v['custom_rule_set'],_sort_rules)
-        _update_waf_rule[k] = v 
-        end
-      end
-      if res_body['jxcheck']  then
-        local load_jxcheck = loadstring(ngx.decode_base64(res_body['jxcheck']))()
-        if load_jxcheck then
-          _jxcheck =  load_jxcheck
-        end
-      end
-      if res_body['botcheck']  then
-        local load_botcheck = loadstring(ngx.decode_base64(res_body['botcheck']))()
-        if load_botcheck then
-          _bot_check =  load_botcheck
-        end
-      end
-      if res_body['bot_auth_key'] then
-        local bot_check_info = res_body['bot_auth_key']
-        bot_check_standard_info = bot_check_info['standard']
-        bot_check_image_info = bot_check_info['image']
-        bot_check_slipper_info = bot_check_info['slipper']
-        local standard_key = {}
-        local slipper_key = {}
-        local image_key = {}
-        for k,_ in pairs(bot_check_standard_info) do
-          table.insert(standard_key,k)
-        end
-        bot_check_standard_key = standard_key
-        for k,_ in pairs(bot_check_slipper_info) do
-          table.insert(slipper_key,k)
-        end
-        bot_check_slipper_key = slipper_key 
-        for k,_ in pairs(bot_check_image_info) do
-          table.insert(image_key,k)
-        end
-        bot_check_image_key = image_key
-        ngx.log(ngx.ALERT, "bot check standard key count is ",#bot_check_standard_key)
-        ngx.log(ngx.ALERT, "bot check key image count is ",#bot_check_slipper_key)
-        ngx.log(ngx.ALERT, "bot check key slipper count is ",#bot_check_image_key)
-      end
-      if res_body['log_conf']  then
-        _log_conf = res_body['log_conf']
+      local load_sys_flow_engine_protection_data = loadstring(ngx.decode_base64(res_body['sys_flow_engine_protection_data']))()
+      if load_sys_flow_engine_protection_data then
+        _sys_flow_engine_protection_data = load_sys_flow_engine_protection_data 
+      else
+        ngx.log(ngx.ERR,"load_sys_flow_engine_protection_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
       end
       
-      if res_body['jxwaf_website_default']  then
-        _jxwaf_website_default = res_body['jxwaf_website_default']
+      local sys_global_default_page_data = res_body['sys_global_default_page_data'] 
+      if sys_global_default_page_data == nil then
+        ngx.log(ngx.ERR,"sys_global_default_page_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
       end
       
-      local waf_common_conf = ngx.shared.waf_common_conf
-      local md5_succ, md5_err = waf_common_conf:set("md5",res_body['md5'])
+      local sys_abnormal_handle_data = res_body['sys_abnormal_handle_data'] 
+      if sys_abnormal_handle_data == nil then
+        ngx.log(ngx.ERR,"sys_abnormal_handle_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+      
+      local sys_log_conf_data = res_body['sys_log_conf_data'] 
+      if sys_log_conf_data == nil then
+        ngx.log(ngx.ERR,"sys_log_conf_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+      
+      local sys_component_protection_data = res_body['sys_component_protection_data'] 
+      if sys_component_protection_data == nil then
+        ngx.log(ngx.ERR,"sys_component_protection_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+      for k,v in pairs(sys_component_protection_data) do 
+        local load_sys_component_protection_data = loadstring(ngx.decode_base64(v))()
+        if load_sys_component_protection_data then
+          _sys_component_protection_data[k] = load_sys_component_protection_data
+        else
+          ngx.log(ngx.ERR,"init fail,can not decode load_sys_component_protection_data,uuid is "..k)
+          return _update_at(tonumber(_fail_update_period),_global_update_rule)
+        end 
+      end
+      
+      
+      local md5_succ, md5_err = waf_conf_data:set("conf_md5",res_body['conf_md5'])
       if md5_err then
-        ngx.log(ngx.ERR,"init fail,can not set waf_common_conf md5")
+        ngx.log(ngx.ERR,"init fail,can not set waf_conf_data md5")
         return _update_at(tonumber(_auto_update_period),_global_update_rule)
       end
-      local res_body_succ, res_body_err = waf_common_conf:set("res_body",res.body)
+      
+      local res_body_succ, res_body_err = waf_conf_data:set("res_body",res.body)
       if res_body_err then
-        ngx.log(ngx.ERR,"init fail,can not set waf_common_conf res_body")
+        ngx.log(ngx.ERR,"init fail,can not set waf_conf_data res_body")
         return _update_at(tonumber(_auto_update_period),_global_update_rule)
       end
-      _md5 = res_body['md5']
-      ngx.log(ngx.ALERT,"global config info md5 is ".._md5..",update config info success")
+      
+      _conf_md5 = res_body['conf_md5']
+      ngx.log(ngx.ALERT,"global config info md5 is ".._conf_md5..",update config info success")
     end
-    _auto_update = res_body['auto_update'] or _auto_update
+    
     _auto_update_period = res_body['auto_update_period'] or _auto_update_period
-    if _auto_update == "true" then
-      local global_ok, global_err = ngx.timer.at(tonumber(_auto_update_period),_global_update_rule)
-      if not global_ok then
-        if global_err ~= "process exiting" then
-          ngx.log(ngx.ERR, "failed to create the cycle timer: ", global_err)
-        end
+    local global_ok, global_err = ngx.timer.at(tonumber(_auto_update_period),_global_update_rule)
+    if not global_ok then
+      if global_err ~= "process exiting" then
+        ngx.log(ngx.ERR, "failed to create the cycle timer: ", global_err)
+      end
+    end
+end
+
+local function _global_name_list_item_update()
+  local _name_list_item_update_website  =  _config_info.waf_name_list_item_update_website
+  local httpc = http.new()
+  httpc:set_timeouts(5000, 5000, 30000)
+  local api_key = _config_info.waf_api_key or ""
+  local api_password = _config_info.waf_api_password or ""
+  local post_data = {}
+  post_data['api_key'] = api_key
+  post_data['api_password'] = api_password
+  post_data['conf_md5'] = _name_list_item_conf_md5
+  post_data['waf_node_uuid'] = _config_info.waf_node_uuid
+  local res, err = httpc:request_uri( _name_list_item_update_website , {
+    method = "POST",
+    body = cjson.encode(post_data)
+  })
+  if not res then
+    ngx.log(ngx.ERR,"failed to request: ", err)
+    ngx.log(ngx.ERR,"60 seconds and try again ")
+    return _update_at(tonumber(_fail_update_period),_global_name_list_item_update)
+  end
+  
+  local res_body = cjson.decode(res.body)
+  if not res_body then
+    ngx.log(ngx.ERR,"init fail,failed to decode resp body " )
+    ngx.log(ngx.ERR,"60 seconds and try again ")
+    return _update_at(tonumber(_fail_update_period),_global_name_list_item_update)
+  end
+    
+  if  res_body['result'] ~= true  then
+    ngx.log(ngx.ERR,"init fail,failed to request, ",res_body['message'])
+    ngx.log(ngx.ERR,"60 seconds and try again ")
+    return _update_at(tonumber(_fail_update_period),_global_name_list_item_update)
+  end
+  
+  if not res_body['configure_without_change'] then
+      local waf_conf_data = ngx.shared.waf_conf_data
+      local sys_name_list_item_data = res_body['sys_name_list_item_data'] 
+      if sys_name_list_item_data == nil then
+        ngx.log(ngx.ERR,"sys_name_list_item_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_name_list_item_update)
+      end
+
+      local md5_succ, md5_err = waf_conf_data:set("name_list_item_conf_md5",res_body['conf_md5'])
+      if md5_err then
+        ngx.log(ngx.ERR,"init fail,can not set waf_conf_data md5")
+        return _update_at(tonumber(_auto_update_period),_global_name_list_item_update)
+      end
+      
+      local res_body_succ, res_body_err = waf_conf_data:set("name_list_item_res_body",res.body)
+      if res_body_err then
+        ngx.log(ngx.ERR,"init fail,can not set waf_conf_data name_list_res_body")
+        return _update_at(tonumber(_auto_update_period),_global_name_list_item_update)
+      end
+      
+      _name_list_item_conf_md5 = res_body['conf_md5']
+      ngx.log(ngx.ALERT,"global name_list config info md5 is ".._name_list_item_conf_md5..",update config info success")
+    end
+    
+    _auto_update_period = res_body['auto_update_period'] or _auto_update_period
+    local global_ok, global_err = ngx.timer.at(tonumber(_auto_update_period),_global_name_list_item_update)
+    if not global_ok then
+      if global_err ~= "process exiting" then
+        ngx.log(ngx.ERR, "failed to create the cycle timer: ", global_err)
       end
     end
 end
@@ -518,117 +430,239 @@ end
 
 
 local function _worker_update_rule()
-  local waf_common_conf = ngx.shared.waf_common_conf
-  local md5 = waf_common_conf:get("md5")
-  if md5 and md5 ~= _md5 then
-    local tmp_res_body = waf_common_conf:get("res_body")
+  local waf_conf_data = ngx.shared.waf_conf_data
+  
+  local conf_md5 = waf_conf_data:get("conf_md5")
+  if conf_md5 and conf_md5 ~= _conf_md5 then
+    local tmp_res_body = waf_conf_data:get("res_body")
+    if not tmp_res_body then
+      ngx.log(ngx.ERR,"worker error,init fail,failed to get resp body " )
+    end
     local res_body = cjson.decode(tmp_res_body)
 		if not res_body then
       ngx.log(ngx.ERR,"worker error,init fail,failed to decode resp body " )
 		end
-    local tmp_waf_rule = res_body['waf_rule']
-    if tmp_waf_rule == nil  then
-      ngx.log(ngx.ERR,"init fail,can not decode waf rule")
+
+    local waf_domain_data = res_body['waf_domain_data']
+    if waf_domain_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode waf_domain_data")
     else
-      _update_waf_rule = tmp_waf_rule
+      _waf_domain_data = waf_domain_data
     end
 
-    for k,v in pairs(_update_waf_rule) do
-      if type(v['custom_rule_set']) == "table" then
-      table_sort(v['custom_rule_set'],_sort_rules)
-      _update_waf_rule[k] = v 
+    local waf_group_domain_data = res_body['waf_group_domain_data']
+    if waf_group_domain_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode waf_group_domain_data")
+    else
+      _waf_group_domain_data = waf_group_domain_data
+    end
+    
+    local waf_group_id_data = res_body['waf_group_id_data']
+    if waf_group_id_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode waf_group_id_data")
+    else
+      _waf_group_id_data = waf_group_id_data
+    end
+    
+    local sys_web_rule_protection_data = res_body['sys_web_rule_protection_data']
+    if sys_web_rule_protection_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode sys_web_rule_protection_data")
+    else
+      _sys_web_rule_protection_data = sys_web_rule_protection_data
+    end
+    
+    local sys_web_white_rule_data = res_body['sys_web_white_rule_data']
+    if sys_web_white_rule_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode sys_web_white_rule_data")
+    else
+      _sys_web_white_rule_data = sys_web_white_rule_data
+    end
+    
+    local sys_flow_rule_protection_data = res_body['sys_flow_rule_protection_data']
+    if sys_flow_rule_protection_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode sys_flow_rule_protection_data")
+    else
+      _sys_flow_rule_protection_data = sys_flow_rule_protection_data
+    end
+    
+    local sys_flow_white_rule_data = res_body['sys_flow_white_rule_data']
+    if sys_flow_white_rule_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode sys_flow_white_rule_data")
+    else
+      _sys_flow_white_rule_data = sys_flow_white_rule_data
+    end
+    
+    local sys_shared_dict_data = res_body['sys_shared_dict_data']
+    if sys_shared_dict_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode sys_shared_dict_data")
+    else
+      _sys_shared_dict_data = sys_shared_dict_data
+    end
+    
+    local sys_name_list_data = res_body['sys_name_list_data']
+    if sys_name_list_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode sys_name_list_data")
+    else
+      _sys_name_list_data = sys_name_list_data
+    end
+    
+    local sys_ssl_manage_data = res_body['sys_ssl_manage_data']
+    if sys_ssl_manage_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode sys_ssl_manage_data")
+    else
+      _sys_ssl_manage_data = sys_ssl_manage_data
+    end
+    
+    local waf_global_name_list_data = res_body['waf_global_name_list_data']
+    if waf_global_name_list_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode waf_global_name_list_data")
+    else
+      _waf_global_name_list_data = waf_global_name_list_data
+    end
+    
+    local waf_global_component_protection_data = res_body['waf_global_component_protection_data']    
+    if waf_global_component_protection_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode waf_global_component_protection_data")
+    else
+      _waf_global_component_protection_data = waf_global_component_protection_data
+    end
+    
+    local sys_web_engine_protection_data = res_body['sys_web_engine_protection_data'] 
+    if sys_web_engine_protection_data == nil then
+      ngx.log(ngx.ERR,"init fail,can not decode sys_web_engine_protection_data")
+    end
+    local load_sys_web_engine_protection_data = loadstring(ngx.decode_base64(res_body['sys_web_engine_protection_data']))()
+    if load_sys_web_engine_protection_data then
+      _sys_web_engine_protection_data = load_sys_web_engine_protection_data 
+    else
+      ngx.log(ngx.ERR,"init fail,can not decode load_sys_web_engine_protection_data")
+    end
+      
+    local sys_flow_engine_protection_data = res_body['sys_flow_engine_protection_data'] 
+    if sys_flow_engine_protection_data == nil then
+      ngx.log(ngx.ERR,"init fail,can not decode sys_flow_engine_protection_data")
+    end
+    local load_sys_flow_engine_protection_data = loadstring(ngx.decode_base64(res_body['sys_flow_engine_protection_data']))()
+    if load_sys_flow_engine_protection_data then
+      _sys_flow_engine_protection_data = load_sys_flow_engine_protection_data 
+    else
+      ngx.log(ngx.ERR,"init fail,can not decode load_sys_flow_engine_protection_data")
+    end
+    
+    local sys_global_default_page_data = res_body['sys_global_default_page_data']
+    if sys_global_default_page_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode sys_abnormal_request_handle_data")
+    else
+      _sys_global_default_page_data = sys_global_default_page_data
+    end
+    local sys_abnormal_handle_data = res_body['sys_abnormal_handle_data']
+    if sys_abnormal_handle_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode sys_abnormal_handle_data")
+    else
+      _sys_abnormal_handle_data = sys_abnormal_handle_data
+    end
+    
+    local sys_log_conf_data = res_body['sys_log_conf_data']
+    if sys_log_conf_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode sys_log_conf_data")
+    else
+      _sys_log_conf_data = sys_log_conf_data
+    end
+    local sys_component_protection_data = res_body['sys_component_protection_data']
+    if sys_component_protection_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode sys_component_protection_data")
+    else
+      for k,v in pairs(sys_component_protection_data) do 
+        local load_sys_component_protection_data = loadstring(ngx.decode_base64(v))()
+        if load_sys_component_protection_data then
+          _sys_component_protection_data[k] = load_sys_component_protection_data
+        else
+          ngx.log(ngx.ERR,"init fail,can not decode load_sys_component_protection_data,uuid is "..k)
+        end 
       end
     end
     
-    if res_body['jxcheck']  then
-      local load_jxcheck = loadstring(ngx.decode_base64(res_body['jxcheck']))()
-      if load_jxcheck then
-        _jxcheck =  load_jxcheck
-      end
-    end
-    
-    if res_body['botcheck']  then
-      local load_botcheck = loadstring(ngx.decode_base64(res_body['botcheck']))()
-      if load_botcheck then
-        _bot_check =  load_botcheck
-      end
-    end
-
-    if res_body['bot_auth_key'] then
-      local bot_check_info = res_body['bot_auth_key']
-      bot_check_standard_info = bot_check_info['standard']
-      bot_check_image_info = bot_check_info['image']
-      bot_check_slipper_info = bot_check_info['slipper']
-      local standard_key = {}
-      local slipper_key = {}
-      local image_key = {}
-      for k,_ in pairs(bot_check_standard_info) do
-        table.insert(standard_key,k)
-      end
-      bot_check_standard_key = standard_key
-      for k,_ in pairs(bot_check_slipper_info) do
-        table.insert(slipper_key,k)
-      end
-      bot_check_slipper_key = slipper_key 
-      for k,_ in pairs(bot_check_image_info) do
-        table.insert(image_key,k)
-      end
-      bot_check_image_key = image_key
-      ngx.log(ngx.ALERT, "bot check standard key count is ",#bot_check_standard_key)
-      ngx.log(ngx.ALERT, "bot check key image count is ",#bot_check_slipper_key)
-      ngx.log(ngx.ALERT, "bot check key slipper count is ",#bot_check_image_key)
-    end
-    
-    if res_body['log_conf']  then
-      _log_conf = res_body['log_conf']
-    end
-    
-    if res_body['jxwaf_website_default']  then
-      _jxwaf_website_default = res_body['jxwaf_website_default']
-    end
-    
-    --_process_rule()
-    _md5 = res_body['md5']
-    ngx.log(ngx.ALERT,"worker config info md5 is ".._md5..",update config info success")
+    _conf_md5 = res_body['conf_md5']
+    ngx.log(ngx.ALERT,"worker config info md5 is ".._conf_md5..",update config info success")
   end
+  
+end
 
+local function _worker_name_list_item_update()
+  local waf_conf_data = ngx.shared.waf_conf_data
+  
+  local name_list_item_conf_md5 = waf_conf_data:get("name_list_item_conf_md5")
+  if name_list_item_conf_md5 and name_list_item_conf_md5 ~= _name_list_item_conf_md5 then
+    local tmp_res_body = waf_conf_data:get("name_list_item_res_body")
+    if not tmp_res_body then
+      ngx.log(ngx.ERR,"worker error,init fail,failed to get resp body " )
+    end
+    local res_body = cjson.decode(tmp_res_body)
+		if not res_body then
+      ngx.log(ngx.ERR,"worker error,init fail,failed to decode resp body " )
+		end
+
+    local sys_name_list_item_data = res_body['sys_name_list_item_data']
+    if sys_name_list_item_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode sys_name_list_item_data")
+    else
+      _sys_name_list_item_data = sys_name_list_item_data
+    end
+
+    _name_list_item_conf_md5 = res_body['conf_md5']
+    ngx.log(ngx.ALERT,"worker name_list config info md5 is ".._name_list_item_conf_md5..",update config info success")
+  end
+  
 end
 
 
 function _M.init_worker()
-	if _config_info.waf_local == "false" then
-    if process.type() == "privileged agent" then
-      if _config_info.waf_node_monitor == "true" then
-        local monitor_ok,monitor_err = ngx.timer.at(0,_momitor_update)
-        if not monitor_ok then
-          if monitor_err ~= "process exiting" then
-            ngx.log(ngx.ERR, "failed to create the init timer: ", monitor_err)
-          end
-        end
+  if process.type() == "privileged agent" then
+    local monitor_ok,monitor_err = ngx.timer.at(0,_momitor_update)
+    if not monitor_ok then
+      if monitor_err ~= "process exiting" then
+        ngx.log(ngx.ERR, "failed to create the init timer: ", monitor_err)
       end
-      local init_ok,init_err = ngx.timer.at(0,_global_update_rule)
-      if not init_ok then
-        if init_err ~= "process exiting" then
-          ngx.log(ngx.ERR, "failed to create the init timer: ", init_err)
-        end
+    end
+    local init_ok,init_err = ngx.timer.at(0,_global_update_rule)
+    if not init_ok then
+      if init_err ~= "process exiting" then
+        ngx.log(ngx.ERR, "failed to create the init global timer: ", init_err)
       end
-    else
-      local worker_init_ok,worker_init_err = ngx.timer.at(0,_worker_update_rule)
-      if not worker_init_ok then
-        if worker_init_err ~= "process exiting" then
-          ngx.log(ngx.ERR, "failed to create the init timer: ", worker_init_err)
-        end
+    end
+    local name_list_init_ok,name_list_init_err = ngx.timer.at(0,_global_name_list_item_update)
+    if not name_list_init_ok then
+      if name_list_init_err ~= "process exiting" then
+        ngx.log(ngx.ERR, "failed to create the  name_list init global timer: ", init_err)
       end
-      local hdl, err = ngx.timer.every(5,_worker_update_rule)
-      if err then
-          ngx.log(ngx.ERR, "failed to create the worker update timer: ", err)
+    end
+  else
+    local worker_init_ok,worker_init_err = ngx.timer.at(0,_worker_update_rule)
+    if not worker_init_ok then
+      if worker_init_err ~= "process exiting" then
+        ngx.log(ngx.ERR, "failed to create the init worker timer: ", worker_init_err)
       end
+    end
+    local hdl, err = ngx.timer.every(3,_worker_update_rule)
+    if err then
+      ngx.log(ngx.ERR, "failed to create the worker update timer: ", err)
+    end
+    
+    local name_list_item_worker_init_ok,name_list_item_worker_init_err = ngx.timer.at(0,_worker_name_list_item_update)
+    if not name_list_item_worker_init_ok then
+      if name_list_item_worker_init_err ~= "process exiting" then
+        ngx.log(ngx.ERR, "failed to create the init name_list worker timer: ", name_list_item_worker_init_err)
+      end
+    end
+    local name_list_item_hdl, name_list_item_err = ngx.timer.every(3,_worker_name_list_item_update)
+    if name_list_item_err then
+      ngx.log(ngx.ERR, "failed to create the name_list worker update timer: ", name_list_item_err)
     end
   end
 end
 
 function _M.init(config_path)
-	local init_config_path = config_path or _config_path
+	local init_config_path = config_path 
 	local read_config = assert(io.open(init_config_path,'r+'))
 	local raw_config_info = read_config:read('*all')
   read_config:close()
@@ -645,7 +679,6 @@ function _M.init(config_path)
     write_config:close()
   end
 	_config_info = config_info
-  iputils.enable_lrucache()
   local ok, err = process.enable_privileged_agent()
   if not ok then
     ngx.log(ngx.ERR, "enables privileged agent failed error:", err)
@@ -654,552 +687,628 @@ function _M.init(config_path)
 end
 
 
-function _M.get_waf_rule()
-	
-	local update_waf_rule = _update_waf_rule
-
-	return update_waf_rule
-
-end
-
-local function _custom_rule_match(rules)
-	local result
-	for _,rule in ipairs(rules) do
-    local matchs_result = true
-    local ctx_rule_log = {}
-    for _,match in ipairs(rule.rule_matchs) do
-      local operator_result = false
-      for _,var in ipairs(match.rule_vars) do
-        local process_request = _process_request(var)
-        local process_transform = _process_transform(process_request,match.rule_transform,var)
-        local _operator_result,_operator_value,_operator_key = _process_operator(process_transform,match,var,rule)
-        if _operator_result and rule.rule_log == "true" then
-          ctx_rule_log.rule_var = var.rule_var
-          ctx_rule_log.rule_operator = match.rule_operator
-          ctx_rule_log.rule_transform = match.rule_transform
-					ctx_rule_log.rule_match_var = _operator_value
-          ctx_rule_log.rule_match_key = _operator_key
-          ctx_rule_log.rule_pattern = match.rule_pattern
+function _M.access_init() 
+  local content_type = ngx.req.get_headers()["Content-type"]
+  local content_length = ngx.req.get_headers()["Content-Length"]
+  if ngx.ctx.req_host and content_type and  ngx.re.find(content_type, [=[^multipart/form-data]=],"oij") and content_length and tonumber(content_length) ~= 0 then
+    local form, err = upload:new()
+    local _file_content_disposition = {}
+    local _file_content_type = {}
+    local _file_body = {}
+    if not form then
+      ngx.log(ngx.ERR,"access_init error,upload_error failed to new upload:,"..err)
+      return
+    end
+    while true do
+      local typ, res, err = form:read()
+      if not typ then
+        ngx.log(ngx.ERR,"access_init error,upload_error failed to read:,"..err)
+        break
+      end
+      if typ == "header" then
+        if res[1] == "Content-Disposition" then
+          table.insert(_file_content_disposition,res[2])
         end
-        if  _operator_result then
-          operator_result = _operator_result
-          break
+        if res[1] == "Content-Type" then
+          table.insert(_file_content_type,res[2])
         end
-      end	
-      if (not operator_result) then
-        matchs_result = false
+      end
+      if typ == "body" then
+        table.insert(_file_body,res)
+      end
+      if typ == "eof" then
         break
       end
     end
-    if matchs_result and rule.rule_log == "true" then                       
-      local waf_log = {}
-      waf_log['log_type'] = "owasp_attack"
-      waf_log['protection_type'] = "custom_protection"
-      waf_log['protection_info'] = rule.rule_action
-      ngx.ctx.waf_log = waf_log
+    if #_file_content_disposition > 0 then
+      ngx.ctx.file_content_disposition = table.concat(_file_content_disposition" ")
     end
-    if rule.rule_action == "pass" and matchs_result then
-      matchs_result = false
+    if #_file_content_type > 0 then
+      ngx.ctx.file_content_type = table.concat(_file_content_type," ")
     end
-    if matchs_result then
-      return matchs_result,rule
-    end
-	end
-	return result
-end
-
-function _M.custom_rule_check()
-	local host = ngx.var.host
-  local scheme = ngx.var.scheme
-  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
-	if req_host then
-		if req_host["protection_set"]["custom_protection"] == "true"  and #req_host["custom_rule_set"]  ~= 0 then
-      local result,match_rule = _custom_rule_match(req_host["custom_rule_set"])
-      if result then
-        if match_rule.rule_action == 'deny' then
-          if req_host['protection_set']['page_custom'] == "true" then
-            exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
-          end
-          return exit_code.return_exit()
-        elseif match_rule.rule_action == 'allow' then
-          local scheme = ngx.var.scheme
-          if req_host['domain_set'] and req_host['domain_set']['redirect_https'] == "true" and scheme == "http"  then
-            local force_https = {}
-            force_https[1] = 'https://'
-            force_https[2] = host
-            force_https[3] = ngx.var.request_uri
-            return ngx.redirect(table_concat(force_https), 301)
-          end
-          return ngx.exit(0)
-        elseif match_rule.rule_action == 'redirect' then
-          return ngx.redirect('/')
-        end
-      end
-		end
-	end
-  
-end
-
-
-function _M.redirect_https()
-  local scheme = ngx.var.scheme
-  if scheme == "https" then
-    return
-  end
-  local host = ngx.var.host
-  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
-	if req_host and  req_host['domain_set']['redirect_https'] == "true"  then
-    local force_https = {}
-    force_https[1] = 'https://'
-    force_https[2] = host
-    force_https[3] = ngx.var.request_uri
-    return ngx.redirect(table_concat(force_https), 301)
-  end
-end
-
-
-function _M.bot_auth_check()
-  local host = ngx.var.host
-  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
-  if _bot_check and req_host and req_host["protection_set"]["cc_protection"] == "true" then
-    local bot_check_uri = "/".._config_info.waf_api_key 
-    if ngx.var.uri == bot_check_uri or ngx.var.uri == '/a20be899-96a6-40b2-88ba-32f1f75f1552-jxwaf' then
-      _cc_black_ip_stat(req_host,'bot_auth')
-    end
-    local bot_check_mode = req_host["cc_protection_set"]["bot_check_mode"]
-    if bot_check_mode == 'standard' then 
-      _bot_check.bot_commit_auth(_config_info.waf_api_key,bot_check_standard_info)
-    elseif bot_check_mode == 'image' then 
-      _bot_check.bot_commit_auth(_config_info.waf_api_key,bot_check_image_info)
-    elseif bot_check_mode == 'slipper' then 
-      _bot_check.bot_commit_auth(_config_info.waf_api_key,bot_check_slipper_info)
+    if #_file_body > 0 then
+      ngx.ctx.file_body = string.sub(table.concat(_file_body," "),1,65535)
     end
   end
 end
 
-function _M.limitreq_check()
-  local host = ngx.var.host
-  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
-  if req_host["protection_set"]["cc_protection"] == "true" then
-    local ip_addr = request.request['REMOTE_ADDR']()
-    if req_host["cc_protection_set"]["emergency_mode_check"] == "true" then
-      local waf_log = {}
-      waf_log['log_type'] = "cc_attack"
-      waf_log['protection_type'] = "emergency_mode_check"
-      waf_log['protection_info'] =  req_host["cc_protection_set"]["emergency_handle_mode"] 
-      ngx.ctx.waf_log = waf_log
-      _cc_black_ip_stat(req_host,'emergency_handle_mode')
-      if req_host["cc_protection_set"]["emergency_handle_mode"] == "block"  then
-        --_cc_black_ip_stat(req_host,'emergency_handle_mode')
-        return ngx.exit(444)
-      elseif req_host["cc_protection_set"]["emergency_handle_mode"] == "bot_check" then
-        if _bot_check  and #bot_check_standard_key > 0 and #bot_check_image_key > 0 and #bot_check_slipper_key > 0 then
-          --_cc_black_ip_stat(req_host,'emergency_handle_mode')
-          local bot_check_mode = req_host["cc_protection_set"]["bot_check_mode"]
-          if bot_check_mode == 'standard' then
-            _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_standard_info,bot_check_standard_key,bot_check_mode)
-          elseif bot_check_mode == 'image' then
-            _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_image_info,bot_check_image_key,bot_check_mode)
-          elseif bot_check_mode == 'slipper' then
-            _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_slipper_info,bot_check_slipper_key,bot_check_mode)
-          end
-        end
-      elseif req_host["cc_protection_set"]["emergency_handle_mode"] == "network_layer_block" then
-        local ip_addr = request.request['REMOTE_ADDR']()
-        local shell_cmd = {}
-        shell_cmd[1] = "/usr/sbin/ipset add jxwaf "
-        shell_cmd[2] = ip_addr
-        shell_cmd[3] = " timeout "
-        shell_cmd[4] = "3600"
-        local ok, stdout, stderr, reason, status =  shell.run(table_concat(shell_cmd), nil, 2000, 4069)
-        if not ok then
-          ngx.log(ngx.ERR,stdout, stderr, reason, status)
-        end
-        return ngx.exit(444)
-      end
-    end
-    if req_host["cc_protection_set"]["count_check"] == "true" then
-      local count = req_host["cc_protection_set"]["count"]
-      local black_ip_time = req_host["cc_protection_set"]["black_ip_time"]
-      local req_count_handle_mode = req_host["cc_protection_set"]["req_count_handle_mode"]
-      local limit_req_count_result = limitreq.limit_req_count(count,black_ip_time,ngx_md5(ip_addr))
-      if limit_req_count_result  then
-        local waf_log = {}
-        waf_log['log_type'] = "cc_attack"
-        waf_log['protection_type'] = "count_check"
-        waf_log['protection_info'] =  req_count_handle_mode
-        ngx.ctx.waf_log = waf_log
-        if req_count_handle_mode == "block" then
-          _cc_black_ip_stat(req_host,'count_check')
-          return ngx.exit(444)
-        elseif req_count_handle_mode == "bot_check" then
-          if _bot_check  and #bot_check_standard_key > 0 and #bot_check_image_key > 0 and #bot_check_slipper_key > 0 then
-            _cc_black_ip_stat(req_host,'count_check')
-            local bot_check_mode = req_host["cc_protection_set"]["bot_check_mode"]
-            if bot_check_mode == 'standard' then
-              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_standard_info,bot_check_standard_key,bot_check_mode)
-            elseif bot_check_mode == 'image' then
-              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_image_info,bot_check_image_key,bot_check_mode)
-            elseif bot_check_mode == 'slipper' then
-              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_slipper_info,bot_check_slipper_key,bot_check_mode)
-            end
-          end
-        elseif req_count_handle_mode == "stat" then
-          _cc_black_ip_stat(req_host,'count_check')
-        end
-      end
-    end
-    if req_host["protection_set"]["cc_protection"] == "true" and  req_host["cc_protection_set"]["qps_check"] == "true" then
-      local ip_qps = req_host["cc_protection_set"]["ip_qps"]
-      local ip_expire_qps = req_host["cc_protection_set"]["ip_expire_qps"]
-      local req_freq_handle_mode = req_host["cc_protection_set"]["req_freq_handle_mode"]
-      local limit_req_rate_result = limitreq.limit_req_rate(ip_qps,ip_expire_qps,ngx_md5(ip_addr))
-      if limit_req_rate_result  then
-        local waf_log = {}
-        waf_log['log_type'] = "cc_attack"
-        waf_log['protection_type'] = "qps_check"
-        waf_log['protection_info'] =  req_freq_handle_mode
-        ngx.ctx.waf_log = waf_log
-        if req_freq_handle_mode == "block" then
-          _cc_black_ip_stat(req_host,'qps_check')
-          return ngx.exit(444)
-        elseif req_freq_handle_mode == "bot_check" then
-          if _bot_check  and #bot_check_standard_key > 0 and #bot_check_image_key > 0 and #bot_check_slipper_key > 0 then
-            _cc_black_ip_stat(req_host,'qps_check')
-            local bot_check_mode = req_host["cc_protection_set"]["bot_check_mode"]
-            if bot_check_mode == 'standard' then
-              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_standard_info,bot_check_standard_key,bot_check_mode)
-            elseif bot_check_mode == 'image' then
-              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_image_info,bot_check_image_key,bot_check_mode)
-            elseif bot_check_mode == 'slipper' then
-              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_slipper_info,bot_check_slipper_key,bot_check_mode)
-            end
-          end
-        elseif req_freq_handle_mode == "stat" then
-          _cc_black_ip_stat(req_host,'qps_check')
-        end
-      end
-    end
-    if req_host["cc_protection_set"]["domain_qps_check"] == "true" then
-      local domain_qps = req_host["cc_protection_set"]["domain_qps"]
-      local domin_qps_handle_mode = req_host["cc_protection_set"]["domin_qps_handle_mode"]
-      local limit_req_domain_rate_result = limitreq.limit_req_domain_rate(domain_qps,ngx_md5(host))
-      if limit_req_domain_rate_result  then
-        local waf_log = {}
-        waf_log['log_type'] = "cc_attack"
-        waf_log['protection_type'] = "domain_qps_check"
-        waf_log['protection_info'] =  domin_qps_handle_mode
-        ngx.ctx.waf_log = waf_log
-        if domin_qps_handle_mode == "block" then
-          _cc_black_ip_stat(req_host,'domain_qps_check')
-          return ngx.exit(444)
-        elseif domin_qps_handle_mode == "bot_check" then
-          if _bot_check  and #bot_check_standard_key > 0 and #bot_check_image_key > 0 and #bot_check_slipper_key > 0 then
-            _cc_black_ip_stat(req_host,'domain_qps_check')
-            local bot_check_mode = req_host["cc_protection_set"]["bot_check_mode"]
-            if bot_check_mode == 'standard' then
-              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_standard_info,bot_check_standard_key,bot_check_mode)
-            elseif bot_check_mode == 'image' then
-              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_image_info,bot_check_image_key,bot_check_mode)
-            elseif bot_check_mode == 'slipper' then
-              _bot_check.bot_check_ip(_config_info.waf_api_key,bot_check_slipper_info,bot_check_slipper_key,bot_check_mode)
-            end
-          end
-        elseif domin_qps_handle_mode == "stat" then
-          _cc_black_ip_stat(req_host,'domain_qps_check')
-        end
+function _M.global_component_protection()
+  for _,global_component_protection_conf in ipairs(_waf_global_component_protection_data) do
+    local global_component_uuid = global_component_protection_conf['uuid']
+    local global_component_conf = global_component_protection_conf['conf']
+    local global_component_name = global_component_protection_conf['name']
+    if _sys_component_protection_data[global_component_uuid] then
+      local result,error_message = pcall(_sys_component_protection_data[global_component_uuid].check,global_component_conf)
+      if not result then
+        ngx.log(ngx.ERR,"global_component_protection error name: "..global_component_name.." ,error_message: "..error_message)
       end
     end
   end
 end
 
 
-function _M.jxcheck_protection()
-  local host = ngx.var.host
-  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
-  if req_host and  req_host['protection_set']['owasp_protection'] == "true" and _jxcheck then
-    -- owasp_check
-    local sql_check = req_host['owasp_check_set']['sql_check']
-    local xss_check = req_host['owasp_check_set']['xss_check']
-    local command_inject_check = req_host['owasp_check_set']['command_inject_check']
-    local directory_traversal_check = req_host['owasp_check_set']['directory_traversal_check']
-    local sensitive_file_check = req_host['owasp_check_set']['sensitive_file_check']
-    local code_exec_check = req_host['owasp_check_set']['code_exec_check']
-    local owasp_result,owasp_type,owasp_action = _jxcheck.owasp_check(sql_check,xss_check,command_inject_check,directory_traversal_check,sensitive_file_check,code_exec_check)
-    if owasp_result then
-      local waf_log = {}
-      waf_log['log_type'] = "owasp_attack"
-      waf_log['protection_type'] = "jxwaf-"..owasp_type
-      waf_log['protection_info'] = owasp_action
-      ngx.ctx.waf_log = waf_log
-      if owasp_action == "block" then
-        _owasp_black_ip_stat(req_host,owasp_type)
-        if req_host['protection_set']['page_custom'] == "true"  then
-          exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
-        end
-        exit_code.return_exit()
-      elseif owasp_action == "stat" then
-        _owasp_black_ip_stat(req_host,owasp_type)
-      end
-    end
-  end  
- 
-end
-
-
-function _M.cc_black_ip_check()
-  local host = ngx.var.host 
-  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
-	if req_host and req_host['protection_set']['cc_attack_ip_protection'] == "true" then
-    local ip_addr = request.request['REMOTE_ADDR']()
-    local attack_ip_check = ngx.shared.black_cc_attack_ip
-    local result,err = attack_ip_check:get(ip_addr)
-    if err then
-      ngx.log(ngx.ERR, "black cc ip check shared get err ", err)
-    end
-    if result then
-      local black_ip_info = cjson.decode(result)
-      local waf_log = {}
-      waf_log['log_type'] = "cc_attack"
-      waf_log['protection_type'] = "black_ip"
-      waf_log['protection_info'] = black_ip_info['protection_info']
-      ngx.ctx.waf_log = waf_log
-      if black_ip_info['protection_info'] == "block"  then
-        return ngx.exit(444)
-      elseif black_ip_info['protection_info'] == "network_layer_block"  then
-        local shell_cmd = {}
-        if tonumber(black_ip_info['protecion_handle']) > 0 then
-          shell_cmd[1] = "/usr/sbin/ipset add jxwaf "
-          shell_cmd[2] = ip_addr
-          shell_cmd[3] = " timeout "
-          shell_cmd[4] = black_ip_info['protecion_handle']
-        elseif tonumber(black_ip_info['protecion_handle']) == 0 then
-          shell_cmd[1] = "/usr/sbin/ipset add jxwaf "
-          shell_cmd[2] = ip_addr
-        end
-        local ok, stdout, stderr, reason, status =  shell.run(table_concat(shell_cmd), nil, 2000, 4069)
-        if not ok then
-          ngx.log(ngx.ERR,stdout, stderr, reason, status)
-        end
-        return ngx.exit(444)
-      end
-    end
-	end
-end
-
-
-function _M.owasp_black_ip_check()
-  local host = ngx.var.host 
-  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
-	if req_host and req_host['protection_set']['evil_ip_handle'] == "true" then
-    local ip_addr = request.request['REMOTE_ADDR']()
-    local attack_ip_check = ngx.shared.black_owasp_attack_ip
-    local result,err = attack_ip_check:get(ip_addr)
-    if err then
-      ngx.log(ngx.ERR, "black owasp ip check shared get err ", err)
-    end
-    if result then
-      local black_ip_info = cjson.decode(result)
-      local waf_log = {}
-      waf_log['log_type'] = "owasp_attack"
-      waf_log['protection_type'] = "black_ip"
-      waf_log['protection_info'] = black_ip_info['protection_info']
-      ngx.ctx.waf_log = waf_log
-      if black_ip_info['protection_info'] == "block"  then
-        if req_host['protection_set']['page_custom'] == "true"  then
-          exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
-        end 
-        exit_code.return_exit()
-      end
-    end
-	end
-end
-
-
-function _M.file_upload_check()
-  local host = ngx.var.host 
-  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
-  local content_type = ngx.req.get_headers()["Content-type"]
-  local content_length = ngx.req.get_headers()["Content-Length"]
-  if content_type and  ngx.re.find(content_type, [=[^multipart/form-data]=],"oij") and content_length and tonumber(content_length) ~= 0 then
-    ngx.ctx.upload_request = true
-    if req_host and req_host['protection_set']['owasp_protection'] == "true" and req_host['owasp_check_set']['upload_check'] ~= "close" then
-      local form, err = upload:new()
-      local _file_name = {}
-      local _form_name = {}
-      local _file_type = {}
-      local t ={}
-      local _type_flag = "false"
-      if not form then
-        local waf_log = {}
-        waf_log['log_type'] = "error"
-        waf_log['protection_type'] = "upload_error"
-        waf_log['protection_info'] = "failed to new upload: "..err
-        ngx.ctx.waf_log = waf_log
-        exit_code.return_error()
-      end
-      ngx.req.init_body()
-      ngx.req.append_body("--" .. form.boundary)
-      local lasttype, chunk
-      local count = 0
-      while true do
-        count = count + 1
-        local typ, res, err = form:read()
-        if not typ then
-          local waf_log = {}
-          waf_log['log_type'] = "error"
-          waf_log['protection_type'] = "upload_error"
-          waf_log['protection_info'] = "failed to read: "..err
-          ngx.ctx.waf_log = waf_log
-          exit_code.return_error()
-        end
-        if typ == "header" then
-          if res[1] == "Content-Disposition" then
-            local _tmp_form_name = ngx.re.match(res[2],[=[(.+)\bname=[" ']*?([^"]+)[" ']*?]=],"oij")
-            local _tmp_file_name =  ngx.re.match(res[2],[=[(.+)filename=[" ']*?([^"]+)[" ']*?]=],"oij")
-            if _tmp_form_name  then
-              table.insert(_form_name,_tmp_form_name[2]..count)
-            end
-            if _tmp_file_name  then
-              table.insert(_file_name,_tmp_file_name[2])
-            end
-            if _tmp_form_name and _tmp_file_name then
-              chunk = string.format([=[Content-Disposition: form-data; name="%s"; filename="%s"]=],_tmp_form_name[2],_tmp_file_name[2])
-              ngx.req.append_body("\r\n" .. chunk)
-            elseif _tmp_form_name then
-              chunk = string.format([=[Content-Disposition: form-data; name="%s"]=],_tmp_form_name[2])
-              ngx.req.append_body("\r\n" .. chunk)
-            else
-              local waf_log = {}
-              waf_log['log_type'] = "error"
-              waf_log['protection_type'] = "upload_error"
-              waf_log['protection_info'] = "Content-Disposition ERR!"
-              ngx.ctx.waf_log = waf_log
-              exit_code.return_error()	
-            end
-          end
-          if res[1] == "Content-Type" then
-            table.insert(_file_type,res[2])
-            _type_flag = "true"
-            chunk = string.format([=[Content-Type: %s]=],res[2])
-            ngx.req.append_body("\r\n" .. chunk)
-          end
-        end
-        if typ == "body" then
-          chunk = res
-          if lasttype == "header" then
-            ngx.req.append_body("\r\n\r\n")
-          end
-          ngx.req.append_body(chunk)
-          if _type_flag == "true" then
-            _type_flag = "false"
-            t[_form_name[#_form_name]] = ""
-          else
-            if lasttype == "header" then
-              t[_form_name[#_form_name]] = res
-            else
-              t[_form_name[#_form_name]] = ""
-            end
-          end
-        end
-        if typ == "part_end" then 
-          ngx.req.append_body("\r\n--" .. form.boundary)
-        end
-        if typ == "eof" then
-          ngx.req.append_body("--\r\n")
+function _M.global_name_list()
+  for _,name_list_uuid in ipairs(_waf_global_name_list_data) do
+    if _sys_name_list_data[name_list_uuid] and _sys_name_list_item_data[name_list_uuid] then
+      local name_list_conf = _sys_name_list_data[name_list_uuid]
+      local name_list_item_data = _sys_name_list_item_data[name_list_uuid]
+      local name_list_rule = name_list_conf['name_list_rule']
+      local name_list_action = name_list_conf['name_list_action']
+      local action_value = name_list_conf['action_value']
+      local name_list_name = name_list_conf['name_list_name']
+      local item_value_table = {}
+      local nil_exist 
+      for _,rule in ipairs(name_list_rule) do
+        local key = rule['key']
+        local value = rule['value']
+        local return_value = request.get_args(key,value)
+        if type(return_value) == "string" then
+          table.insert(item_value_table,return_value)
+        else
+          nil_exist = true
           break
         end
-        lasttype = typ
       end
-      form:read()
-      ngx.req.finish_body()
-      for _,v in ipairs(_file_name) do
-        if not ngx.re.find(v,req_host['owasp_check_set']['upload_check_rule'],"oij") then
-          local waf_log = {}
-          waf_log['log_type'] = "owasp_attack"
-          waf_log['protection_type'] = "upload_check"
-          waf_log['protection_info'] = req_host['owasp_check_set']['upload_check']
-          ngx.ctx.waf_log = waf_log
-          if req_host['owasp_check_set']['upload_check'] ==  'block' then
-            _owasp_black_ip_stat(req_host,'upload_check')
-            if req_host['protection_set']['page_custom'] == "true"  then
-              exit_code.return_exit(req_host['page_custom_set']['owasp_code'],req_host['page_custom_set']['owasp_html'])
-            end 
-            exit_code.return_exit()
-          elseif req_host['owasp_check_set']['upload_check'] ==  'stat' then
-            _owasp_black_ip_stat(req_host,'upload_check')
+      if not nil_exist then
+        local item_value = table.concat(item_value_table)
+        if name_list_item_data[item_value] then
+            local waf_log = {}
+            waf_log['waf_module'] = "global_name_list"
+            waf_log['waf_policy'] = name_list_name
+            waf_log['waf_action'] = name_list_action
+            waf_log['waf_extra'] = item_value
+            ngx.ctx.waf_log = waf_log
+          if name_list_action == "block" or name_list_action == "tcp_block"  then
+            local page_conf = {}
+            page_conf['code'] = _sys_global_default_page_data['name_list_deny_code']
+            page_conf['html'] = _sys_global_default_page_data['name_list_deny_html']
+            unify_action.block(page_conf)
+          elseif name_list_action == "allow" then
+            unify_action.allow()
+          elseif name_list_action == "check_bypass" then
+            ngx.ctx[action_value] = true
+          elseif name_list_action == "reject_response" then
+            unify_action.reject_response()
+          elseif name_list_action == "bot_check" then
+            _sys_flow_engine_protection_data.bot_commit_auth()
+            _sys_flow_engine_protection_data.bot_check_ip(action_value)
           end
         end
       end
     end
-  else
-    ngx.req.read_body()
   end
 end
 
-function _M.ip_config_check()
-  local host = ngx.var.host 
-  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
-  if req_host['protection_set'] and req_host['protection_set']['ip_config'] == "true" then
-    local ip_config = req_host['ip_config_set'] 
-    local ip_addr = request.request['REMOTE_ADDR']()
-    if ip_config[ip_addr] then
-      if ip_config[ip_addr] == "block" then
-        local waf_log = {}
-        waf_log['log_type'] = "cc_attack"
-        waf_log['protection_type'] = "ip_config"
-        waf_log['protection_info'] = "block"
-        ngx.ctx.waf_log = waf_log
-        return ngx.exit(444)
-      elseif ip_config[ip_addr] == "network_layer_block" then
-        local waf_log = {}
-        waf_log['log_type'] = "cc_attack"
-        waf_log['protection_type'] = "ip_config"
-        waf_log['protection_info'] = "network_layer_block"
-        ngx.ctx.waf_log = waf_log
-        local shell_cmd = {}
-        shell_cmd[1] = "/usr/sbin/ipset add jxwaf "
-        shell_cmd[2] = ip_addr
-        shell_cmd[3] = " timeout 3600"
-        local ok, stdout, stderr, reason, status =  shell.run(table_concat(shell_cmd), nil, 2000, 4069)
-        if not ok then
-          ngx.log(ngx.ERR,stdout, stderr, reason, status)
+function _M.domain_check()
+  local req_host = ngx.ctx.req_host
+  local scheme = ngx.var.scheme
+  if (not req_host) or (req_host['domain_data'] and  req_host['domain_data'][scheme] == "false") then
+    local page_conf = {}
+    page_conf['code'] = _sys_global_default_page_data['domain_404_code']
+    page_conf['html'] = _sys_global_default_page_data['domain_404_html']
+    return unify_action.block(page_conf)
+  end
+end
+
+function _M.name_list()
+  local req_host = ngx.ctx.req_host
+  local name_list_data = req_host['name_list_data']
+  local protection_data = req_host['protection_data']
+  if not name_list_data or (protection_data and protection_data['name_list'] == "false") then
+    return 
+  end
+  if name_list_data then
+  for _,name_list_uuid in ipairs(name_list_data) do
+    if _sys_name_list_data[name_list_uuid] and _sys_name_list_item_data[name_list_uuid] then
+      local name_list_conf = _sys_name_list_data[name_list_uuid]
+      local name_list_item_data = _sys_name_list_item_data[name_list_uuid]
+      local name_list_rule = name_list_conf['name_list_rule']
+      local name_list_action = name_list_conf['name_list_action']
+      local action_value = name_list_conf['action_value']
+      local name_list_name = name_list_conf['name_list_name']
+      local item_value_table = {}
+      local nil_exist 
+      for _,rule in ipairs(name_list_rule) do
+        local key = rule['key']
+        local value = rule['value']
+        local return_value = request.get_args(key,value)
+        if type(return_value) == "string" then
+          table.insert(item_value_table,return_value)
+        else
+          nil_exist = true
+          break
         end
-        return ngx.exit(444)
-      elseif ip_config[ip_addr] == "allow" then
-        local waf_log = {}
-        waf_log['log_type'] = "cc_attack"
-        waf_log['protection_type'] = "ip_config"
-        waf_log['protection_info'] = "white_ip"
-        ngx.ctx.waf_log = waf_log
-        return ngx.exit(0)
+      end
+      if not nil_exist then
+        local item_value = table.concat(item_value_table)
+        if name_list_item_data[item_value] then 
+            local waf_log = {}
+            waf_log['waf_module'] = "name_list"
+            waf_log['waf_policy'] = name_list_name
+            waf_log['waf_action'] = name_list_action
+            waf_log['waf_extra'] = item_value
+            ngx.ctx.waf_log = waf_log
+          if name_list_action == "block" or name_list_action == "tcp_block"  then
+            local page_conf = {}
+            page_conf['code'] = _sys_global_default_page_data['name_list_deny_code']
+            page_conf['html'] = _sys_global_default_page_data['name_list_deny_html']
+            unify_action.block(page_conf)
+          elseif name_list_action == "allow" then
+            unify_action.allow()
+          elseif name_list_action == "check_bypass" then
+            ngx.ctx[action_value] = true
+          elseif name_list_action == "reject_response" then
+            unify_action.reject_response()
+          elseif name_list_action == "bot_check" then
+            _sys_flow_engine_protection_data.bot_commit_auth()
+            _sys_flow_engine_protection_data.bot_check_ip(action_value)
+          end
+        end
       end
     end
+  end
+  end
+end
+
+
+function _M.flow_white_rule()
+  local req_host = ngx.ctx.req_host
+  local flow_white_rule_data = req_host['flow_white_rule_data']
+  local protection_data = req_host['protection_data']
+  if not flow_white_rule_data or (protection_data and protection_data['flow_white_rule'] == "false") then
+    return 
+  end
+  for _,rule_uuid in ipairs(flow_white_rule_data) do
+     if _sys_flow_white_rule_data[rule_uuid] then
+       local rule_conf = _sys_flow_white_rule_data[rule_uuid]
+       local rule_group_name = rule_conf['rule_group_name']
+       local rule_name = rule_conf['rule_name']
+       local rule_matchs = rule_conf['rule_matchs']
+       local rule_action = rule_conf['rule_action']
+       local action_value = rule_conf['action_value']
+       local rule_log = rule_conf['rule_log']
+       local rule_pre_match = rule_conf['rule_pre_match']
+       local matchs_result = true
+       if rule_pre_match == "true" then
+        for _,rule_match in ipairs(rule_matchs) do
+           local match_args = rule_match['match_args']
+           local args_prepocess = rule_match['args_prepocess']
+           local match_operator = rule_match['match_operator']
+           local match_value = rule_match['match_value']
+           local operator_result = false
+           for _,match_arg in ipairs(match_args) do
+             local arg = request.get_args(match_arg.key,match_arg.value)
+             for _,arg_prepocess in ipairs(args_prepocess) do
+               arg = preprocess.process_args(arg_prepocess,arg)
+             end
+             if arg then
+                local operator_match_result = operator.match(match_operator,arg,match_value)
+                if  operator_match_result then
+                  operator_result =  true
+                  break
+                 end
+              end
+           end
+          if (not operator_result) then
+              matchs_result = false
+              break
+          end
+        end
+       end
+       if matchs_result then
+          if rule_log == "true" then
+            local waf_log = {}
+            waf_log['waf_module'] = "flow_white_rule"
+            waf_log['waf_policy'] = rule_name
+            waf_log['waf_action'] = rule_action
+            waf_log['waf_extra'] = rule_group_name
+            ngx.ctx.waf_log = waf_log
+          end
+          if rule_action == "allow" then
+            unify_action.allow()
+          elseif rule_action == "flow_check_bypass" then
+            for _,v in ipairs(action_value) do
+              ngx.ctx[v] = true
+            end
+          elseif rule_action == "flow_rule_protection_bypass" then
+            for _,v in ipairs(action_value) do
+              ngx.ctx[v] = true
+            end
+          elseif rule_action == "flow_engine_protection_bypass" then
+            for _,v in ipairs(action_value) do
+              ngx.ctx[v] = true
+            end
+          end
+       end
+     end
+  end
+end
+
+function _M.flow_rule_protection()
+  local req_host = ngx.ctx.req_host
+  local flow_rule_protection_data = req_host['flow_rule_protection_data']
+  local protection_data = req_host['protection_data']
+  if not flow_rule_protection_data or (protection_data and protection_data['flow_rule_protection'] == "false") then
+    return 
+  end
+  for _,rule_uuid in ipairs(flow_rule_protection_data) do
+     if _sys_flow_rule_protection_data[rule_uuid] then
+       local rule_conf = _sys_flow_rule_protection_data[rule_uuid]
+       local rule_group_name = rule_conf['rule_group_name']
+       local rule_group_uuid = rule_conf['rule_group_uuid']
+       local rule_name = rule_conf['rule_name']
+       local rule_matchs = rule_conf['rule_matchs']
+       local rule_action = rule_conf['rule_action']
+       local action_value = rule_conf['action_value']
+       local rule_log = rule_conf['rule_log']
+       local rule_pre_match = rule_conf['rule_pre_match']
+       local matchs_result = true
+       if rule_pre_match == "true" then
+        for _,rule_match in ipairs(rule_matchs) do
+           local match_args = rule_match['match_args']
+           local args_prepocess = rule_match['args_prepocess']
+           local match_operator = rule_match['match_operator']
+           local match_value = rule_match['match_value']
+           local operator_result = false
+           for _,match_arg in ipairs(match_args) do
+             local arg = request.get_args(match_arg.key,match_arg.value)
+             for _,arg_prepocess in ipairs(args_prepocess) do
+               arg = preprocess.process_args(arg_prepocess,arg)
+             end
+             if arg then
+                local operator_match_result = operator.match(match_operator,arg,match_value)
+                if  operator_match_result then
+                  operator_result =  true
+                  break
+                 end
+              end
+           end
+          if (not operator_result) then
+              matchs_result = false
+              break
+          end
+        end
+       end
+       if matchs_result and  (not ngx.ctx['flow_check_bypass'])  and (not ngx.ctx['flow_rule_protection_bypass']) and (not ngx.ctx[rule_uuid]) and (not ngx.ctx[rule_group_uuid]) then
+          if rule_log == "true" then
+            local waf_log = {}
+            waf_log['waf_module'] = "flow_rule_protection"
+            waf_log['waf_policy'] = rule_name
+            waf_log['waf_action'] = rule_action
+            waf_log['waf_extra'] = rule_group_name
+            ngx.ctx.waf_log = waf_log
+          end
+        if rule_action == "block" then
+          local page_conf = {}
+          page_conf['code'] = _sys_global_default_page_data['flow_deny_code']
+          page_conf['html'] = _sys_global_default_page_data['flow_deny_html']
+          unify_action.block(page_conf)
+        elseif rule_action == "reject_response" then
+          unify_action.reject_response()
+        elseif rule_action == "bot_check" then
+          _sys_flow_engine_protection_data.bot_commit_auth()
+          _sys_flow_engine_protection_data.bot_check_ip(action_value)
+        elseif rule_action == "add_shared_dict_key" then
+          unify_action.add_shared_dict_key(action_value,_sys_shared_dict_data)
+        elseif rule_action == "add_name_list_item" then
+          unify_action.add_name_list_item(action_value,_sys_name_list_data,_config_info)
+        end
+       end
+     end
   end
   
 end
 
 
-function _M.access_init()
-  local host = ngx.var.host 
-  local req_host = _update_waf_rule[host] or ngx.ctx.req_host
-  local xff = ngx.req.get_headers()['X-Forwarded-For'] or ngx.req.get_headers()['X-REAL-IP']
-  if xff and req_host['domain_set']['proxy'] == "true" then
-    local xff_result
-    local iplist = iputils.parse_cidrs(req_host['domain_set']['proxy_ip'])
-    if iputils.ip_in_cidrs(ngx.var.remote_addr, iplist) then
-      local ip = ngx.re.match(xff,[=[^\d{1,3}+\.\d{1,3}+\.\d{1,3}+\.\d{1,3}+]=],'oj')[0] or ngx.req.get_headers()['X-REAL-IP']
-      if ip and #ip > 6 then
-        xff_result = ip 
-      else
-        xff_result = ngx.var.remote_addr
-      end
-    else
-      xff_result = ngx.var.remote_addr
+function _M.flow_engine_protection()
+  local req_host = ngx.ctx.req_host
+  local flow_engine_protection_data = req_host['flow_engine_protection_data']
+  local protection_data = req_host['protection_data']
+  if not flow_engine_protection_data or (protection_data and protection_data['flow_engine_protection'] == "false") then
+    return 
+  end
+  local check_result,check_type = _sys_flow_engine_protection_data.check(flow_engine_protection_data)
+  if check_result then
+    local block_mode 
+    local block_mode_extra_parameter
+    if check_type == "high_freq_cc_rate_check" then
+      block_mode = flow_engine_protection_data['req_rate_block_mode']
+      block_mode_extra_parameter =  flow_engine_protection_data['req_rate_block_mode_extra_parameter']
+    elseif check_type == "high_freq_cc_count_check" then
+      block_mode =  flow_engine_protection_data['req_count_block_mode']
+      block_mode_extra_parameter = flow_engine_protection_data['req_count_block_mode_extra_parameter']
+    elseif check_type == "slow_cc_ip_count_check"  then
+      block_mode = flow_engine_protection_data['ip_count_block_mode']
+      block_mode_extra_parameter =  flow_engine_protection_data['ip_count_block_mode_extra_parameter']
+    elseif check_type == "slow_cc_domain_check"  then
+      block_mode = flow_engine_protection_data['slow_cc_block_mode']
+      block_mode_extra_parameter  = flow_engine_protection_data['slow_cc_block_mode_extra_parameter']
+    elseif check_type == "emergency_mode_check"  then
+      block_mode =  flow_engine_protection_data['emergency_mode_block_mode']
+      block_mode_extra_parameter =  flow_engine_protection_data['emergency_mode_block_mode_extra_parameter']
     end
-    ngx.ctx.remote_addr = xff_result
+    -- log
+    local bypass_check = check_type.."_bypass"
+    if ngx.ctx['flow_check_bypass']  and ngx.ctx['flow_engine_protection_bypass'] or ngx.ctx[bypass_check] then
+      return
+    end
+            local waf_log = {}
+            waf_log['waf_module'] = "flow_engine_protection"
+            waf_log['waf_policy'] = check_type
+            waf_log['waf_action'] = block_mode
+            waf_log['waf_extra'] = ""
+            ngx.ctx.waf_log = waf_log
+    -- log
+    ngx.ctx[check_type] = true
+    if block_mode == "block" then
+      local page_conf = {}
+      page_conf['code'] = _sys_global_default_page_data['flow_deny_code']
+      page_conf['html'] = _sys_global_default_page_data['flow_deny_html']
+      unify_action.block(page_conf)
+    elseif block_mode == "reject_response" then
+      unify_action.reject_response()
+    elseif block_mode == "bot_check" then
+      _sys_flow_engine_protection_data.bot_commit_auth()
+      _sys_flow_engine_protection_data.bot_check_ip(block_mode_extra_parameter)
+    end
+      
   end
 end
+
+function _M.web_white_rule()
+  local req_host = ngx.ctx.req_host
+  local web_white_rule_data = req_host['web_white_rule_data']
+  local protection_data = req_host['protection_data']
+  if not web_white_rule_data or (protection_data and protection_data['web_white_rule'] == "false") then
+    return 
+  end
+  for _,rule_uuid in ipairs(web_white_rule_data) do
+    if _sys_web_white_rule_data[rule_uuid] then
+       local rule_conf = _sys_web_white_rule_data[rule_uuid]
+       local rule_group_name = rule_conf['rule_group_name']
+       local rule_name = rule_conf['rule_name']
+       local rule_matchs = rule_conf['rule_matchs']
+       local rule_action = rule_conf['rule_action']
+       local action_value = rule_conf['action_value']
+       local rule_log = rule_conf['rule_log']
+       local matchs_result = true
+       for _,rule_match in ipairs(rule_matchs) do
+          local match_args = rule_match['match_args']
+          local args_prepocess = rule_match['args_prepocess']
+          local match_operator = rule_match['match_operator']
+          local match_value = rule_match['match_value']
+          local operator_result = false
+          for _,match_arg in ipairs(match_args) do
+            local arg = request.get_args(match_arg.key,match_arg.value)
+            for _,arg_prepocess in ipairs(args_prepocess) do
+              arg = preprocess.process_args(arg_prepocess,arg)
+            end
+            if arg then
+              local operator_match_result = operator.match(match_operator,arg,match_value)
+              if  operator_match_result then
+                operator_result =  true
+                break
+              end
+            end
+          end
+          if (not operator_result) then
+            matchs_result = false
+            break
+          end
+      end
+       if matchs_result then
+          if rule_log == "true" then
+            local waf_log = {}
+            waf_log['waf_module'] = "web_white_rule"
+            waf_log['waf_policy'] = rule_name
+            waf_log['waf_action'] = rule_action
+            waf_log['waf_extra'] = rule_group_name
+            ngx.ctx.waf_log = waf_log
+          end
+          if rule_action == "allow" then
+            unify_action.allow()
+          elseif rule_action == "web_check_bypass" then
+            for _,v in ipairs(action_value) do
+              ngx.ctx[v] = true
+            end
+          elseif rule_action == "web_rule_protection_bypass" then
+            for _,v in ipairs(action_value) do
+              ngx.ctx[v] = true
+            end
+          elseif rule_action == "web_engine_protection_bypass" then
+            for _,v in ipairs(action_value) do
+              ngx.ctx[v] = true
+            end
+          end
+       end
+    end
+  end
+end
+
+function _M.web_rule_protection()
+  local req_host = ngx.ctx.req_host
+  local web_rule_protection_data = req_host['web_rule_protection_data']
+  local protection_data = req_host['protection_data']
+  if not web_rule_protection_data or (protection_data and protection_data['web_rule_protection'] == "false") then
+    return 
+  end
+  for _,rule_uuid in ipairs(web_rule_protection_data) do
+    if _sys_web_rule_protection_data[rule_uuid] then
+       local rule_conf = _sys_web_rule_protection_data[rule_uuid]
+       local rule_group_name = rule_conf['rule_group_name']
+       local rule_group_uuid = rule_conf['rule_group_uuid']
+       local rule_name = rule_conf['rule_name']
+       local rule_matchs = rule_conf['rule_matchs']
+       local rule_action = rule_conf['rule_action']
+       local action_value = rule_conf['action_value']
+       local rule_log = rule_conf['rule_log']
+       local matchs_result = true
+       for _,rule_match in ipairs(rule_matchs) do
+          local match_args = rule_match['match_args']
+          local args_prepocess = rule_match['args_prepocess']
+          local match_operator = rule_match['match_operator']
+          local match_value = rule_match['match_value']
+          local operator_result = false
+          for _,match_arg in ipairs(match_args) do
+            local arg = request.get_args(match_arg.key,match_arg.value,_sys_shared_dict_data)
+            for _,arg_prepocess in ipairs(args_prepocess) do
+              arg = preprocess.process_args(arg_prepocess,arg)
+            end
+            if arg then
+              local operator_match_result = operator.match(match_operator,arg,match_value)
+              if  operator_match_result then
+                operator_result =  true
+                break
+              end
+            end
+          end
+          if (not operator_result) then
+            matchs_result = false
+            break
+          end
+      end
+       if matchs_result and (not ngx.ctx['web_check_bypass'])   and (not ngx.ctx['web_rule_protection_bypass']) and (not ngx.ctx[rule_uuid]) and (not ngx.ctx[rule_group_uuid])  then
+        if rule_log == "true" then
+            local waf_log = {}
+            waf_log['waf_module'] = "web_rule_protection"
+            waf_log['waf_policy'] = rule_name
+            waf_log['waf_action'] = rule_action
+            waf_log['waf_extra'] = rule_group_name 
+            ngx.ctx.waf_log = waf_log
+        end
+        if rule_action == "block" then
+          local page_conf = {}
+          page_conf['code'] = _sys_global_default_page_data['web_deny_code']
+          page_conf['html'] = _sys_global_default_page_data['web_deny_html']
+          unify_action.block(page_conf)
+        elseif rule_action == "reject_response" then
+          unify_action.reject_response()
+        elseif rule_action == "bot_check" then
+          _sys_flow_engine_protection_data.bot_commit_auth()
+          _sys_flow_engine_protection_data.bot_check_ip(action_value)
+        elseif rule_action == "add_shared_dict_key" then
+          unify_action.add_shared_dict_key(action_value,_sys_shared_dict_data)
+        elseif rule_action == "add_name_list_item" then
+          unify_action.add_name_list_item(action_value,_sys_name_list_data,_config_info)
+        end
+       end
+    end
+  end
+  
+end
+
+function _M.web_engine_protection()
+  local req_host = ngx.ctx.req_host
+  local web_engine_protection_data = req_host['web_engine_protection_data']
+  local protection_data = req_host['protection_data']
+  if (not web_engine_protection_data) or (protection_data and protection_data['web_engine_protection'] == "false")  then
+    return 
+  end
+  local check_result,check_type,check_action = _sys_web_engine_protection_data.check(web_engine_protection_data)
+  if check_result then
+    local bypass_check = check_type.."_bypass"
+    if ngx.ctx['web_check_bypass'] or ngx.ctx['web_engine_protection_bypass'] or ngx.ctx[bypass_check] then
+      return
+    end
+    -- log            
+      local waf_log = {}
+      waf_log['waf_module'] = "web_engine_protection"
+      waf_log['waf_policy'] = check_type
+      waf_log['waf_action'] = check_action
+      waf_log['waf_extra'] = ""
+      ngx.ctx.waf_log = waf_log
+      ngx.ctx[check_type] = true
+    -- log
+    ngx.ctx[check_type] = true
+    if  check_action == "block" then
+      local page_conf = {}
+      page_conf['code'] = _sys_global_default_page_data['web_deny_code']
+      page_conf['html'] = _sys_global_default_page_data['web_deny_html']
+      unify_action.block(page_conf)
+    elseif check_action == "reject_response" then
+      unify_action.reject_response()
+    end
+  end
+end
+
+function _M.component_protection()
+  local req_host = ngx.ctx.req_host
+  local component_protection_data = req_host['component_protection_data']
+  local component_protection = req_host['component_protection']
+  local protection_data = req_host['protection_data']
+  if not component_protection_data or (protection_data and protection_data['component_protection'] == "false") then
+    return 
+  end
+  for _,component_protection_data in ipairs(component_protection_data) do
+    local component_uuid = component_protection_data['uuid']
+    local component_name = component_protection_data['name']
+    local component_conf = component_protection_data['conf']
+    if _sys_component_protection_data[component_uuid] then
+      
+      local result,error_message = pcall(_sys_component_protection_data[component_uuid].check,component_conf)
+      if not result then
+        ngx.log(ngx.ERR,"component_protection error component_name: "..component_name.." ,error_message: "..error_message)
+      end
+    end
+  end 
+end
+
+function _M.abnormal_handle()
+  if _sys_abnormal_handle_data['bypass_check'] == "true" then
+    local abnormal_handle_check_result 
+    local abnormal_handle_check_type 
+    if _sys_abnormal_handle_data['same_name_args_check'] == "true" and ngx.ctx.same_name_args_check  then
+        abnormal_handle_check_result = true
+        abnormal_handle_check_type = "same_name_args_check"
+    elseif _sys_abnormal_handle_data['truncated_agrs_check'] == "true" and ngx.ctx.truncated_agrs_check  then
+        abnormal_handle_check_result = true
+        abnormal_handle_check_type = "truncated_agrs_check"
+    elseif _sys_abnormal_handle_data['client_body_size_check'] == "true" and ngx.ctx.client_body_size_check  then
+        abnormal_handle_check_result = true
+        abnormal_handle_check_type = "client_body_size_check"
+    end
+    if abnormal_handle_check_result then
+      -- log --
+            local waf_log = {}
+            waf_log['waf_module'] = "abnormal_handle"
+            waf_log['waf_policy'] = abnormal_handle_check_type
+            waf_log['waf_action'] = "block"
+            waf_log['waf_extra'] = ""
+            ngx.ctx.waf_log = waf_log
+      -- log --
+      local page_conf = {}
+      page_conf['code'] = _sys_global_default_page_data['web_deny_code']
+      page_conf['html'] = _sys_global_default_page_data['web_deny_html']
+      unify_action.block(page_conf)
+    end
+    
+  end
+  
+end
+
+
+
+
 
 
 return _M

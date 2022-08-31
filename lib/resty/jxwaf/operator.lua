@@ -1,6 +1,6 @@
 local string_find = string.find
 local _M = {}
-_M.version = "2.0"
+_M.version = "20220831"
 
 local function _equals(input,pattern)
 	local result, output
@@ -142,6 +142,34 @@ local function _table_contain(input,pattern)
 end
 
 
+function _M.process_args(operator,arg,match_value)
+  if operator == "eq" then
+    return _equals(arg,match_value)
+  elseif operator == "lt" then
+    return _less(arg,match_value)
+  elseif operator == "gt" then
+    return _greater(arg,match_value)
+  elseif operator == "rx" then
+    return _regex(arg,match_value)
+  elseif operator == "neq" then
+    return _nequals(arg,match_value)
+  elseif operator == "str_eq" then
+    return _str_eq(arg,match_value)
+  elseif operator == "str_neq" then
+    return _str_neq(arg,match_value)
+  elseif operator == "str_contain" then
+    return _str_contain(arg,match_value)
+  elseif operator == "str_ncontain" then
+    return _str_ncontain(arg,match_value)
+  elseif operator == "str_prefix" then
+    return _str_prefix(arg,match_value)
+  elseif operator == "str_suffix" then
+    return _str_suffix(arg,match_value)
+  else
+    return nil 
+  end
+end
+
 _M.request = {
 
 eq = function(var,rule_pattern)
@@ -187,12 +215,36 @@ end,
 
 str_suffix =  function(var,rule_pattern)
         return _str_suffix(var,rule_pattern)
-end,
-
-table_contain = function(var,rule_pattern)
-        return _table_contain(var,rule_pattern)
-end,
+end
 
 }
+
+function _M.match(k,var,rule_pattern)
+  if k == "rx" then
+    return _regex(var,rule_pattern)
+  elseif k == "str_contain" then
+    return _str_contain(var,rule_pattern)
+  elseif k == "str_prefix" then
+    return _str_prefix(var,rule_pattern)
+  elseif k == "str_suffix" then
+    return _str_suffix(var,rule_pattern)
+  elseif k == "str_eq" then
+    return _str_eq(var,rule_pattern)
+  elseif k == "str_neq" then
+    return _str_neq(var,rule_pattern)
+  elseif k == "str_ncontain" then
+    return _str_ncontain(var,rule_pattern)
+  elseif k == "lt" then
+    return _less(var,rule_pattern)
+  elseif k == "gt" then
+    return _greater(var,rule_pattern)
+  elseif k == "neq" then
+    return _nequals(var,rule_pattern)
+  elseif k == "eq" then
+    return _equals(var,rule_pattern)
+  else
+    return nil 
+  end
+end
 
 return _M

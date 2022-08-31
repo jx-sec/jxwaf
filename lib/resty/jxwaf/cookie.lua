@@ -68,7 +68,7 @@ local function get_cookie_table(text_cookie)
             end
         elseif state == EXPECT_VALUE then
             if byte(text_cookie, j) == SEMICOLON
-                    or byte(text_cookie, j) == SPACE
+--                    or byte(text_cookie, j) == SPACE
                     or byte(text_cookie, j) == HTAB
             then
                 value = sub(text_cookie, i, j - 1)
@@ -97,9 +97,12 @@ local function get_cookie_table(text_cookie)
     return cookie_table
 end
 
+function _M.get_cookie_table(string)
+  return get_cookie_table(string)
+end
 
 function _M.get_response_cookie_table(cookie)
-	return get_cookie_table(cookie)
+  return get_cookie_table(cookie)
 end
 
 function _M.new(self)
