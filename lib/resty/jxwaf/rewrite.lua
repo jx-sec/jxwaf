@@ -8,7 +8,12 @@ local waf_group_id_data = waf.get_waf_group_id_data()
 
 local req_host = nil
 local dot_pos = string_find(host,".",1,true)
-local wildcard_host = "*"..string_sub(host,dot_pos)
+local wildcard_host = nil 
+if dot_pos then
+  wildcard_host = "*"..string_sub(host,dot_pos)
+else
+  wildcard_host = host 
+end
 local proxy_pass_https = nil 
 
 if waf_domain_data[host] then
