@@ -59,7 +59,7 @@ if sys_log_conf_data["log_remote"] == "true" and (ctx_waf_log or sys_log_conf_da
   for k,v in pairs(raw_resp_headers) do
     table_insert(raw_resp_headers_table,k..": "..v)
   end
-  raw_resp_header_data = table_concat(raw_resp_headers_table,"\r\n")
+  local raw_resp_header_data = table_concat(raw_resp_headers_table,"\r\n")
   if #raw_resp_header_data > 4096 then
     waf_log['raw_resp_headers'] = string_sub(raw_resp_header_data,1,4096)
   else
