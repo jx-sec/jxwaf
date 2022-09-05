@@ -4,6 +4,7 @@ local waf = require "resty.jxwaf.waf"
 local string_sub = string.sub
 local config_info = waf.get_config_info()
 local table_concat = table.concat
+local table_insert = table.insert
 local request = require "resty.jxwaf.request"
 
 local sys_log_conf_data  = waf.get_sys_log_conf_data()
@@ -54,10 +55,15 @@ if sys_log_conf_data["log_remote"] == "true" and (ctx_waf_log or sys_log_conf_da
   waf_log['ssl_ciphers'] = ngx.var.ssl_ciphers or ""
   waf_log['ssl_protocol'] = ngx.var.ssl_protocol or ""
   local raw_resp_headers = ngx.resp.get_headers() 
-  if #raw_resp_headers > 4096 then
-    waf_log['raw_resp_headers'] = string_sub(raw_resp_headers,1,4096)
+  local raw_resp_headers_table = {} 
+  for k,v in pairs(raw_resp_headers) do
+    table_insert(raw_resp_headers_table,k..": "..v)
+  end
+  raw_resp_header_data = table_concat(raw_resp_headers_table,"\r\n")
+  if #raw_resp_header_data > 4096 then
+    waf_log['raw_resp_headers'] = string_sub(raw_resp_header_data,1,4096)
   else
-    waf_log['raw_resp_headers'] = raw_resp_headers
+    waf_log['raw_resp_headers'] = raw_resp_header_data
   end
   if ctx_waf_log then
     waf_log['waf_module']  = ctx_waf_log['waf_module']
