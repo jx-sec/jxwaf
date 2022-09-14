@@ -116,16 +116,18 @@ end
 
 
 function _M.block(page_conf)
-  local code = tonumber(page_conf['code'])
+  local code = page_conf['code']
   local html = page_conf['html']
   if html and #html > 0 then
     ngx.status = tonumber(code)
     ngx.header.content_type = "text/html;charset=utf-8"
     ngx.header.request_id = ngx.var.request_id
     ngx.say(html)
-    return ngx.exit(code)
+  end
+  if code then
+      return ngx.exit(tonumber(code))
   else
-    return ngx.exit(code)
+      return ngx.exit(404)
   end
 end
 
