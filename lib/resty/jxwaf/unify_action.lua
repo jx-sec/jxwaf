@@ -88,7 +88,6 @@ function _M.add_shared_dict_key(shared_dict_uuid,sys_shared_dict_data)
   if not shared_dict_data then
     return
   end
-  local shared_dict_uuid = shared_dict_data['shared_dict_uuid']
   local shared_dict_key =  shared_dict_data['shared_dict_key']
   local shared_dict_type = shared_dict_data['shared_dict_type']
   local shared_dict_expire_time = shared_dict_data['shared_dict_expire_time']
