@@ -1,4 +1,4 @@
-local logger = require "resty.jxwaf.socket"
+local logger_socket = require "resty.jxwaf.socket"
 local cjson = require "cjson.safe"
 local waf = require "resty.jxwaf.waf"
 local string_sub = string.sub
@@ -76,19 +76,20 @@ if sys_log_conf_data["log_remote"] == "true" and (ctx_waf_log or sys_log_conf_da
     waf_log['waf_action'] = ""
     waf_log['waf_extra'] = ""
   end
-  if not logger.initted() then
-  local ok,err = logger.init{
-    host = sys_log_conf_data['log_ip'],
-    port = tonumber(sys_log_conf_data['log_port']),
-    sock_type = "tcp",
-    flush_limit = 1
-  }
-  if not ok then
-    ngx.log(ngx.ERR,"failed to initialize the logger: ",err)
-    return 
+  local logger = logger_socket:new()
+   if not logger:initted() then
+    local ok,err = logger:init{
+      host = sys_log_conf_data['log_ip'],
+      port = tonumber(sys_log_conf_data['log_port']),
+      sock_type = "tcp",
+      flush_limit = 1
+    }
+    if not ok then
+      ngx.log(ngx.ERR,"failed to initialize the logger: ",err)
+      return 
+    end
   end
-  end
-  local _, send_err = logger.log(cjson.encode(waf_log).."\n")
+  local _, send_err = logger:log(cjson.encode(waf_log).."\n")
   if send_err then
     ngx.log(ngx.ERR, "failed to log message: ", send_err)
   end
