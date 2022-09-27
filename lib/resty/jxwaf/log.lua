@@ -76,7 +76,7 @@ if sys_log_conf_data["log_remote"] == "true" and (ctx_waf_log or sys_log_conf_da
     waf_log['waf_action'] = ""
     waf_log['waf_extra'] = ""
   end
-  
+  if not logger.initted() then
   local ok,err = logger.init{
     host = sys_log_conf_data['log_ip'],
     port = tonumber(sys_log_conf_data['log_port']),
@@ -86,6 +86,7 @@ if sys_log_conf_data["log_remote"] == "true" and (ctx_waf_log or sys_log_conf_da
   if not ok then
     ngx.log(ngx.ERR,"failed to initialize the logger: ",err)
     return 
+  end
   end
   local _, send_err = logger.log(cjson.encode(waf_log).."\n")
   if send_err then
