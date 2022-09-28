@@ -49,10 +49,14 @@ end
   
 if not ssl_host then
   if waf_group_domain_data[host] then
-    ssl_host = waf_group_domain_data[host]
+    local group_id_data = {}
+    group_id_data['domain_data'] = waf_group_domain_data[host]
+    ssl_host = group_id_data
   else
     if waf_group_domain_data[wildcard_host] then
-      ssl_host = waf_group_domain_data[wildcard_host]
+      local group_id_data = {}
+      group_id_data['domain_data'] = waf_group_domain_data[wildcard_host]
+      ssl_host = group_id_data
     end
   end
 end 
