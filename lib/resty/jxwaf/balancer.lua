@@ -9,9 +9,29 @@ local table_insert = table.insert
 local table_concat = table.concat
 local table_remove = table.remove
 
+local mimetic_defense_conf = ngx.ctx.mimetic_defense_conf
+
+if mimetic_defense_conf then
+  local proxy_host =  mimetic_defense_conf['proxy_host']
+  local proxy_port =  mimetic_defense_conf['proxy_port']
+  local set_more_tries_ok, set_more_tries_err = balancer.set_more_tries(1)
+  if not set_more_tries_ok then
+    ngx.log(ngx.ERR,"failed to set the current peer: ",set_more_tries_err)
+  elseif set_more_tries_err then
+    ngx.log(ngx.ALERT, "set more tries: ", set_more_tries_err)
+  end
+  local ok,err = balancer.set_current_peer(proxy_host,proxy_port)
+  if not ok then
+    ngx.log(ngx.ERR,"failed to set the current peer: ",err)
+  end
+  return 
+end
+
+
+
 if balance_host and balance_host['domain_data'][scheme] == "true" then
-	local ip_lists = balance_host["domain_data"]["source_ip"]
-	local port = balance_host["domain_data"]["source_http_port"]
+	local ip_lists = ngx.ctx.component_source_ip or balance_host["domain_data"]["source_ip"]
+	local port = ngx.ctx.component_source_http_port or balance_host["domain_data"]["source_http_port"]
 	if not ngx.ctx.tries then
 		ngx.ctx.tries = 0	
 	end

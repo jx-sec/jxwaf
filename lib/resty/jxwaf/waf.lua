@@ -52,6 +52,7 @@ local _sys_name_list_item_data = {}
 local _sys_abnormal_handle_data = {}
 local _sys_global_default_page_data = {}
 local _sys_log_conf_data = {}
+local _sys_action_data = {}
 
 function _M.get_config_info()
 	return _config_info
@@ -317,6 +318,13 @@ local function _global_update_rule()
         return _update_at(tonumber(_fail_update_period),_global_update_rule)
       end
       
+      local sys_action_data = res_body['sys_action_data'] 
+      if sys_action_data == nil then
+        ngx.log(ngx.ERR,"sys_action_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+      
       local sys_component_protection_data = res_body['sys_component_protection_data'] 
       if sys_component_protection_data == nil then
         ngx.log(ngx.ERR,"sys_component_protection_data update fail")
@@ -568,6 +576,14 @@ local function _worker_update_rule()
     else
       _sys_log_conf_data = sys_log_conf_data
     end
+    
+    local sys_action_data = res_body['sys_action_data']
+    if sys_action_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode sys_action_data")
+    else
+      _sys_action_data = sys_action_data
+    end
+    
     local sys_component_protection_data = res_body['sys_component_protection_data']
     if sys_component_protection_data == nil  then
       ngx.log(ngx.ERR,"init fail,can not decode sys_component_protection_data")
@@ -792,6 +808,8 @@ function _M.global_name_list()
           elseif name_list_action == "bot_check" then
             _sys_flow_engine_protection_data.bot_commit_auth()
             _sys_flow_engine_protection_data.bot_check_ip(action_value)
+          elseif name_list_action == "mimetic_defense" then
+            unify_action.mimetic_defense(_sys_action_data['mimetic_defense_conf'])
           end
         end
       end
@@ -862,6 +880,8 @@ function _M.name_list()
           elseif name_list_action == "bot_check" then
             _sys_flow_engine_protection_data.bot_commit_auth()
             _sys_flow_engine_protection_data.bot_check_ip(action_value)
+          elseif name_list_action == "mimetic_defense" then
+            unify_action.mimetic_defense(_sys_action_data['mimetic_defense_conf'])
           end
         end
       end
@@ -1210,6 +1230,8 @@ function _M.web_rule_protection()
           unify_action.add_shared_dict_key(action_value,_sys_shared_dict_data)
         elseif rule_action == "add_name_list_item" then
           unify_action.add_name_list_item(action_value,_sys_name_list_data,_config_info)
+        elseif rule_action == "mimetic_defense" then
+          unify_action.mimetic_defense(_sys_action_data['mimetic_defense_conf'])
         end
        end
     end
@@ -1247,6 +1269,8 @@ function _M.web_engine_protection()
       unify_action.block(page_conf)
     elseif check_action == "reject_response" then
       unify_action.reject_response()
+    elseif check_action == "mimetic_defense" then
+      unify_action.mimetic_defense(_sys_action_data['mimetic_defense_conf'])
     end
   end
 end
@@ -1264,7 +1288,6 @@ function _M.component_protection()
     local component_name = component_protection_data['name']
     local component_conf = component_protection_data['conf']
     if _sys_component_protection_data[component_uuid] then
-      
       local result,error_message = pcall(_sys_component_protection_data[component_uuid].check,component_conf)
       if not result then
         ngx.log(ngx.ERR,"component_protection error component_name: "..component_name.." ,error_message: "..error_message)

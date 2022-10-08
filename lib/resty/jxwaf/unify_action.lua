@@ -138,5 +138,16 @@ function _M.reject_response()
   return ngx.exit(444)
 end
 
+function _M.mimetic_defense(mimetic_defense_conf)
+  if mimetic_defense_conf and mimetic_defense_conf['mimetic_defense'] == "true"  then
+    ngx.req.set_header("X-Forwarded-Proto", ngx.var.scheme)
+    ngx.req.set_header("X-Forwarded-Host", ngx.var.http_host)
+    ngx.req.set_header("X-Forwarded-Port", ngx.var.server_port)
+    ngx.req.set_header("X-Cmd-Token", mimetic_defense_conf['token'])
+    ngx.req.set_header("Host", nil)
+    ngx.ctx.mimetic_defense_conf = mimetic_defense_conf
+    ngx.exit(0)
+  end
+end
 
 return _M
