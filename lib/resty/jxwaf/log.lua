@@ -57,7 +57,11 @@ if sys_log_conf_data["log_remote"] == "true" and (ctx_waf_log or sys_log_conf_da
   local raw_resp_headers = ngx.resp.get_headers() 
   local raw_resp_headers_table = {} 
   for k,v in pairs(raw_resp_headers) do
-    table_insert(raw_resp_headers_table,k..": "..v)
+    if type(v) == 'string' then
+        table_insert(raw_resp_headers_table,k..": "..v)
+    elseif  type(v) == 'table' then
+        table_insert(raw_resp_headers_table,k..": "..cjson.encode(v))
+    end
   end
   local raw_resp_header_data = table_concat(raw_resp_headers_table,"\r\n")
   if #raw_resp_header_data > 4096 then
