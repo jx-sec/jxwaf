@@ -87,7 +87,8 @@ if sys_log_conf_data["log_remote"] == "true" and (ctx_waf_log or sys_log_conf_da
       port = tonumber(sys_log_conf_data['log_port']),
       sock_type = "tcp",
       flush_limit = 1,
-      timeout = 3000
+      timeout = 3000,
+      max_retry_times = 3
     }
     if not ok then
       ngx.log(ngx.ERR,"failed to initialize the logger: ",err)
