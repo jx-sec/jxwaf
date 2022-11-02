@@ -81,16 +81,7 @@ if sys_log_conf_data["log_remote"] == "true" and (ctx_waf_log or sys_log_conf_da
     waf_log['waf_action'] = ""
     waf_log['waf_extra'] = ""
   end
---[[
-  local kafka_broker_list = sys_global_open_conf['kafka_bootstrap_servers']
-  local kafka_topic = sys_global_open_conf['kafka_topic']
-  local kafka_producer_type = sys_global_open_conf['kafka_producer_type'] 
-  local bp = producer:new(kafka_broker_list, { producer_type = kafka_producer_type  })
-  local ok, err = bp:send(kafka_topic, wids_log['wids_web_log_uuid'], cjson.encode(wids_log))
-  if not ok then
-    ngx.say("kafka send err:", err)
-  end
---]]
+
   if sys_log_conf_data['log_remote_type'] == "kafka" then
     local kafka_broker_list = sys_log_conf_data['kafka_bootstrap_servers']
     local kafka_topic = sys_log_conf_data['kafka_topic']
