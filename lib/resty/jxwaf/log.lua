@@ -6,6 +6,7 @@ local config_info = waf.get_config_info()
 local table_concat = table.concat
 local table_insert = table.insert
 local request = require "resty.jxwaf.request"
+local producer = require "resty.kafka.producer"
 
 local sys_log_conf_data  = waf.get_sys_log_conf_data()
 local ctx_waf_log = ngx.ctx.waf_log
@@ -80,27 +81,45 @@ if sys_log_conf_data["log_remote"] == "true" and (ctx_waf_log or sys_log_conf_da
     waf_log['waf_action'] = ""
     waf_log['waf_extra'] = ""
   end
-  local logger = logger_socket:new()
-   if not logger:initted() then
-    local ok,err = logger:init{
-      host = sys_log_conf_data['log_ip'],
-      port = tonumber(sys_log_conf_data['log_port']),
-      sock_type = "tcp",
-      flush_limit = 1,
-      timeout = 3000,
-      max_retry_times = 3
-    }
+--[[
+  local kafka_broker_list = sys_global_open_conf['kafka_bootstrap_servers']
+  local kafka_topic = sys_global_open_conf['kafka_topic']
+  local kafka_producer_type = sys_global_open_conf['kafka_producer_type'] 
+  local bp = producer:new(kafka_broker_list, { producer_type = kafka_producer_type  })
+  local ok, err = bp:send(kafka_topic, wids_log['wids_web_log_uuid'], cjson.encode(wids_log))
+  if not ok then
+    ngx.say("kafka send err:", err)
+  end
+--]]
+  if sys_log_conf_data['log_remote_type'] == "kafka" then
+    local kafka_broker_list = sys_log_conf_data['kafka_bootstrap_servers']
+    local kafka_topic = sys_log_conf_data['kafka_topic']
+    local bp = producer:new(kafka_broker_list, { producer_type = "async"  })
+    local ok, err = bp:send(kafka_topic, waf_log['request_id'], cjson.encode(waf_log))
     if not ok then
-      ngx.log(ngx.ERR,"failed to initialize the logger: ",err)
-      return 
+      ngx.log(ngx.ERR, "failed to send kafka message: ", err)
+    end
+  else
+    local logger = logger_socket:new()
+    if not logger:initted() then
+      local ok,err = logger:init{
+        host = sys_log_conf_data['log_ip'],
+        port = tonumber(sys_log_conf_data['log_port']),
+        sock_type = "tcp",
+        flush_limit = 1,
+        timeout = 3000,
+        max_retry_times = 3
+      }
+      if not ok then
+        ngx.log(ngx.ERR,"failed to initialize the logger: ",err)
+        return 
+      end
+    end
+    local _, send_err = logger:log(cjson.encode(waf_log).."\n")
+    if send_err then
+      ngx.log(ngx.ERR, "failed to log message: ", send_err)
     end
   end
-  local _, send_err = logger:log(cjson.encode(waf_log).."\n")
-  if send_err then
-    ngx.log(ngx.ERR, "failed to log message: ", send_err)
-  end
-
-
 end
 
 if sys_log_conf_data["log_local_debug"] == "true" and (ctx_waf_log or sys_log_conf_data["log_all"] == "true" ) then
