@@ -12,4 +12,5 @@ cp ../conf/private.key /opt/jxwaf/nginx/conf/
 mkdir /opt/jxwaf/nginx/conf/jxwaf
 cp ../conf/jxwaf_config.json /opt/jxwaf/nginx/conf/jxwaf/
 cp -r ../lib/resty/jxwaf  /opt/jxwaf/lualib/resty/
+cp -r ../lib/resty/kafka  /opt/jxwaf/lualib/resty/
 /opt/jxwaf/nginx/sbin/nginx -t
