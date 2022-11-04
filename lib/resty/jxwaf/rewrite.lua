@@ -16,7 +16,7 @@ else
 end
 local proxy_pass_https = nil 
 
-if server_port ~= 80 and server_port ~= 443 then
+if server_port ~= "80" and server_port ~= "443" then
   local custom_host = host + ":" + server_port
   if waf_domain_data[custom_host] then
     req_host = waf_domain_data[custom_host]
