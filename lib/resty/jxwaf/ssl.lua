@@ -16,7 +16,7 @@ local ssl_attack_count_stat_time_period = sys_abnormal_handle_data['ssl_attack_c
 local ssl_attack_block_name_list_uuid = sys_abnormal_handle_data['ssl_attack_block_name_list_uuid']
 local jxwaf_limit_ssl = ngx.shared.jxwaf_limit_ssl
 local host = ssl.server_name()
-local server_port = ngx.var.server_port
+local server_port = ssl.server_port()
 local addr, addrtyp = ssl.raw_client_addr()
 
 if not addr then
