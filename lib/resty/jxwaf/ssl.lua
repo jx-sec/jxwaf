@@ -46,7 +46,7 @@ else
   wildcard_host = host 
 end
 
-if server_port ~= 443 then
+if server_port ~= "443" then
   local custom_host = host + ":" + server_port
   if waf_domain_data[custom_host] then
     ssl_host = waf_domain_data[custom_host]
