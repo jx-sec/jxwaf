@@ -16,6 +16,7 @@ local ssl_attack_count_stat_time_period = sys_abnormal_handle_data['ssl_attack_c
 local ssl_attack_block_name_list_uuid = sys_abnormal_handle_data['ssl_attack_block_name_list_uuid']
 local jxwaf_limit_ssl = ngx.shared.jxwaf_limit_ssl
 local host = ssl.server_name()
+local server_port = ngx.var.server_port
 local addr, addrtyp = ssl.raw_client_addr()
 
 if not addr then
@@ -38,12 +39,30 @@ local waf_domain_data = waf.get_waf_domain_data()
 local waf_group_domain_data = waf.get_waf_group_domain_data()
 local sys_ssl_manage_data = waf.get_sys_ssl_manage_data()
 local dot_pos = string_find(host,".",1,true)
-local wildcard_host = "*"..string_sub(host,dot_pos)
-if waf_domain_data[host] then
-    ssl_host = waf_domain_data[host]
+local wildcard_host = nil 
+if dot_pos then
+  wildcard_host = "*"..string_sub(host,dot_pos)
 else
-  if waf_domain_data[wildcard_host] then
-    ssl_host = waf_domain_data[wildcard_host]
+  wildcard_host = host 
+end
+
+if server_port ~= 443 then
+  local custom_host = host + ":" + server_port
+  if waf_domain_data[custom_host] then
+    ssl_host = waf_domain_data[custom_host]
+  elseif waf_group_domain_data[custom_host] then
+    local group_id_data = {}
+    group_id_data['domain_data'] = waf_group_domain_data[host]
+    ssl_host = group_id_data
+  end
+end
+if not ssl_host then
+  if waf_domain_data[host] then
+      ssl_host = waf_domain_data[host]
+  else
+    if waf_domain_data[wildcard_host] then
+      ssl_host = waf_domain_data[wildcard_host]
+    end
   end
 end
   
