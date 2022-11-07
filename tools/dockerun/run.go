@@ -20,8 +20,8 @@ func getEnv(key, fallback string) string {
 
 
 var (
-	Http_prot = getEnv("HTTP_PORT","8081")
-	Https_port = getEnv("HTTPs_PORT","9443")
+	Http_prot = getEnv("HTTP_PORT","80")
+	Https_port = getEnv("HTTPs_PORT","443")
 	Nginx_config = fmt.Sprintf(`#user  nobody;
 worker_processes  auto;
 
