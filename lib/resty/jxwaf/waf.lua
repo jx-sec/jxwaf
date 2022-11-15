@@ -810,6 +810,14 @@ function _M.global_name_list()
             _sys_flow_engine_protection_data.bot_check_ip(action_value)
           elseif name_list_action == "mimetic_defense" then
             unify_action.mimetic_defense(_sys_action_data['mimetic_defense_conf'])
+          elseif rule_action == "identity_cheat_custom_response" then
+            unify_action.identity_cheat_custom_response(_sys_action_data['identity_cheat_custom_response_conf'])
+          elseif rule_action == "identity_cheat_request_replace" then
+            unify_action.identity_cheat_request_replace(_sys_action_data['identity_cheat_request_replace_conf'])
+          elseif rule_action == "identity_cheat_response_replace" then
+            unify_action.identity_cheat_response_replace(_sys_action_data['identity_cheat_response_replace_conf'])
+          elseif rule_action == "identity_cheat_traffic_forward" then
+            unify_action.identity_cheat_traffic_forward(_sys_action_data['identity_cheat_traffic_forward_conf'])
           end
         end
       end
@@ -882,6 +890,14 @@ function _M.name_list()
             _sys_flow_engine_protection_data.bot_check_ip(action_value)
           elseif name_list_action == "mimetic_defense" then
             unify_action.mimetic_defense(_sys_action_data['mimetic_defense_conf'])
+          elseif rule_action == "identity_cheat_custom_response" then
+            unify_action.identity_cheat_custom_response(_sys_action_data['identity_cheat_custom_response_conf'])
+          elseif rule_action == "identity_cheat_request_replace" then
+            unify_action.identity_cheat_request_replace(_sys_action_data['identity_cheat_request_replace_conf'])
+          elseif rule_action == "identity_cheat_response_replace" then
+            unify_action.identity_cheat_response_replace(_sys_action_data['identity_cheat_response_replace_conf'])
+          elseif rule_action == "identity_cheat_traffic_forward" then
+            unify_action.identity_cheat_traffic_forward(_sys_action_data['identity_cheat_traffic_forward_conf'])
           end
         end
       end
@@ -1232,6 +1248,14 @@ function _M.web_rule_protection()
           unify_action.add_name_list_item(action_value,_sys_name_list_data,_config_info)
         elseif rule_action == "mimetic_defense" then
           unify_action.mimetic_defense(_sys_action_data['mimetic_defense_conf'])
+        elseif rule_action == "identity_cheat_custom_response" then
+          unify_action.identity_cheat_custom_response(_sys_action_data['identity_cheat_custom_response_conf'])
+        elseif rule_action == "identity_cheat_request_replace" then
+          unify_action.identity_cheat_request_replace(_sys_action_data['identity_cheat_request_replace_conf'])
+        elseif rule_action == "identity_cheat_response_replace" then
+          unify_action.identity_cheat_response_replace(_sys_action_data['identity_cheat_response_replace_conf'])
+        elseif rule_action == "identity_cheat_traffic_forward" then
+          unify_action.identity_cheat_traffic_forward(_sys_action_data['identity_cheat_traffic_forward_conf'])
         end
        end
     end

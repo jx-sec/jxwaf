@@ -150,4 +150,86 @@ function _M.mimetic_defense(mimetic_defense_conf)
   end
 end
 
+
+function _M.identity_cheat_custom_response(identity_cheat_custom_response_conf)
+  if identity_cheat_custom_response_conf   then
+    local set_return_header_status = identity_cheat_custom_response_conf['set_return_header_status']
+    local set_return_header_value = identity_cheat_custom_response_conf['set_return_header_value']
+    local return_code = identity_cheat_custom_response_conf['return_code']
+    local return_html = identity_cheat_custom_response_conf['return_html']
+    if set_return_header_status == 'true' then
+      for _,v in ipairs(set_return_header_value) do
+        ngx.header[v['key']] = v['value']
+      end
+    end
+    ngx.status = tonumber(return_code)
+    ngx.say(return_html)
+  end
+end
+
+function _M.identity_cheat_request_replace(identity_cheat_request_replace_conf)
+  if identity_cheat_request_replace_conf   then
+    local get_status = identity_cheat_request_replace_conf['get_status']
+    local get_replace_match = identity_cheat_request_replace_conf['get_replace_match']
+    local get_replace_data = identity_cheat_request_replace_conf['get_replace_data']
+    local header_status = identity_cheat_request_replace_conf['header_status']
+    local header_replace_data = identity_cheat_request_replace_conf['header_replace_data']
+    local post_status = identity_cheat_request_replace_conf['post_status']
+    local post_replace_match = identity_cheat_request_replace_conf['post_replace_match']
+    local post_replace_data = identity_cheat_request_replace_conf['post_replace_data']
+    if get_status == 'true' then
+      local encode_args = ngx.encode_args(ngx.req.get_uri_args())
+      local replace_string = ngx.re.gsub(encode_args,get_replace_match,get_replace_data)
+      ngx.req.set_uri_args = replace_string
+    end
+    if header_status == 'true' then
+      for k,v in pairs(header_replace_data) do
+        local header_key = k
+        local replace_match = v['replace_match'] 
+        local replace_data = v['replace_data']
+        local header_value = ngx.req.get_headers()[header_key]
+        if header_value then
+          local replace_string = ngx.re.gsub(header_value,replace_match,replace_data)
+          ngx.req.set_header(header_key, replace_string)
+        end
+      end
+    end
+    if post_status == 'true' then
+      ngx.req.read_body()
+      local data = ngx.req.get_body_data()
+      if data then
+        local replace_string = ngx.re.gsub(data,post_replace_match,post_replace_data)
+        ngx.req.set_body_data(replace_string)
+      end
+    end
+  end
+end
+
+function _M.identity_cheat_response_replace(identity_cheat_response_replace_conf)
+  if identity_cheat_response_replace_conf   then
+    local response_header_status = identity_cheat_response_replace_conf['response_header_status']
+    local response_header_replace_data = identity_cheat_response_replace_conf['response_header_replace_data']
+    local response_data_status = identity_cheat_response_replace_conf['response_data_status']
+    local response_data_replace_match = identity_cheat_response_replace_conf['response_data_replace_match']
+    local response_data_replace_data = identity_cheat_response_replace_conf['response_data_replace_data']
+    if response_header_status == "true" then
+      ngx.ctx.response_header_replace_data = response_header_replace_data
+    end
+
+    if response_data_status == "true" then
+      ngx.ctx.response_data_replace_match = response_data_replace_match
+      response_data_replace_data = response_data_replace_data
+    end
+  end
+end
+
+function _M.identity_cheat_traffic_forward(identity_cheat_traffic_forward_conf)
+  if identity_cheat_traffic_forward_conf   then
+    local traffic_forward_ip = identity_cheat_traffic_forward_conf['traffic_forward_ip']
+    local traffic_forward_port = identity_cheat_traffic_forward_conf['traffic_forward_port']
+    ngx.ctx.component_source_ip = traffic_forward_ip
+    ngx.ctx.component_source_http_port = traffic_forward_port
+  end
+end
+
 return _M
