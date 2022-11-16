@@ -180,7 +180,9 @@ function _M.identity_cheat_request_replace(identity_cheat_request_replace_conf)
     if get_status == 'true' then
       local encode_args = ngx.encode_args(ngx.req.get_uri_args())
       local replace_string = ngx.re.gsub(encode_args,get_replace_match,get_replace_data)
-      ngx.req.set_uri_args = replace_string
+        if replace_string then
+            ngx.req.set_uri_args = replace_string
+         end
     end
     if header_status == 'true' then
       for k,v in pairs(header_replace_data) do
@@ -190,7 +192,9 @@ function _M.identity_cheat_request_replace(identity_cheat_request_replace_conf)
         local header_value = ngx.req.get_headers()[header_key]
         if header_value then
           local replace_string = ngx.re.gsub(header_value,replace_match,replace_data)
-          ngx.req.set_header(header_key, replace_string)
+           if replace_string then
+                ngx.req.set_header(header_key, replace_string)
+           end
         end
       end
     end
@@ -199,7 +203,9 @@ function _M.identity_cheat_request_replace(identity_cheat_request_replace_conf)
       local data = ngx.req.get_body_data()
       if data then
         local replace_string = ngx.re.gsub(data,post_replace_match,post_replace_data)
+                if replace_string then
         ngx.req.set_body_data(replace_string)
+                    end
       end
     end
   end
