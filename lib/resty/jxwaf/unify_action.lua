@@ -181,7 +181,7 @@ function _M.identity_cheat_request_replace(identity_cheat_request_replace_conf)
       local encode_args = ngx.encode_args(ngx.req.get_uri_args())
       local replace_string = ngx.re.gsub(encode_args,get_replace_match,get_replace_data)
         if replace_string then
-            ngx.req.set_uri_args = replace_string
+            ngx.req.set_uri_args(replace_string)
          end
     end
     if header_status == 'true' then
