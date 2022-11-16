@@ -811,13 +811,13 @@ function _M.global_name_list()
           elseif name_list_action == "mimetic_defense" then
             unify_action.mimetic_defense(_sys_action_data['mimetic_defense_conf'])
           elseif rule_action == "identity_cheat_custom_response" then
-            unify_action.identity_cheat_custom_response(_sys_action_data['identity_cheat_custom_response_conf'])
+            unify_action.identity_cheat_custom_response(_sys_action_data['identity_cheat_custom_response_conf'][action_value])
           elseif rule_action == "identity_cheat_request_replace" then
-            unify_action.identity_cheat_request_replace(_sys_action_data['identity_cheat_request_replace_conf'])
+            unify_action.identity_cheat_request_replace(_sys_action_data['identity_cheat_request_replace_conf'][action_value])
           elseif rule_action == "identity_cheat_response_replace" then
-            unify_action.identity_cheat_response_replace(_sys_action_data['identity_cheat_response_replace_conf'])
+            unify_action.identity_cheat_response_replace(_sys_action_data['identity_cheat_response_replace_conf'][action_value])
           elseif rule_action == "identity_cheat_traffic_forward" then
-            unify_action.identity_cheat_traffic_forward(_sys_action_data['identity_cheat_traffic_forward_conf'])
+            unify_action.identity_cheat_traffic_forward(_sys_action_data['identity_cheat_traffic_forward_conf'][action_value])
           end
         end
       end
@@ -891,13 +891,13 @@ function _M.name_list()
           elseif name_list_action == "mimetic_defense" then
             unify_action.mimetic_defense(_sys_action_data['mimetic_defense_conf'])
           elseif rule_action == "identity_cheat_custom_response" then
-            unify_action.identity_cheat_custom_response(_sys_action_data['identity_cheat_custom_response_conf'])
+            unify_action.identity_cheat_custom_response(_sys_action_data['identity_cheat_custom_response_conf'][action_value])
           elseif rule_action == "identity_cheat_request_replace" then
-            unify_action.identity_cheat_request_replace(_sys_action_data['identity_cheat_request_replace_conf'])
+            unify_action.identity_cheat_request_replace(_sys_action_data['identity_cheat_request_replace_conf'][action_value])
           elseif rule_action == "identity_cheat_response_replace" then
-            unify_action.identity_cheat_response_replace(_sys_action_data['identity_cheat_response_replace_conf'])
+            unify_action.identity_cheat_response_replace(_sys_action_data['identity_cheat_response_replace_conf'][action_value])
           elseif rule_action == "identity_cheat_traffic_forward" then
-            unify_action.identity_cheat_traffic_forward(_sys_action_data['identity_cheat_traffic_forward_conf'])
+            unify_action.identity_cheat_traffic_forward(_sys_action_data['identity_cheat_traffic_forward_conf'][action_value])
           end
         end
       end
@@ -1249,13 +1249,13 @@ function _M.web_rule_protection()
         elseif rule_action == "mimetic_defense" then
           unify_action.mimetic_defense(_sys_action_data['mimetic_defense_conf'])
         elseif rule_action == "identity_cheat_custom_response" then
-          unify_action.identity_cheat_custom_response(_sys_action_data['identity_cheat_custom_response_conf'])
+          unify_action.identity_cheat_custom_response(_sys_action_data['identity_cheat_custom_response_conf'][action_value])
         elseif rule_action == "identity_cheat_request_replace" then
-          unify_action.identity_cheat_request_replace(_sys_action_data['identity_cheat_request_replace_conf'])
+          unify_action.identity_cheat_request_replace(_sys_action_data['identity_cheat_request_replace_conf'][action_value])
         elseif rule_action == "identity_cheat_response_replace" then
-          unify_action.identity_cheat_response_replace(_sys_action_data['identity_cheat_response_replace_conf'])
+          unify_action.identity_cheat_response_replace(_sys_action_data['identity_cheat_response_replace_conf'][action_value])
         elseif rule_action == "identity_cheat_traffic_forward" then
-          unify_action.identity_cheat_traffic_forward(_sys_action_data['identity_cheat_traffic_forward_conf'])
+          unify_action.identity_cheat_traffic_forward(_sys_action_data['identity_cheat_traffic_forward_conf'][action_value])
         end
        end
     end
