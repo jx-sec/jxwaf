@@ -9,7 +9,9 @@ if ngx.ctx.response_header_replace_data then
         local header_value =ngx.header[header_key]
         if header_value then
           local replace_string = ngx.re.gsub(header_value,replace_match,replace_data)
-          ngx.req.set_header(header_key, replace_string)
+            if replace_string then 
+                ngx.header[header_key] = replace_string
+            end
         end
     end
 end
