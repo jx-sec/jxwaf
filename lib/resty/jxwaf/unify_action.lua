@@ -224,7 +224,7 @@ function _M.identity_cheat_response_replace(identity_cheat_response_replace_conf
 
     if response_data_status == "true" then
       ngx.ctx.response_data_replace_match = response_data_replace_match
-      response_data_replace_data = response_data_replace_data
+      ngx.ctx.response_data_replace_data = response_data_replace_data
     end
   end
 end
