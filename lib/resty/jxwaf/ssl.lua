@@ -47,7 +47,7 @@ else
 end
 
 if server_port ~= "443" then
-  local custom_host = host + ":" + server_port
+  local custom_host = host..":"..server_port
   if waf_domain_data[custom_host] then
     ssl_host = waf_domain_data[custom_host]
   elseif waf_group_domain_data[custom_host] then
