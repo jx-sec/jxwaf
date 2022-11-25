@@ -849,7 +849,7 @@ function _M.name_list()
       for _,rule in ipairs(name_list_rule) do
         local key = rule['key']
         local value = rule['value']
-        local return_value = request.get_args(key,value)
+        local return_value = request.get_args(key,value,_sys_shared_dict_data)
         if type(return_value) == "string" then
           table.insert(item_value_table,return_value)
         else
