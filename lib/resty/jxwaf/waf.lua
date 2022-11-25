@@ -777,7 +777,7 @@ function _M.global_name_list()
       for _,rule in ipairs(name_list_rule) do
         local key = rule['key']
         local value = rule['value']
-        local return_value = request.get_args(key,value)
+        local return_value = request.get_args(key,value,_sys_shared_dict_data)
         if type(return_value) == "string" then
           table.insert(item_value_table,return_value)
         else
@@ -917,7 +917,7 @@ function _M.flow_white_rule()
            local match_value = rule_match['match_value']
            local operator_result = false
            for _,match_arg in ipairs(match_args) do
-             local arg = request.get_args(match_arg.key,match_arg.value)
+             local arg = request.get_args(match_arg.key,match_arg.value,_sys_shared_dict_data)
              for _,arg_prepocess in ipairs(args_prepocess) do
                arg = preprocess.process_args(arg_prepocess,arg)
              end
@@ -991,7 +991,7 @@ function _M.flow_rule_protection()
            local match_value = rule_match['match_value']
            local operator_result = false
            for _,match_arg in ipairs(match_args) do
-             local arg = request.get_args(match_arg.key,match_arg.value)
+             local arg = request.get_args(match_arg.key,match_arg.value,_sys_shared_dict_data)
              for _,arg_prepocess in ipairs(args_prepocess) do
                arg = preprocess.process_args(arg_prepocess,arg)
              end
@@ -1119,7 +1119,7 @@ function _M.web_white_rule()
           local match_value = rule_match['match_value']
           local operator_result = false
           for _,match_arg in ipairs(match_args) do
-            local arg = request.get_args(match_arg.key,match_arg.value)
+            local arg = request.get_args(match_arg.key,match_arg.value,_sys_shared_dict_data)
             for _,arg_prepocess in ipairs(args_prepocess) do
               arg = preprocess.process_args(arg_prepocess,arg)
             end
