@@ -42,7 +42,11 @@ local function _get_raw_header()
   end
   local header_table = {} 
   for k,v in pairs(headers) do
-    table_insert(header_table,k..": "..v)
+    if type(v) == 'string' then
+        table_insert(header_table,k..": "..v)
+    elseif  type(v) == 'table' then
+        table_insert(header_table,k..": "..v[1])
+    end
   end
   raw_header_data = table_concat(header_table,"\r\n")
   ngx.ctx.raw_header_data = raw_header_data
@@ -59,7 +63,11 @@ local function _get_raw_header_no_referer()
   headers['referer'] = nil
   local header_table = {} 
   for k,v in pairs(headers) do
-    table_insert(header_table,k..": "..v)
+    if type(v) == 'string' then
+      table_insert(header_table,k..": "..v)
+    elseif  type(v) == 'table' then
+      table_insert(header_table,k..": "..v[1])
+    end
   end
   raw_header_no_referer_data = table_concat(header_table,"\r\n")
   ngx.ctx.raw_header_no_referer_data = raw_header_no_referer_data
