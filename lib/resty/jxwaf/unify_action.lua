@@ -138,6 +138,7 @@ function _M.reject_response()
   return ngx.exit(444)
 end
 
+--[[
 function _M.mimetic_defense(mimetic_defense_conf)
   if mimetic_defense_conf and mimetic_defense_conf['mimetic_defense'] == "true"  then
     ngx.req.set_header("X-Forwarded-Proto", ngx.var.scheme)
@@ -147,6 +148,106 @@ function _M.mimetic_defense(mimetic_defense_conf)
     ngx.req.set_header("Host", nil)
     ngx.ctx.mimetic_defense_conf = mimetic_defense_conf
     ngx.exit(0)
+  end
+end
+--]]
+
+function _M.custom_response(custom_response_conf)
+  if custom_response_conf   then
+    local set_response_header_status = custom_response_conf['set_response_header_status']
+    local set_response_header_value = custom_response_conf['set_response_header_value']
+    local return_code = custom_response_conf['return_code']
+    local return_html = custom_response_conf['return_html']
+    if set_response_header_status == 'true' then
+      for _,v in ipairs(set_response_header_value) do
+        ngx.header[v['key']] = v['value']
+      end
+    end
+    ngx.status = tonumber(return_code)
+    ngx.say(return_html)
+  end
+end
+
+function _M.request_replace(request_replace_conf)
+  if request_replace_conf   then
+    local get_status = request_replace_conf['get_status']
+    local get_replace_match = request_replace_conf['get_replace_match']
+    local get_replace_data = request_replace_conf['get_replace_data']
+    local header_status = request_replace_conf['header_status']
+    local header_replace_data = request_replace_conf['header_replace_data']
+    local post_status = request_replace_conf['post_status']
+    local post_replace_match = request_replace_conf['post_replace_match']
+    local post_replace_data = request_replace_conf['post_replace_data']
+    if get_status == 'true' then
+      local encode_args = ngx.encode_args(ngx.req.get_uri_args())
+      local replace_string = ngx.re.gsub(encode_args,get_replace_match,get_replace_data)
+      if replace_string then
+        ngx.req.set_uri_args(replace_string)
+      end
+    end
+    if header_status == 'true' then
+      for k,v in pairs(header_replace_data) do
+        local header_key = k
+        local replace_match = v['replace_match'] 
+        local replace_data = v['replace_data']
+        local header_value = ngx.req.get_headers()[header_key]
+        if header_value then
+          local replace_string = ngx.re.gsub(header_value,replace_match,replace_data)
+           if replace_string then
+                ngx.req.set_header(header_key, replace_string)
+           end
+        end
+      end
+    end
+    if post_status == 'true' then
+      ngx.req.read_body()
+      local data = ngx.req.get_body_data()
+      if data then
+        local replace_string = ngx.re.gsub(data,post_replace_match,post_replace_data)
+        if replace_string then
+          ngx.req.set_body_data(replace_string)
+        end
+      end
+    end
+  end
+end
+
+function _M.response_replace(response_replace_conf)
+  if response_replace_conf then
+    local response_header_status = response_replace_conf['response_header_status']
+    local response_header_replace_data = response_replace_conf['response_header_replace_data']
+    local response_data_status = response_replace_conf['response_data_status']
+    local response_data_replace_match = response_replace_conf['response_data_replace_match']
+    local response_data_replace_data = response_replace_conf['response_data_replace_data']
+    if response_header_status == "true" then
+      ngx.ctx.response_header_replace_data = response_header_replace_data
+    end
+
+    if response_data_status == "true" then
+      ngx.req.clear_header('Accept-Encoding')
+      ngx.ctx.response_data_replace_match = response_data_replace_match
+      ngx.ctx.response_data_replace_data = response_data_replace_data
+    end
+  end
+end
+
+function _M.traffic_forward(traffic_forward_conf)
+  if traffic_forward_conf   then
+    local traffic_forward_ip = traffic_forward_conf['traffic_forward_ip']
+    local traffic_forward_port = traffic_forward_conf['traffic_forward_port']
+    local set_request_header_status = custom_response_conf['set_request_header_status']
+    local set_request_header_value = custom_response_conf['set_request_header_value']
+    if set_request_header_status == 'true' then
+      for _,v in ipairs(set_request_header_value) do
+        if v['type'] == 'set_value' then
+          ngx.req.set_header(v['key'],v['value'])
+        elseif v['type'] == 'del_value' then
+          ngx.req.clear_header(v['key'])
+        end
+      end
+    end
+    ngx.ctx.component_source_ip = traffic_forward_ip
+    ngx.ctx.component_source_http_port = traffic_forward_port
   end
 end
 

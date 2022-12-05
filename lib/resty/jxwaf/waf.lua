@@ -754,9 +754,12 @@ function _M.global_component_protection()
     local global_component_conf = global_component_protection_conf['conf']
     local global_component_name = global_component_protection_conf['name']
     if _sys_component_protection_data[global_component_uuid] then
-      local result,error_message = pcall(_sys_component_protection_data[global_component_uuid].check,global_component_conf)
-      if not result then
-        ngx.log(ngx.ERR,"global_component_protection error name: "..global_component_name.." ,error_message: "..error_message)
+      local function_result,return_result = pcall(_sys_component_protection_data[global_component_uuid].check,global_component_conf)
+      if not function_result then
+        ngx.log(ngx.ERR,"global_component_protection error name: "..global_component_name.." ,error_message: "..return_result)
+      end
+      if return_result then
+        ngx.ctx["global_component_result_"..global_component_name] = "true"
       end
     end
   end
@@ -794,6 +797,7 @@ function _M.global_name_list()
             waf_log['waf_action'] = name_list_action
             waf_log['waf_extra'] = item_value
             ngx.ctx.waf_log = waf_log
+            ngx.ctx["global_name_list_result_"..name_list_name] = "true"
           if name_list_action == "block" or name_list_action == "tcp_block"  then
             local page_conf = {}
             page_conf['code'] = _sys_global_default_page_data['name_list_deny_code']
@@ -808,8 +812,14 @@ function _M.global_name_list()
           elseif name_list_action == "bot_check" then
             _sys_flow_engine_protection_data.bot_commit_auth()
             _sys_flow_engine_protection_data.bot_check_ip(action_value)
-          elseif name_list_action == "mimetic_defense" then
-            unify_action.mimetic_defense(_sys_action_data['mimetic_defense_conf'])
+          elseif name_list_action == "custom_response" then
+            unify_action.custom_response(_sys_action_data['custom_response_conf'])
+          elseif name_list_action == "request_replace" then
+            unify_action.request_replace(_sys_action_data['request_replace_conf'])
+          elseif name_list_action == "response_replace" then
+            unify_action.response_replace(_sys_action_data['response_replace_conf'])
+          elseif name_list_action == "traffic_forward" then
+            unify_action.traffic_forward(_sys_action_data['traffic_forward_conf'])
           end
         end
       end
@@ -866,6 +876,7 @@ function _M.name_list()
             waf_log['waf_action'] = name_list_action
             waf_log['waf_extra'] = item_value
             ngx.ctx.waf_log = waf_log
+            ngx.ctx["name_list_result_"..name_list_name] = "true"
           if name_list_action == "block" or name_list_action == "tcp_block"  then
             local page_conf = {}
             page_conf['code'] = _sys_global_default_page_data['name_list_deny_code']
@@ -880,8 +891,14 @@ function _M.name_list()
           elseif name_list_action == "bot_check" then
             _sys_flow_engine_protection_data.bot_commit_auth()
             _sys_flow_engine_protection_data.bot_check_ip(action_value)
-          elseif name_list_action == "mimetic_defense" then
-            unify_action.mimetic_defense(_sys_action_data['mimetic_defense_conf'])
+          elseif name_list_action == "custom_response" then
+            unify_action.custom_response(_sys_action_data['custom_response_conf'])
+          elseif name_list_action == "request_replace" then
+            unify_action.request_replace(_sys_action_data['request_replace_conf'])
+          elseif name_list_action == "response_replace" then
+            unify_action.response_replace(_sys_action_data['response_replace_conf'])
+          elseif name_list_action == "traffic_forward" then
+            unify_action.traffic_forward(_sys_action_data['traffic_forward_conf'])
           end
         end
       end
@@ -1232,6 +1249,14 @@ function _M.web_rule_protection()
           unify_action.add_name_list_item(action_value,_sys_name_list_data,_config_info)
         elseif rule_action == "mimetic_defense" then
           unify_action.mimetic_defense(_sys_action_data['mimetic_defense_conf'])
+        elseif name_list_action == "custom_response" then
+          unify_action.custom_response(_sys_action_data['custom_response_conf'])
+        elseif name_list_action == "request_replace" then
+          unify_action.request_replace(_sys_action_data['request_replace_conf'])
+        elseif name_list_action == "response_replace" then
+          unify_action.response_replace(_sys_action_data['response_replace_conf'])
+        elseif name_list_action == "traffic_forward" then
+          unify_action.traffic_forward(_sys_action_data['traffic_forward_conf'])
         end
        end
     end
@@ -1269,8 +1294,6 @@ function _M.web_engine_protection()
       unify_action.block(page_conf)
     elseif check_action == "reject_response" then
       unify_action.reject_response()
-    elseif check_action == "mimetic_defense" then
-      unify_action.mimetic_defense(_sys_action_data['mimetic_defense_conf'])
     end
   end
 end
@@ -1288,10 +1311,13 @@ function _M.component_protection()
     local component_name = component_protection_data['name']
     local component_conf = component_protection_data['conf']
     if _sys_component_protection_data[component_uuid] then
-      local result,error_message = pcall(_sys_component_protection_data[component_uuid].check,component_conf)
-      if not result then
-        ngx.log(ngx.ERR,"component_protection error component_name: "..component_name.." ,error_message: "..error_message)
+      local function_result,return_result = pcall(_sys_component_protection_data[component_uuid].check,component_conf)
+      if not function_result then
+        ngx.log(ngx.ERR,"component_protection error component_name: "..component_name.." ,error_message: "..return_result)
       end
+      if return_result  then
+        ngx.ctx.["component_result_"..component_name] = "true"
+      end 
     end
   end 
 end

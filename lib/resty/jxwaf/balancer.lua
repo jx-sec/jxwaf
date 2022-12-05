@@ -9,8 +9,8 @@ local table_insert = table.insert
 local table_concat = table.concat
 local table_remove = table.remove
 
+--[[
 local mimetic_defense_conf = ngx.ctx.mimetic_defense_conf
-
 if mimetic_defense_conf then
   local proxy_host =  mimetic_defense_conf['proxy_host']
   local proxy_port =  mimetic_defense_conf['proxy_port']
@@ -26,7 +26,7 @@ if mimetic_defense_conf then
   end
   return 
 end
-
+--]]
 
 
 if balance_host and balance_host['domain_data'][scheme] == "true" then
