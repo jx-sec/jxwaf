@@ -235,8 +235,8 @@ function _M.traffic_forward(traffic_forward_conf)
   if traffic_forward_conf   then
     local traffic_forward_ip = traffic_forward_conf['traffic_forward_ip']
     local traffic_forward_port = traffic_forward_conf['traffic_forward_port']
-    local set_request_header_status = custom_response_conf['set_request_header_status']
-    local set_request_header_value = custom_response_conf['set_request_header_value']
+    local set_request_header_status = traffic_forward_conf['set_request_header_status']
+    local set_request_header_value = traffic_forward_conf['set_request_header_value']
     if set_request_header_status == 'true' then
       for _,v in ipairs(set_request_header_value) do
         if v['type'] == 'set_value' then
