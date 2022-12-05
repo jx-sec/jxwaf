@@ -1249,13 +1249,13 @@ function _M.web_rule_protection()
           unify_action.add_name_list_item(action_value,_sys_name_list_data,_config_info)
         elseif rule_action == "mimetic_defense" then
           unify_action.mimetic_defense(_sys_action_data['mimetic_defense_conf'])
-        elseif name_list_action == "custom_response" then
+        elseif rule_action == "custom_response" then
           unify_action.custom_response(_sys_action_data['custom_response_conf'])
-        elseif name_list_action == "request_replace" then
+        elseif rule_action == "request_replace" then
           unify_action.request_replace(_sys_action_data['request_replace_conf'])
-        elseif name_list_action == "response_replace" then
+        elseif rule_action == "response_replace" then
           unify_action.response_replace(_sys_action_data['response_replace_conf'])
-        elseif name_list_action == "traffic_forward" then
+        elseif rule_action == "traffic_forward" then
           unify_action.traffic_forward(_sys_action_data['traffic_forward_conf'])
         end
        end
@@ -1316,7 +1316,7 @@ function _M.component_protection()
         ngx.log(ngx.ERR,"component_protection error component_name: "..component_name.." ,error_message: "..return_result)
       end
       if return_result  then
-        ngx.ctx.["component_result_"..component_name] = "true"
+        ngx.ctx["component_result_"..component_name] = "true"
       end 
     end
   end 
