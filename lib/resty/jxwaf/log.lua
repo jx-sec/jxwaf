@@ -45,7 +45,7 @@ if sys_log_conf_data["log_remote"] == "true" and (ctx_waf_log or sys_log_conf_da
   else
     waf_log['raw_body'] = raw_body
   end
-  waf_log['src_ip'] = ngx.var.remote_addr
+  waf_log['src_ip'] = ngx.ctx.src_ip or ngx.var.remote_addr
   waf_log['user_agent'] = ngx.var.http_user_agent or ""
   waf_log['connections_active'] = ngx.var.connections_active or ""
   waf_log['connections_waiting'] = ngx.var.connections_waiting or ""
@@ -118,7 +118,7 @@ if sys_log_conf_data["log_local_debug"] == "true" and (ctx_waf_log or sys_log_co
   waf_log['host'] = ngx.var.host
   waf_log['status'] = ngx.var.status
   waf_log['uri'] = ngx.var.uri
-  waf_log['src_ip'] = ngx.var.remote_addr
+  waf_log['src_ip'] = ngx.ctx.src_ip or ngx.var.remote_addr
   waf_log['user_agent'] = ngx.var.http_user_agent or ""
   waf_log['request_id'] = ngx.ctx.request_uuid
   waf_log['process_time'] = ngx.var.request_time
