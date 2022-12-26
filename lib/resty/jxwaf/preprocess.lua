@@ -205,7 +205,11 @@ function _M.process_args(k,v)
   elseif k == "uniDecode" then
     return _uni_decode(v)
   elseif k == "type" then
-    return type(v)
+    if tonumber(v) then
+      return "number"
+    else
+      return type(v)
+    end
   else
     return nil 
   end
