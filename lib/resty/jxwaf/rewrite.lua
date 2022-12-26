@@ -58,7 +58,7 @@ if not req_host then
   end
 end 
 
-if proxy_pass_https == "true" then
+if proxy_pass_https == "true" or (proxy_pass_https == "follow" and ngx.var.scheme == "https") then
   ngx.var.proxy_pass_https_flag = "true"
 end
 

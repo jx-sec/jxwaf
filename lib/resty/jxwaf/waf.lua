@@ -606,7 +606,6 @@ end
 
 local function _worker_name_list_item_update()
   local waf_conf_data = ngx.shared.waf_conf_data
-  
   local name_list_item_conf_md5 = waf_conf_data:get("name_list_item_conf_md5")
   if name_list_item_conf_md5 and name_list_item_conf_md5 ~= _name_list_item_conf_md5 then
     local tmp_res_body = waf_conf_data:get("name_list_item_res_body")
@@ -704,6 +703,8 @@ end
 
 
 function _M.access_init() 
+  local request_uuid = uuid.generate_random()
+  ngx.ctx.request_uuid = request_uuid
   local content_type = ngx.req.get_headers()["Content-type"]
   local content_length = ngx.req.get_headers()["Content-Length"]
   if ngx.ctx.req_host and content_type and  ngx.re.find(content_type, [=[^multipart/form-data]=],"oij") and content_length and tonumber(content_length) ~= 0 then

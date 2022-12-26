@@ -15,7 +15,7 @@ local ctx_waf_log = ngx.ctx.waf_log
 if sys_log_conf_data["log_remote"] == "true" and (ctx_waf_log or sys_log_conf_data["log_all"] == "true" ) then
   local waf_log = {}
   waf_log['host'] = ngx.var.host
-  waf_log['request_id'] = ngx.var.request_id
+  waf_log['request_id'] = ngx.ctx.request_uuid
   waf_log['waf_node_uuid'] = config_info['waf_node_uuid']
   waf_log['bytes_sent'] = ngx.var.bytes_sent or ""
   waf_log['bytes_received'] = ngx.var.request_length or ""  
@@ -120,7 +120,7 @@ if sys_log_conf_data["log_local_debug"] == "true" and (ctx_waf_log or sys_log_co
   waf_log['uri'] = ngx.var.uri
   waf_log['src_ip'] = ngx.var.remote_addr
   waf_log['user_agent'] = ngx.var.http_user_agent or ""
-  waf_log['request_id'] = ngx.var.request_id
+  waf_log['request_id'] = ngx.ctx.request_uuid
   waf_log['process_time'] = ngx.var.request_time
   if ctx_waf_log then
     waf_log['waf_module']  = ctx_waf_log['waf_module']

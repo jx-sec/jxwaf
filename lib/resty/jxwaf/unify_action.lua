@@ -120,7 +120,7 @@ function _M.block(page_conf)
   if html and #html > 0 then
     ngx.status = tonumber(code)
     ngx.header.content_type = "text/html;charset=utf-8"
-    ngx.header.request_id = ngx.var.request_id
+    ngx.header.request_id = ngx.ctx.request_uuid
     ngx.say(html)
   end
   if code then
