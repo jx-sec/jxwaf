@@ -83,7 +83,7 @@ local function get_http_args(key)
   elseif key == "method" then
     return_value = ngx.req.get_method()
   elseif key == "src_ip" then
-    return_value = ngx.var.remote_addr
+    return_value = ngx.ctx.src_ip or ngx.var.remote_addr
   elseif key == "raw_body" then
     return_value = ngx.ctx.file_body or _get_raw_body()
   elseif key == "version" then
