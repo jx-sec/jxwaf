@@ -1278,7 +1278,7 @@ function _M.web_engine_protection()
     if ngx.ctx['web_check_bypass'] or ngx.ctx['web_engine_protection_bypass'] or ngx.ctx[bypass_check] then
       return
     end
-    -- log            
+           
       local waf_log = {}
       waf_log['waf_module'] = "web_engine_protection"
       waf_log['waf_policy'] = check_type
@@ -1286,8 +1286,6 @@ function _M.web_engine_protection()
       waf_log['waf_extra'] = ""
       ngx.ctx.waf_log = waf_log
       ngx.ctx[check_type] = true
-    -- log
-    ngx.ctx[check_type] = true
     if  check_action == "block" then
       local page_conf = {}
       page_conf['code'] = _sys_global_default_page_data['web_deny_code']
