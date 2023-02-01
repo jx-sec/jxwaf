@@ -23,6 +23,11 @@ if not domain_check_result then
   ngx.log(ngx.ERR,domain_check_error)
 end
 
+local base_component_protection_result,base_component_protection_error = pcall(waf.base_component_protection)
+if not base_component_protection_result then
+  ngx.log(ngx.ERR,base_component_protection_error)
+end
+
 local name_list_result,name_list_error = pcall(waf.name_list)
 if not name_list_result then
   ngx.log(ngx.ERR,name_list_error)
@@ -58,9 +63,9 @@ if not web_engine_protection_result then
   ngx.log(ngx.ERR,web_engine_protection_error)
 end
 
-local component_protection_result,component_protection_error = pcall(waf.component_protection)
-if not component_protection_result then
-  ngx.log(ngx.ERR,component_protection_error)
+local analysis_component_protection_result,analysis_component_protection_error = pcall(waf.analysis_component_protection)
+if not analysis_component_protection_result then
+  ngx.log(ngx.ERR,analysis_component_protection_error)
 end
 
 local abnormal_handle_result,abnormal_handle_error = pcall(waf.abnormal_handle)

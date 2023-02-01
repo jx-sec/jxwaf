@@ -705,6 +705,15 @@ end
 function _M.access_init() 
   local request_uuid = uuid.generate_random()
   ngx.ctx.request_uuid = request_uuid
+  ngx.ctx.global_component_protection_result = {}
+  ngx.ctx.global_name_list_result = {}
+  ngx.ctx.base_component_protection_result = {}
+  ngx.ctx.name_list_result = {}
+  ngx.ctx.flow_rule_protection_result = {}
+  ngx.ctx.flow_engine_protection_result = {}
+  ngx.ctx.web_rule_protection_result = {}
+  ngx.ctx.web_engine_protection_result = {}
+  ngx.ctx.analysis_component_protection = {}
   local content_type = ngx.req.get_headers()["Content-type"]
   local content_length = ngx.req.get_headers()["Content-Length"]
   if ngx.ctx.req_host and content_type and  ngx.re.find(content_type, [=[^multipart/form-data]=],"oij") and content_length and tonumber(content_length) ~= 0 then
@@ -760,7 +769,8 @@ function _M.global_component_protection()
         ngx.log(ngx.ERR,"global_component_protection error name: "..global_component_name.." ,error_message: "..return_result)
       end
       if return_result then
-        ngx.ctx["global_component_result_"..global_component_name] = "true"
+      --ngx.ctx["global_component_result_"..global_component_name] = "true"
+        ngx.ctx.global_component_protection_result[global_component_name] = true
       end
     end
   end
@@ -798,7 +808,8 @@ function _M.global_name_list()
             waf_log['waf_action'] = name_list_action
             waf_log['waf_extra'] = item_value
             ngx.ctx.waf_log = waf_log
-            ngx.ctx["global_name_list_result_"..name_list_name] = "true"
+            --ngx.ctx["global_name_list_result_"..name_list_name] = "true"
+            ngx.ctx.global_name_list_result[name_list_name] = true
           if name_list_action == "block" or name_list_action == "tcp_block"  then
             local page_conf = {}
             page_conf['code'] = _sys_global_default_page_data['name_list_deny_code']
@@ -839,6 +850,31 @@ function _M.domain_check()
   end
 end
 
+function _M.base_component_protection()
+  local req_host = ngx.ctx.req_host
+  local component_protection_data = req_host['component_protection_data']
+  local protection_data = req_host['protection_data']
+  if not component_protection_data or (protection_data and protection_data['component_protection'] == "false") then
+    return 
+  end
+  for _,component_protection in ipairs(component_protection_data) do
+    local component_uuid = component_protection['uuid']
+    local component_name = component_protection['name']
+    local component_conf = component_protection['conf']
+    if _sys_component_protection_data[component_uuid] then
+      local function_result,return_result = pcall(_sys_component_protection_data[component_uuid].check,component_conf)
+      if not function_result then
+        ngx.log(ngx.ERR,"component_protection error component_name: "..component_name.." ,error_message: "..return_result)
+      end
+      if return_result  then
+        --ngx.ctx["component_result_"..component_name] = "true"
+        ngx.ctx.base_component_protection_result[component_name] = true
+      end 
+    end
+  end 
+end
+
+
 function _M.name_list()
   local req_host = ngx.ctx.req_host
   local name_list_data = req_host['name_list_data']
@@ -877,7 +913,8 @@ function _M.name_list()
             waf_log['waf_action'] = name_list_action
             waf_log['waf_extra'] = item_value
             ngx.ctx.waf_log = waf_log
-            ngx.ctx["name_list_result_"..name_list_name] = "true"
+            --ngx.ctx["name_list_result_"..name_list_name] = "true"
+            ngx.ctx.name_list_result[name_list_name] = true
           if name_list_action == "block" or name_list_action == "tcp_block"  then
             local page_conf = {}
             page_conf['code'] = _sys_global_default_page_data['name_list_deny_code']
@@ -1036,6 +1073,7 @@ function _M.flow_rule_protection()
             waf_log['waf_extra'] = rule_group_name
             ngx.ctx.waf_log = waf_log
           end
+          ngx.ctx.flow_rule_protection_result[rule_name] = true
         if rule_action == "block" then
           local page_conf = {}
           page_conf['code'] = _sys_global_default_page_data['flow_deny_code']
@@ -1097,7 +1135,8 @@ function _M.flow_engine_protection()
             waf_log['waf_extra'] = ""
             ngx.ctx.waf_log = waf_log
     -- log
-    ngx.ctx[check_type] = true
+    --ngx.ctx[check_type] = true
+    ngx.ctx.flow_engine_protection_result[check_type] = true
     if block_mode == "block" then
       local page_conf = {}
       page_conf['code'] = _sys_global_default_page_data['flow_deny_code']
@@ -1234,6 +1273,7 @@ function _M.web_rule_protection()
             waf_log['waf_extra'] = rule_group_name 
             ngx.ctx.waf_log = waf_log
         end
+        ngx.ctx.web_rule_protection_result[rule_name] = true
         if rule_action == "block" then
           local page_conf = {}
           page_conf['code'] = _sys_global_default_page_data['web_deny_code']
@@ -1285,7 +1325,8 @@ function _M.web_engine_protection()
       waf_log['waf_action'] = check_action
       waf_log['waf_extra'] = ""
       ngx.ctx.waf_log = waf_log
-      ngx.ctx[check_type] = true
+      --ngx.ctx[check_type] = true
+      ngx.ctx.web_engine_protection_result[check_type] = true
     if  check_action == "block" then
       local page_conf = {}
       page_conf['code'] = _sys_global_default_page_data['web_deny_code']
@@ -1297,25 +1338,25 @@ function _M.web_engine_protection()
   end
 end
 
-function _M.component_protection()
+function _M.analysis_component_protection()
   local req_host = ngx.ctx.req_host
-  local component_protection_data = req_host['component_protection_data']
-  local component_protection = req_host['component_protection']
+  local analysis_component_data = req_host['analysis_component_data']
   local protection_data = req_host['protection_data']
-  if not component_protection_data or (protection_data and protection_data['component_protection'] == "false") then
+  if not analysis_component_data or (protection_data and protection_data['component_protection'] == "false") then
     return 
   end
-  for _,component_protection_data in ipairs(component_protection_data) do
-    local component_uuid = component_protection_data['uuid']
-    local component_name = component_protection_data['name']
-    local component_conf = component_protection_data['conf']
+  for _,analysis_component in ipairs(analysis_component_data) do
+    local component_uuid = analysis_component['uuid']
+    local component_name = analysis_component['name']
+    local component_conf = analysis_component['conf']
     if _sys_component_protection_data[component_uuid] then
       local function_result,return_result = pcall(_sys_component_protection_data[component_uuid].check,component_conf)
       if not function_result then
         ngx.log(ngx.ERR,"component_protection error component_name: "..component_name.." ,error_message: "..return_result)
       end
       if return_result  then
-        ngx.ctx["component_result_"..component_name] = "true"
+        --ngx.ctx["component_result_"..component_name] = "true"
+        ngx.ctx.analysis_component_protection[component_name] = true
       end 
     end
   end 
