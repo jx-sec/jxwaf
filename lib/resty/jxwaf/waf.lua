@@ -747,7 +747,7 @@ function _M.access_init()
       end
     end
     if #_file_content_disposition > 0 then
-      ngx.ctx.file_content_disposition = table.concat(_file_content_disposition" ")
+      ngx.ctx.file_content_disposition = table.concat(_file_content_disposition," ")
     end
     if #_file_content_type > 0 then
       ngx.ctx.file_content_type = table.concat(_file_content_type," ")
