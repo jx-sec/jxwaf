@@ -714,6 +714,7 @@ function _M.access_init()
   ngx.ctx.web_rule_protection_result = {}
   ngx.ctx.web_engine_protection_result = {}
   ngx.ctx.analysis_component_protection = {}
+--[[
   local content_type = ngx.req.get_headers()["Content-type"]
   local content_length = ngx.req.get_headers()["Content-Length"]
   if ngx.ctx.req_host and content_type and  ngx.re.find(content_type, [=[^multipart/form-data]=],"oij") and content_length and tonumber(content_length) ~= 0 then
@@ -756,6 +757,7 @@ function _M.access_init()
       ngx.ctx.file_body = string.sub(table.concat(_file_body," "),1,65535)
     end
   end
+ --]]
 end
 
 function _M.global_component_protection()
