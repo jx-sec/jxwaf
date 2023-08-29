@@ -94,7 +94,6 @@ lua_code_cache on;
         location / {
             #root   html;
            # index  index.html index.htm;
-	   proxy_http_version 1.1;
           if ($proxy_pass_https_flag = "true"){
             proxy_pass https://jxwaf;
           }
@@ -102,9 +101,10 @@ lua_code_cache on;
             proxy_pass http://jxwaf;
           }
 
-           proxy_set_header Host  $http_host;
-           proxy_set_header X-Real-IP $remote_addr;
-           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header Host  $http_host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+	   proxy_http_version 1.1;
 	   proxy_set_header Upgrade $http_upgrade;
            proxy_set_header Connection "upgrade";
         }
@@ -208,6 +208,9 @@ lua_code_cache on;
             proxy_set_header Host  $http_host;
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+	   proxy_http_version 1.1;
+	   proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection "upgrade";
         }
     }
 
