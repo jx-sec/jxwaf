@@ -29,6 +29,6 @@ FROM centos:centos7
 # from alpine:3.16
 WORKDIR /opt/jxwaf 
 COPY --from=builder /opt/jxwaf /opt/jxwaf
-COPY --from=dokerun_builder /opt/app/run /
+COPY --from=dokerun_builder /opt/app/run /opt/
 
-CMD   ["/run"]
+CMD   ["/opt/run"]
