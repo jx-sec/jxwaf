@@ -47,10 +47,23 @@ if balance_host and balance_host['domain_data'][scheme] == "true" then
 	if not ngx.ctx.ip_lists then
 		ngx.ctx.ip_lists = ip_lists
 	end
-  local first_count = {}
-  table_insert(first_count,string_sub(ngx.var.remote_addr,1,1))
-  table_insert(first_count,string_sub(ngx.var.remote_addr,-1))
-	local ip_count = (tonumber(table_concat(first_count)) % #ngx.ctx.ip_lists) + 1
+local first_count = {}
+local first_digit = string.sub(ngx.var.remote_addr, 1, 1) 
+local last_digit = string.sub(ngx.var.remote_addr, -1) 
+if tonumber(first_digit) then
+    table.insert(first_count, first_digit)
+else
+    first_digit = string.match(ngx.var.remote_addr, "%d") or "0" 
+    table.insert(first_count, first_digit)
+end
+
+if tonumber(last_digit) then
+    table.insert(first_count, last_digit)
+else
+    last_digit = string.match(string.reverse(ngx.var.remote_addr), "%d") or "0" 
+    table.insert(first_count, last_digit)
+end
+	local ip_count = (tonumber(table.concat(first_count)) % #ngx.ctx.ip_lists) + 1
 	local _host = ngx.ctx.ip_lists[ip_count]
 	local state_name,state_code = balancer.get_last_failure()
 	if state_name == "failed" then
