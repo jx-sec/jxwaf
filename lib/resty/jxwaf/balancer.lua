@@ -4,6 +4,7 @@ local request = require "resty.jxwaf.request"
 local host = ngx.var.host
 local balance_host =  ngx.ctx.req_host
 local scheme = ngx.var.scheme
+local point_cache = require "resty.jxwaf.point_cache"
 
 if balance_host and balance_host['domain_data'][scheme] == "true" then
 	local ip_lists = ngx.ctx.component_source_ip or balance_host["domain_data"]["source_ip"]
