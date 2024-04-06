@@ -4,84 +4,76 @@ local request = require "resty.jxwaf.request"
 local host = ngx.var.host
 local balance_host =  ngx.ctx.req_host
 local scheme = ngx.var.scheme
-local string_sub = string.sub
-local table_insert = table.insert
-local table_concat = table.concat
-local table_remove = table.remove
-
---[[
-local mimetic_defense_conf = ngx.ctx.mimetic_defense_conf
-if mimetic_defense_conf then
-  local proxy_host =  mimetic_defense_conf['proxy_host']
-  local proxy_port =  mimetic_defense_conf['proxy_port']
-  local set_more_tries_ok, set_more_tries_err = balancer.set_more_tries(1)
-  if not set_more_tries_ok then
-    ngx.log(ngx.ERR,"failed to set the current peer: ",set_more_tries_err)
-  elseif set_more_tries_err then
-    ngx.log(ngx.ALERT, "set more tries: ", set_more_tries_err)
-  end
-  local ok,err = balancer.set_current_peer(proxy_host,proxy_port)
-  if not ok then
-    ngx.log(ngx.ERR,"failed to set the current peer: ",err)
-  end
-  return 
-end
---]]
-
 
 if balance_host and balance_host['domain_data'][scheme] == "true" then
 	local ip_lists = ngx.ctx.component_source_ip or balance_host["domain_data"]["source_ip"]
 	local port = ngx.ctx.component_source_http_port or balance_host["domain_data"]["source_http_port"]
-	if not ngx.ctx.tries then
-		ngx.ctx.tries = 0	
+    local balance_type =  balance_host["domain_data"]["balance_type"]
+	local domain = balance_host["domain_data"]["domain"]
+    if #ip_lists == 1 then
+	    local ok,err = balancer.set_current_peer(ip_lists[1],port)
+	    if not ok then
+            ngx.log(ngx.ERR,"failed to set the current peer: ",err)
+	    end
+	    return
 	end
-  if ngx.ctx.tries < #ip_lists then
-    local set_more_tries_ok, set_more_tries_err = balancer.set_more_tries(1)
-    if not set_more_tries_ok then
-        ngx.log(ngx.ERR,"failed to set the current peer: ",set_more_tries_err)
-    elseif set_more_tries_err then
-        ngx.log(ngx.ALERT, "set more tries: ", set_more_tries_err)
-    end
-  end
-	ngx.ctx.tries = ngx.ctx.tries + 1
-	if not ngx.ctx.ip_lists then
-		ngx.ctx.ip_lists = ip_lists
-	end
-local first_count = {}
-local first_digit = string.sub(ngx.var.remote_addr, 1, 1) 
-local last_digit = string.sub(ngx.var.remote_addr, -1) 
-if tonumber(first_digit) then
-    table.insert(first_count, first_digit)
-else
-    first_digit = string.match(ngx.var.remote_addr, "%d") or "0" 
-    table.insert(first_count, first_digit)
-end
 
-if tonumber(last_digit) then
-    table.insert(first_count, last_digit)
-else
-    last_digit = string.match(string.reverse(ngx.var.remote_addr), "%d") or "0" 
-    table.insert(first_count, last_digit)
-end
-	local ip_count = (tonumber(table.concat(first_count)) % #ngx.ctx.ip_lists) + 1
-	local _host = ngx.ctx.ip_lists[ip_count]
-	local state_name,state_code = balancer.get_last_failure()
-	if state_name == "failed" then
-		for k,v in ipairs(ngx.ctx.ip_lists) do
-        		if v == _host then
-                		if not (#ngx.ctx.ip_lists == 1) then
-                		table_remove(ngx.ctx.ip_lists,k)
-                		ip_count = (tonumber(table_concat(first_count)) % #ngx.ctx.ip_lists) + 1
-                		_host = ngx.ctx.ip_lists[ip_count]
-                		end
-        		end
-		end
-	end
-  
-	local ok,err = balancer.set_current_peer(_host,port)
-	if not ok then
-    ngx.log(ngx.ERR,"failed to set the current peer: ",err)
-	end
+	if balance_type == "round_robin" then
+        local cache = point_cache.get_cache()
+        local point = cache:get(domain)
+        if  not point then
+            cache:set(domain,1)
+            point = 1
+        end
+        if #ip_lists == point then
+          cache:set(domain,1)
+        else
+          cache:set(domain,point+1)
+        end
+        local _host = ip_lists[point]
+        local state_name = balancer.get_last_failure()
+	    if state_name == "failed" or state_name == "next" then
+	        if #ip_lists == point then
+	            _host =  ip_lists[1]
+	        else
+	            _host =  ip_lists[point+1]
+	        end
+        else
+        	local set_more_tries_ok, set_more_tries_err = balancer.set_more_tries(1)
+            if not set_more_tries_ok then
+                ngx.log(ngx.ERR, "failed to set more tries: ", set_more_tries_err)
+            end
+	    end
+
+        local ok,err = balancer.set_current_peer(_host,port)
+	    if not ok then
+            ngx.log(ngx.ERR,"failed to set the current peer: ",err)
+	    end
+
+    else
+        local ip = ngx.var.remote_addr
+        local first_byte = string.byte(ip, 1)
+        local last_byte = string.byte(ip, -1)
+        local ip_count = (first_byte + last_byte) % #ip_lists + 1
+	    local _host = ip_lists[ip_count]
+	    local state_name = balancer.get_last_failure()
+	    if state_name == "failed" or state_name == "next" then
+            if #ip_lists == ip_count then
+	            _host =  ip_lists[1]
+	        else
+	            _host =  ip_lists[ip_count+1]
+	        end
+        else
+        	local set_more_tries_ok, set_more_tries_err = balancer.set_more_tries(1)
+            if not set_more_tries_ok then
+                ngx.log(ngx.ERR, "failed to set more tries: ", set_more_tries_err)
+            end
+	    end
+	    local ok,err = balancer.set_current_peer(_host,port)
+	    if not ok then
+            ngx.log(ngx.ERR,"failed to set the current peer: ",err)
+	    end
+    end
 else
 	ngx.exit(503)
 end
