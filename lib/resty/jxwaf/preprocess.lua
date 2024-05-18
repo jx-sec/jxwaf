@@ -1,5 +1,5 @@
 local _M = {}
-_M.version = "20220831"
+_M.version = "jxwaf_base_v4"
 local ngx_decode_base64 = ngx.decode_base64
 local ngx_re_gsub = ngx.re.gsub
 local ngx_md5 = ngx.md5
@@ -53,60 +53,16 @@ local function _uri_decode(value)
 	return ngx_unescape_uri(tostring(value))
 end 
 
-local function unicode_to_utf8(convertStr)
-    local resultStr=""
-    local i=1
-    while true do
-        local num1=string.byte(convertStr,i)
-        local unicode
-        if num1~=nil and string.sub(convertStr,i,i+1)=="\\u" then
-            local tmp_convertStr = {}
-            tmp_convertStr[1] = "0x"
-            tmp_convertStr[2] = string.sub(convertStr,i+2,i+5)
-            unicode=tonumber(table.concat(tmp_convertStr))
-            if unicode then
-              i=i+6
-            else
-              unicode=num1
-              i=i+1
-            end
-        elseif num1~=nil then
-            unicode=num1
-            i=i+1
-        else
-            break
-        end
-        
-        if  unicode <= 0x007f then
-            local tmp_resultStr = {}
-            tmp_resultStr[1] = resultStr
-            tmp_resultStr[2] = string.char(bit.band(unicode,0x7f))
-            resultStr= table.concat(tmp_resultStr)
-        elseif  unicode >= 0x0080 and unicode <= 0x07ff then
-            local tmp_resultStr = {}
-            tmp_resultStr[1] = resultStr
-            tmp_resultStr[2] = string.char(bit.bor(0xc0,bit.band(bit.rshift(unicode,6),0x1f)))
-            resultStr= table.concat(tmp_resultStr)
-            local tmp_resultStr2 = {}
-            tmp_resultStr2[1] = resultStr
-            tmp_resultStr2[2] = string.char(bit.bor(0x80,bit.band(unicode,0x3f)))
-            resultStr= table.concat(tmp_resultStr2)
-        elseif unicode >= 0x0800 and unicode <= 0xffff then
-            local tmp_resultStr = {}
-            tmp_resultStr[1] = resultStr
-            tmp_resultStr[2] = string.char(bit.bor(0xe0,bit.band(bit.rshift(unicode,12),0x0f)))
-            resultStr= table.concat(tmp_resultStr)
-            local tmp_resultStr2 = {}
-            tmp_resultStr2[1] = resultStr
-            tmp_resultStr2[2] = string.char(bit.bor(0x80,bit.band(bit.rshift(unicode,6),0x3f)))
-            resultStr= table.concat(tmp_resultStr2)
-            local tmp_resultStr3 = {}
-            tmp_resultStr3[1] = resultStr
-            tmp_resultStr3[2] = string.char(bit.bor(0x80,bit.band(unicode,0x3f))) 
-            resultStr= table.concat(tmp_resultStr3)
-        end
+
+local function unicode_decode(unicode_str)
+    if not unicode_str:find("\\u00%x%x") then
+        return unicode_str  
     end
-    return resultStr
+    local result = unicode_str:gsub("\\u00(%x%x)", function(hex)
+        local byte = tonumber(hex, 16)
+        return string.char(byte)
+    end)
+    return result
 end
 
 local function _uni_decode(value)
@@ -117,64 +73,43 @@ local function _uni_decode(value)
     return value
   end
   if string.find(value,"\\u", 1,true) then
-    return unicode_to_utf8(value)
+    return unicode_decode(value)
   else
     return value
   end
 end
 
-
 local function hex_to_utf8(convertStr)
-    local resultStr=""
-    local i=1
-    while true do
-        local num1=string.byte(convertStr,i)
+    local resultStrTable = {}  
+    local i = 1
+    while i <= #convertStr do
+        local num = string_byte(convertStr, i)
         local unicode
-        if num1~=nil and string.sub(convertStr,i,i+1)=="\\x" then
-            unicode = tonumber(string.sub(convertStr,i+2,i+3), 16)
+        if num and convertStr:sub(i, i+1) == "\\x" then
+            unicode = tonumber(convertStr:sub(i+2, i+3), 16)
             if unicode then
-              i=i+4
+                i = i + 4
             else
-              unicode=num1
-              i=i+1
+                unicode = num
+                i = i + 1
             end
-        elseif num1~=nil then
-            unicode=num1
-            i=i+1
         else
-            break
+            unicode = num
+            i = i + 1
         end
         
-        if  unicode <= 0x007f then
-            local tmp_resultStr = {}
-            tmp_resultStr[1] = resultStr
-            tmp_resultStr[2] = string.char(bit.band(unicode,0x7f))
-            resultStr= table.concat(tmp_resultStr)
-        elseif  unicode >= 0x0080 and unicode <= 0x07ff then
-            local tmp_resultStr = {}
-            tmp_resultStr[1] = resultStr
-            tmp_resultStr[2] = string.char(bit.bor(0xc0,bit.band(bit.rshift(unicode,6),0x1f)))
-            resultStr= table.concat(tmp_resultStr)
-            local tmp_resultStr2 = {}
-            tmp_resultStr2[1] = resultStr
-            tmp_resultStr2[2] = string.char(bit.bor(0x80,bit.band(unicode,0x3f)))
-            resultStr= table.concat(tmp_resultStr2)
-        elseif unicode >= 0x0800 and unicode <= 0xffff then
-            local tmp_resultStr = {}
-            tmp_resultStr[1] = resultStr
-            tmp_resultStr[2] = string.char(bit.bor(0xe0,bit.band(bit.rshift(unicode,12),0x0f)))
-            resultStr= table.concat(tmp_resultStr)
-            local tmp_resultStr2 = {}
-            tmp_resultStr2[1] = resultStr
-            tmp_resultStr2[2] = string.char(bit.bor(0x80,bit.band(bit.rshift(unicode,6),0x3f)))
-            resultStr= table.concat(tmp_resultStr2)
-            local tmp_resultStr3 = {}
-            tmp_resultStr3[1] = resultStr
-            tmp_resultStr3[2] = string.char(bit.bor(0x80,bit.band(unicode,0x3f))) 
-            resultStr= table.concat(tmp_resultStr3)
+        if unicode <= 0x7f then
+            table_insert(resultStrTable, string_char(unicode))
+        elseif unicode <= 0x7ff then
+            table_insert(resultStrTable, string_char(bit_bor(0xc0, bit_band(bit_rshift(unicode, 6), 0x1f))))
+            table_insert(resultStrTable, string_char(bit_bor(0x80, bit_band(unicode, 0x3f))))
+        elseif unicode <= 0xffff then
+            table_insert(resultStrTable, string_char(bit_bor(0xe0, bit_band(bit_rshift(unicode, 12), 0x0f))))
+            table_insert(resultStrTable, string_char(bit_bor(0x80, bit_band(bit_rshift(unicode, 6), 0x3f))))
+            table_insert(resultStrTable, string_char(bit_bor(0x80, bit_band(unicode, 0x3f))))
         end
     end
-    return resultStr
+    return table.concat(resultStrTable)
 end
 
 local function _hex_decode(value)

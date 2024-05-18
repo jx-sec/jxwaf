@@ -1,10 +1,10 @@
 {
     "waf_name_list_item_update_website": "",
-    "waf_api_key": "",
-    "waf_api_password": "",
+    "waf_auth": "",
     "waf_node_hostname": "server_info_detail",
-    "waf_add_name_list_item_website": "",
     "waf_update_website":"",
-    "waf_monitor_website":""
+    "waf_monitor_website":"",
+    "bot_check_ip_bind": "true",
+    "waf_cc_js_website": "https://cc.jxwaf.top/"
 }
 
