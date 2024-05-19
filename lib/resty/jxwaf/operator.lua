@@ -1,6 +1,8 @@
 local string_find = string.find
+local iputils = require 'resty.jxwaf.iputils'
+local ngx_re = require "ngx.re"
 local _M = {}
-_M.version = "20220831"
+_M.version = "jxwaf_base_v4"
 
 local function _equals(input,pattern)
 	local result, output
@@ -141,6 +143,27 @@ local function _table_contain(input,pattern)
   return result,output
 end
 
+local function _ip_in_cidr(input,pattern)
+  local result
+  local whitelist = iputils.parse_cidrs(pattern)
+  if whitelist then
+    result = iputils.ip_in_cidrs(input, whitelist) 
+  end
+  return result
+end
+
+local function _ip_in_cidrs(input,pattern)
+  local result
+  local res = ngx_re.split(pattern, ",")
+  if res then
+    local whitelist = iputils.parse_cidrs(res)
+    if  whitelist then
+      result = iputils.ip_in_cidrs(input, whitelist) 
+    end
+  end
+  return result
+end
+
 
 function _M.process_args(operator,arg,match_value)
   if operator == "eq" then
@@ -164,6 +187,10 @@ function _M.process_args(operator,arg,match_value)
   elseif operator == "str_prefix" then
     return _str_prefix(arg,match_value)
   elseif operator == "str_suffix" then
+    return _str_suffix(arg,match_value)
+  elseif operator == "ip_in_cidr" then
+    return _str_suffix(arg,match_value)
+  elseif operator == "ip_in_cidrs" then
     return _str_suffix(arg,match_value)
   else
     return nil 
@@ -215,6 +242,13 @@ end,
 
 str_suffix =  function(var,rule_pattern)
         return _str_suffix(var,rule_pattern)
+end,
+
+ip_in_cidr =  function(var,rule_pattern)
+        return _ip_in_cidr(var,rule_pattern)
+end,
+ip_in_cidrs =  function(var,rule_pattern)
+        return _ip_in_cidrs(var,rule_pattern)
 end
 
 }
@@ -242,6 +276,10 @@ function _M.match(k,var,rule_pattern)
     return _nequals(var,rule_pattern)
   elseif k == "eq" then
     return _equals(var,rule_pattern)
+  elseif k == "ip_in_cidr" then
+    return _ip_in_cidr(var,rule_pattern)
+  elseif k == "ip_in_cidrs" then
+    return _ip_in_cidrs(var,rule_pattern)
   else
     return nil 
   end

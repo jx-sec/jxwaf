@@ -1,5 +1,5 @@
 local _M = {}
-_M.version = "20220831"
+_M.version = "jxwaf_base_v4"
 local ngx_unescape_uri = ngx.unescape_uri
 local ngx_decode_base64 = ngx.decode_base64
 local ngx_re_gsub = ngx.re.gsub

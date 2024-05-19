@@ -1,28 +1,82 @@
 package main
 
 import (
-	"os"
-	"syscall"
-	"log"
-	"github.com/google/uuid"
-	"io/ioutil"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"syscall"
+
+	"github.com/google/uuid"
 )
 
-
 func getEnv(key, fallback string) string {
-    if value, ok := os.LookupEnv(key); ok {
-        return value
-    }
-    return fallback
+	if value, ok := os.LookupEnv(key); ok {
+		return value
+	}
+	return fallback
+}
+
+func loadConfig(path string) (map[string]string, bool, error) {
+	content, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, false, err
+	}
+
+	conf := make(map[string]string)
+	err = json.Unmarshal(content, &conf)
+	if err != nil {
+		return nil, false, err
+	}
+
+	return conf, conf["waf_auth"] == "", nil
+}
+
+func saveConfig(path string, data map[string]string) error {
+	confJSON, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
+	return ioutil.WriteFile(path, confJSON, 0644)
 }
 
 
-var (
-	Http_prot = getEnv("HTTP_PORT","80")
-	Https_port = getEnv("HTTPs_PORT","443")
-	Nginx_config = fmt.Sprintf(`#user  nobody;
+func generateConfig(existingMap map[string]string) map[string]string {
+	evData := map[string]string{
+		"waf_update_website":                   getEnv("JXWAF_SERVER", "") + "/waf_update",
+		"waf_monitor_website":                  getEnv("JXWAF_SERVER", "") + "/waf_monitor",
+		"waf_name_list_item_update_website":    getEnv("JXWAF_SERVER", "") + "/waf_name_list_item_update",
+		"waf_add_name_list_item_website":       getEnv("JXWAF_SERVER", "") + "/api/add_name_list_item",
+		"waf_auth":                             getEnv("WAF_AUTH", ""),
+		"bot_check_ip_bind":                    getEnv("BOT_CHECK_IP_BIND", "true"),
+		"waf_cc_js_website":                    getEnv("WAF_CC_JS_WEBSITE", "https://cc.jxwaf.top/"),
+	}
+
+	if existingMap != nil {
+		if v, ok := existingMap["waf_node_uuid"]; ok {
+			evData["waf_node_uuid"] = v
+		} else {
+			evData["waf_node_uuid"] = uuid.New().String()
+		}
+	} else {
+		evData["waf_node_uuid"] = uuid.New().String()
+	}
+
+	hostname, err := os.Hostname()
+	if err != nil {
+		hostname = "unknown"
+	}
+	evData["waf_node_hostname"] = "docker_" + hostname
+
+	return evData
+}
+
+func writeNginxConfig() error {
+    wafDnsResolver := getEnv("WAF_DNS_RESOLVER", "114.114.114.114")
+	httpPort := getEnv("HTTP_PORT", "80")
+	httpsPort := getEnv("HTTPS_PORT", "443")
+	nginxConfigTemplate := fmt.Sprintf(`#user  nobody;
 worker_processes  auto;
 
 #error_log  logs/error.log;
@@ -53,7 +107,7 @@ http {
     client_max_body_size 100m;
     sendfile        on;
     #tcp_nopush     on;
-	resolver  114.114.114.114;
+	resolver  %s ipv6=off;
   resolver_timeout 5s;
     #keepalive_timeout  0;
     keepalive_timeout  65;
@@ -67,14 +121,13 @@ lua_shared_dict jxwaf_limit_domain 100m;
 lua_shared_dict jxwaf_limit_ip_count 100m;
 lua_shared_dict jxwaf_limit_ip 100m;
 lua_shared_dict jxwaf_limit_bot 100m;
-lua_shared_dict jxwaf_flow_block_ip 100m;
-lua_shared_dict jxwaf_public 100m;
+lua_shared_dict jxwaf_public 500m;
+lua_shared_dict jxwaf_suppression 100m;
 init_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/init.lua;
 init_worker_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/init_worker.lua;
 rewrite_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/rewrite.lua;
 access_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/access.lua;
-#header_filter_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/header_filter.lua;
-#body_filter_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/body_filter.lua;
+body_filter_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/body_filter.lua;
 log_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/log.lua;
 rewrite_by_lua_no_postpone on;
     #gzip  on;
@@ -94,6 +147,7 @@ lua_code_cache on;
         location / {
             #root   html;
            # index  index.html index.htm;
+            proxy_http_version 1.1;
           if ($proxy_pass_https_flag = "true"){
             proxy_pass https://jxwaf;
           }
@@ -101,11 +155,10 @@ lua_code_cache on;
             proxy_pass http://jxwaf;
           }
 
-            proxy_set_header Host  $http_host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-	   proxy_http_version 1.1;
-	   proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Host  $http_host;
+           proxy_set_header X-Real-IP $remote_addr;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header Upgrade $http_upgrade;
            proxy_set_header Connection "upgrade";
         }
 
@@ -215,99 +268,46 @@ lua_code_cache on;
     }
 
 
-}`,Http_prot,Https_port)
+}`, wafDnsResolver, httpPort, httpsPort)
 
-)
+	return ioutil.WriteFile("/opt/jxwaf/nginx/conf/nginx.conf", []byte(nginxConfigTemplate), 0644)
+}
 
+func initializeWAF() {
+	filePath := "/opt/jxwaf/nginx/conf/jxwaf/jxwaf_config.json"
 
+	// Write nginx configuration template
+	if err := writeNginxConfig(); err != nil {
+		log.Fatalf("failed writing nginx config: %v", err)
+	}
 
+	confMap, isNew, err := loadConfig(filePath)
+	if err != nil {
+		log.Fatalf("failed to load json config: %v", err)
+	}
 
-var (
-	file_path = "/opt/jxwaf/nginx/conf/jxwaf/jxwaf_config.json"
-	server = getEnv("JXWAF_SERVER","")
-	wafapikey = getEnv("WAF_API_KEY","")
-	wafapipassword = getEnv("WAF_API_PASSWORD","")
+	finalConfig := generateConfig(confMap)
+	if err := saveConfig(filePath, finalConfig); err != nil {
+		log.Fatalf("failed to save waf config: %v", err)
+	}
 
-	cmd = "/opt/jxwaf/nginx/sbin/nginx"
-	args = []string{
-		"jxwaf",
+	if isNew {
+		log.Printf("new configuration: %v", finalConfig)
+	} else {
+		log.Printf("existing configuration updated: %v", finalConfig)
+	}
+
+	cmd := "/opt/jxwaf/nginx/sbin/nginx"
+	args := []string{
+	    "jxwaf",
 		"-g",
 		"daemon off;",
 	}
-)
-
-
-func nginx_config() error{
-	err := os.WriteFile("/opt/jxwaf/nginx/conf/nginx.conf", []byte(Nginx_config),0644)
-	if err != nil {
-		log.Fatal(err)
+	if err := syscall.Exec(cmd, args, os.Environ()); err != nil {
+		log.Fatalf("failed to execute nginx: %v", err)
 	}
-	return err 
 }
-
-
-func evndata()  map[string]string{
-	evndata := map[string]string{
-		"waf_update_website": server + "/waf_update",
-		"waf_monitor_website": server + "/waf_monitor",
-		"waf_name_list_item_update_website": server + "/waf_name_list_item_update",
-		"waf_add_name_list_item_website": server + "/api/add_name_list_item",
-		"waf_node_hostname":"docker_" + uuid.New().String(),
-		"waf_api_key": wafapikey,
-		"waf_api_password": wafapipassword,
-
-	}
-	return evndata 
-}
-
-func waf_init(){
-	// confmap := evndata()
-	err := nginx_config()
-	if err != nil {
-		log.Fatal(err)
-	} 
-
-	var confmap map[string]string
-	file, err := os.Open(file_path)
-    if err != nil {
-       log.Panic("config open err: ",err)
-    }
-    defer file.Close()
-    content, _ := ioutil.ReadAll(file)
-	err = json.Unmarshal(content, &confmap)
-	if err != nil {
-		log.Panic("json marshal err: ",err)
-	}
-	if confmap["waf_api_key"] == "" {
-		confmap := evndata()
-		confjson, err := json.Marshal(&confmap)
-		if err != nil {
-			log.Print(err)
-		}
-		ioutil.WriteFile(file_path, confjson, 0644)
-		log.Print(string(confjson))
-	}else{
-		hostname := confmap["waf_node_hostname"]
-		node_uuid := confmap["waf_node_uuid"]
-		confmap := evndata()
-		confmap["waf_node_hostname"] = hostname
-		confmap["waf_node_uuid"] = node_uuid
-		confjson, err := json.Marshal(&confmap)
-		if err != nil {
-			log.Print(err)
-		}
-		ioutil.WriteFile(file_path, confjson, 0644)
-		log.Print(string(confjson))
-	}
-
-	if err := syscall.Exec(cmd, args,os.Environ()); err != nil {
-		log.Fatal(err)
-	}
-
-}
-
 
 func main() {
-	
-	waf_init()
+	initializeWAF()
 }

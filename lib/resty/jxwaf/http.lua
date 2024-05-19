@@ -873,11 +873,6 @@ function _M.request_uri(self, uri, params)
 
     res.body = body
 
-    local ok, err = self:set_keepalive()
-    if not ok then
-        ngx_log(ngx_ERR, err)
-    end
-
     return res, nil
 end
 

