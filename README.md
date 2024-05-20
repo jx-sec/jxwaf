@@ -56,8 +56,7 @@ service docker start
 # 下载docker compose文件
 yum install git
 git clone https://github.com/jx-sec/jxwaf-docker-file.git
-# 运行程序
-#国内环境可以使用 jxwaf-docker-file/test_env_cn 速度更快
+# 运行程序，国内可以使用 jxwaf-docker-file/test_env_cn 速度更快
 cd jxwaf-docker-file/test_env
 docker compose  up -d
 ```
