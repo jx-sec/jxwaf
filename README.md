@@ -191,7 +191,7 @@ docker compose  up -d
 
 <img src="img/prod_test.jpg" width="500">
 
-配置完成后，jxlog服务器
+配置完成后，回到 jxlog服务器
 
 ```
 [root@VM-0-13-centos jxlog]# pwd
