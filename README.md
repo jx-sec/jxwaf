@@ -41,7 +41,7 @@ JXWAF 是一款开源 WEB 应用防火墙
 
 ![jxwaf_architecture](img/jxwaf_architecture.jpg)
 
-### 演示环境
+### Demo 演示环境
 
 http://demo.jxwaf.com:8000/
 
@@ -49,7 +49,7 @@ http://demo.jxwaf.com:8000/
 
 密码  123456
 
-### 测试环境部署 
+### Test Environment Deploy 测试环境部署 
 
 #### 环境要求
 
