@@ -39,7 +39,7 @@ JXWAF 是一款开源 WEB 应用防火墙
   - jxwaf节点
   - jxlog日志系统 
 
-![jxwaf_architecture](img/jxwaf_architecture.jpg)
+<img src="img/jxwaf_architecture.jpg" width="1000">
 
 ### Demo Environment 线上演示环境
 
@@ -77,7 +77,7 @@ docker compose  up -d
 
 登录控制台后，在网站防护中点击新建网站，参考如下配置进行设置
 
-<img src="img/website_conf.jpg" width="500" height="500">
+<img src="img/website_conf.jpg" width="500">
 
 配置完成后，回到服务器 
 
@@ -89,6 +89,7 @@ docker compose  up -d
 ```
 
 运行waf测试脚本后,即可在控制台中的运营中心查看防护效果
+
 ![web_flow](img/web_flow.jpg)
 
 ### Production Environment Deployment 生产环境部署
@@ -119,7 +120,7 @@ docker compose  up -d
 
 完成注册并登录控制台后，点击 系统配置 -> 基础信息 页面，查看 waf_auth，后续节点配置需要
 
-![waf_auth](img/waf_auth.jpg)
+<img src="img/waf_auth.jpg" width="500">
 
 #### jxwaf节点部署
 
@@ -139,24 +140,21 @@ vim docker-compose.yml
 
 修改文件中的 JXWAF_SERVER 和 WAF_AUTH 
 
-![compose_conf](img/compose_conf.jpg)
+<img src="img/compose_conf.jpg" width="500">
 
 JXWAF_SERVER的值为jxwaf控制台服务器地址，这里为 http://10.206.0.10:8000 ，注意这里地址不能带路径，即 http://10.206.0.10:8000/ 是错误输入
 
 其中 WAF_AUTH为 系统配置 -> 基础信息 中 waf_auth的值
 
-![compose_conf_edit](img/compose_conf_edit.jpg)
+<img src="img/compose_conf_edit.jpg" width="500">
 
-
-···
+```
 docker compose  up -d
-···
-
+```
 
 启动后，可以在  运营中心 -> 节点状态  查看节点是否上线 
 
 ![node_status](img/node_status.jpg)
-
 
 #### jxlog部署
 
@@ -176,20 +174,17 @@ docker compose  up -d
 
 部署完成后，在控制台中  系统配置 -> 日志传输配置  完成如下配置
 
-![jxlog_conf](img/jxlog_conf.jpg)
+<img src="img/jxlog_conf.jpg" width="500">
 
 在 控制台 系统配置 -> 日志查询配置  完成如下配置，其中ClickHouse数据库的帐号密码可以在 docker-compose.yml 文件中修改 
 
-![clickhouse_conf](img/clickhouse_conf.jpg)
-
+<img src="img/clickhouse_conf.jpg" width="500">
 
 #### 效果验证
 
 在控制台 防护管理 -> 网站配置 ，点击新建网站，参考如下配置进行设置
 
-
-![prod_test](img/prod_test.jpg)
-
+<img src="img/prod_test.jpg" width="500">
 
 配置完成后，jxlog服务器
 
@@ -202,7 +197,7 @@ docker compose  up -d
 
 运行waf测试脚本后,即可在控制台中的 运营中心 -> 攻击事件 查看防护效果
 
-![attack_event](img/attack_event.jpg)
+<img src="img/attack_event.jpg" width="1000">
 
 ### Contributor 贡献者
 
@@ -216,4 +211,5 @@ docker compose  up -d
 
 - 微信群  不定期更新
 
-![wx_qroce](img/wx_qrcode.png)
+<img src="img/wx_qrcode.png" width="300">
+
