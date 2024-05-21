@@ -35,13 +35,13 @@ JXWAF 是一款开源 WEB 应用防火墙
 
 ### Architecture 架构
 - JXWAF系统由三个子系统组成
-  - jxwaf节点
   - jxwaf控制台
+  - jxwaf节点
   - jxlog日志系统 
 
 ![jxwaf_architecture](img/jxwaf_architecture.jpg)
 
-### Demo 演示环境
+### Demo Environment 线上演示环境
 
 http://demo.jxwaf.com:8000/
 
@@ -49,7 +49,7 @@ http://demo.jxwaf.com:8000/
 
 密码  123456
 
-### Test Environment Deploy 测试环境部署 
+### Test Environment Deployment 测试环境部署 
 
 #### 环境要求
 
@@ -57,12 +57,14 @@ http://demo.jxwaf.com:8000/
 
 #### 快速部署
 
+申请一台按量计费服务器，IP地址为 119.45.234.74 ，完成下面部署步骤
+
 ```
 # 安装docker，国内网络建议输入 curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
 curl -sSLk https://get.docker.com/ | bash
 service docker start
 # 下载docker compose文件,国内网络建议输入 git clone https://gitclone.com/github.com/jx-sec/jxwaf-docker-file.git
-yum install git
+yum install git -y
 git clone https://github.com/jx-sec/jxwaf-docker-file.git
 # 启动容器，国内网络建议输入 cd jxwaf-docker-file/test_env_cn
 cd jxwaf-docker-file/test_env
@@ -71,13 +73,11 @@ docker compose  up -d
 
 #### 效果验证
 
-申请一台按量计费服务器，IP地址为 119.45.234.74 ，完成上述快速部署步骤后
-
 访问 控制台地址  http://119.45.234.74:8000  默认帐号为 test，密码为123456
 
 登录控制台后，在网站防护中点击新建网站，参考如下配置进行设置
 
-![image](https://github.com/jx-sec/jxwaf/assets/9301820/b0128902-3d86-49e6-899a-9a75c2d35aaf)
+<img src="img/website_conf.jpg" width="500" height="500">
 
 配置完成后，回到服务器 
 
@@ -89,9 +89,131 @@ docker compose  up -d
 ```
 
 运行waf测试脚本后,即可在控制台中的运营中心查看防护效果
+![web_flow](img/web_flow.jpg)
 
-![image](https://github.com/jx-sec/jxwaf/assets/9301820/1dd779f8-c64b-4706-9fa3-8abb94192c37)
+### Production Environment Deployment 生产环境部署
 
-![image](https://github.com/jx-sec/jxwaf/assets/9301820/7e42194c-cada-4e0a-9fec-9f4c57dbbc7d)
+#### 环境要求
 
-![image](https://github.com/jx-sec/jxwaf/assets/9301820/5034934a-339d-40b4-92dc-3bd3ff4719c0)
+- 服务器系统 Centos 7.x
+
+- 服务器推荐配置  4核8G以上
+
+#### jxwaf控制台部署
+
+服务器IP地址  内网地址: 10.206.0.10
+
+```
+# 安装docker，国内网络建议输入 curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
+curl -sSLk https://get.docker.com/ | bash
+service docker start
+# 下载docker compose文件
+yum install git -y
+git clone https://github.com/jx-sec/jxwaf-docker-file.git
+# 启动容器，国内网络建议输入 cd jxwaf-docker-file/prod_env_cn/jxwaf-mini-server
+cd jxwaf-docker-file/prod_env/jxwaf-mini-server
+docker compose  up -d
+```
+
+部署完成后，访问控制台地址http://10.206.0.10:8000，第一次访问控制台会自动跳转到帐号注册页面
+
+完成注册并登录控制台后，点击 系统配置 -> 基础信息 页面，查看 waf_auth，后续节点配置需要
+
+![waf_auth](img/waf_auth.jpg)
+
+#### jxwaf节点部署
+
+服务器IP地址  公网地址: 1.13.193.150 内网地址: 10.206.0.3
+
+```
+# 安装docker，国内网络建议输入 curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
+curl -sSLk https://get.docker.com/ | bash
+service docker start
+# 下载docker compose文件
+yum install git -y
+git clone https://github.com/jx-sec/jxwaf-docker-file.git
+# 启动容器，国内网络建议输入 cd jxwaf-docker-file/prod_env_cn/jxwaf
+cd jxwaf-docker-file/prod_env/jxwaf
+vim docker-compose.yml
+```
+
+修改文件中的 JXWAF_SERVER 和 WAF_AUTH 
+
+![compose_conf](img/compose_conf.jpg)
+
+JXWAF_SERVER的值为jxwaf控制台服务器地址，这里为 http://10.206.0.10:8000 ，注意这里地址不能带路径，即 http://10.206.0.10:8000/ 是错误输入
+
+其中 WAF_AUTH为 系统配置 -> 基础信息 中 waf_auth的值
+
+![compose_conf_edit](img/compose_conf_edit.jpg)
+
+
+···
+docker compose  up -d
+···
+
+
+启动后，可以在  运营中心 -> 节点状态  查看节点是否上线 
+
+![node_status](img/node_status.jpg)
+
+
+#### jxlog部署
+
+服务器IP地址  内网地址: 10.206.0.13
+
+```
+# 安装docker，国内网络建议输入 curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
+curl -sSLk https://get.docker.com/ | bash
+service docker start
+# 下载docker compose文件
+yum install git -y
+git clone https://github.com/jx-sec/jxwaf-docker-file.git
+# 启动容器，国内网络建议输入 cd jxwaf-docker-file/prod_env_cn/jxlog
+cd jxwaf-docker-file/prod_env/jxlog
+docker compose  up -d
+```
+
+部署完成后，在控制台中  系统配置 -> 日志传输配置  完成如下配置
+
+![jxlog_conf](img/jxlog_conf.jpg)
+
+在 控制台 系统配置 -> 日志查询配置  完成如下配置，其中ClickHouse数据库的帐号密码可以在 docker-compose.yml 文件中修改 
+
+![clickhouse_conf](img/clickhouse_conf.jpg)
+
+
+#### 效果验证
+
+在控制台 防护管理 -> 网站配置 ，点击新建网站，参考如下配置进行设置
+
+
+![prod_test](img/prod_test.jpg)
+
+
+配置完成后，jxlog服务器
+
+```
+[root@VM-0-13-centos jxlog]# pwd
+/root/jxwaf-docker-file/prod_env_cn/jxlog
+[root@VM-0-13-centos jxlog]# cd ../../waf_test/
+[root@VM-0-13-centos waf_test]# python waf_poc_test.py -u http://1.13.193.150 
+```
+
+运行waf测试脚本后,即可在控制台中的 运营中心 -> 攻击事件 查看防护效果
+
+![attack_event](img/attack_event.jpg)
+
+### Contributor 贡献者
+
+- [chenjc](https://github.com/jx-sec) 
+- [jiongrizi](https://github.com/jiongrizi) 
+- [thankfly](https://github.com/thankfly) 
+
+### BUG&Requirement BUG&需求
+
+- 微信 574604532  添加请备注 jxwaf  
+
+- 微信群  不定期更新
+
+![wx_qroce](img/wx_qrcode.png)
