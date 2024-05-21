@@ -102,7 +102,9 @@ docker compose  up -d
 
 #### jxwaf控制台部署
 
-服务器IP地址  内网地址: 10.206.0.10
+服务器IP地址  
+- 内网地址: 10.206.0.10
+
 
 ```
 # 安装docker，国内网络建议输入 curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
@@ -124,7 +126,9 @@ docker compose  up -d
 
 #### jxwaf节点部署
 
-服务器IP地址  公网地址: 1.13.193.150 内网地址: 10.206.0.3
+服务器IP地址  
+- 公网地址: 1.13.193.150
+- 内网地址: 10.206.0.3
 
 ```
 # 安装docker，国内网络建议输入 curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
@@ -158,7 +162,8 @@ docker compose  up -d
 
 #### jxlog部署
 
-服务器IP地址  内网地址: 10.206.0.13
+服务器IP地址  
+- 内网地址: 10.206.0.13
 
 ```
 # 安装docker，国内网络建议输入 curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
