@@ -64,7 +64,7 @@ service docker start
 # 下载docker compose文件,国内网络建议输入 git clone https://gitclone.com/github.com/jx-sec/jxwaf-docker-file.git
 yum install git
 git clone https://github.com/jx-sec/jxwaf-docker-file.git
-# 启动容器，国内网络建议输入 cd jxwaf-docker-file/test_env 
+# 启动容器，国内网络建议输入 cd jxwaf-docker-file/test_env_cn
 cd jxwaf-docker-file/test_env
 docker compose  up -d
 ```
