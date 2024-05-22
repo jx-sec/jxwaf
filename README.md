@@ -153,6 +153,8 @@ JXWAF_SERVER 的值为 jxwaf 控制台服务器地址，这里为 http://10.206.
 
 其中 WAF_AUTH 为 系统配置 -> 基础信息 中 waf_auth 的值
 
+修改后如下
+
 <kbd><img src="img/compose_conf_edit.jpg" width="500"></kbd>
 
 ```
