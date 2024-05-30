@@ -11,6 +11,10 @@ JXWAF is an open-source WEB Application Firewall.
 
 - Release of JXWAF4.
 
+### Docs
+
+https://docs.jxwaf.com/
+
 ### Features
 
 - Protection Management
