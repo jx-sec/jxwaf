@@ -11,6 +11,10 @@ JXWAF 是一款开源 WEB 应用防火墙
 
 - JXWAF4 发布
 
+### Docs 文档
+
+https://docs.jxwaf.com/
+
 ### Feature 功能
 
 - 防护管理
@@ -220,7 +224,4 @@ docker compose  up -d
 
 - 微信 574604532 添加请备注 jxwaf
 
-- 微信群 不定期更新
-
-<kbd><img src="img/wx_qrcode.png" width="300"></kbd>
 
