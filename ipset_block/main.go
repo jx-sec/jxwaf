@@ -2,10 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"log"
-	"net"
 	"net/http"
 	"os"
 	"os/exec"
@@ -23,30 +23,37 @@ type ResponseMessage struct {
 	Message string `json:"message"`
 }
 
-// 全局变量，存储启动服务时从环境变量中获取的认证密钥
-var authKey string
+// 从命令行参数获取监听端口和认证密钥
+var (
+	listenPort string
+	authKey    string
+)
+
+func init() {
+	flag.StringVar(&listenPort, "port", "6677", "Port to listen on")
+	flag.StringVar(&authKey, "auth", "", "Authentication key")
+}
 
 func main() {
-	// 创建日志文件
+	flag.Parse()
+
+	// 检查认证密钥是否已设置
+	if authKey == "" {
+		log.Println("Auth key must be provided with -auth")
+		os.Exit(1)
+	}
+
 	logFile, err := os.OpenFile("ip_ban.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
 		log.Fatalf("Error opening log file: %v", err)
 	}
 	defer logFile.Close()
 
-	// 设置日志的输出到文件
 	log.SetOutput(logFile)
 
-	// 从环境变量中获取认证密钥
-	authKey = os.Getenv("IP_BAN_AUTH")
-	if authKey == "" {
-		log.Println("Auth key must be set in environment variable IP_BAN_AUTH.")
-		os.Exit(1)
-	}
-
 	http.HandleFunc("/banip", ipHandler)
-	log.Println("Server is listening on port 6677...")
-	if err := http.ListenAndServe(":6677", nil); err != nil {
+	log.Printf("Server is listening on port %s...\n", listenPort)
+	if err := http.ListenAndServe(":"+listenPort, nil); err != nil {
 		log.Panicf("Error starting server: %v", err)
 	}
 }
