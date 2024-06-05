@@ -9,7 +9,7 @@ JXWAF 是一款开源 WEB 应用防火墙
 
 ### Notice 通知
 
-- JXWAF4 发布
+- JXWAF4.2 发布
 
 ### Docs 文档
 
