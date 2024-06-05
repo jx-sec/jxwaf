@@ -223,5 +223,8 @@ docker compose  up -d
 ### BUG&Requirement BUG&需求
 
 - 微信 574604532 添加请备注 jxwaf
+- 微信群 不定期更新
+
+<kbd><img src="img/wx_qrcode.png" width="200"></kbd>
 
 
