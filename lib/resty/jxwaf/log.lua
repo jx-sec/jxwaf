@@ -12,7 +12,7 @@ local ctx_waf_log = ngx.ctx.waf_log
 
 if sys_conf_data["log_conf_remote"] == "true" and (ctx_waf_log or sys_conf_data["log_all"] == "true" ) then
   local waf_log = {}
-  waf_log['host'] = ngx.var.host_http or ""
+  waf_log['host'] = ngx.var.http_host or ""
   waf_log['request_uuid'] = ngx.ctx.request_uuid
   waf_log['waf_node_uuid'] = config_info['waf_node_uuid']
   waf_log['upstream_addr'] = ngx.var.upstream_addr  or ""
