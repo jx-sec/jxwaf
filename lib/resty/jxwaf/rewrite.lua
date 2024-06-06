@@ -24,7 +24,7 @@ else
     end
 end
 
-if proxy_pass_https == "true" or ngx.var.scheme == "https" then
+if proxy_pass_https == "true" then
   ngx.var.proxy_pass_https_flag = "true"
 end
 
