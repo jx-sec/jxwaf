@@ -214,6 +214,32 @@ docker compose  up -d
 
 <kbd><img src="img/attack_event.jpg" width="1000"></kbd>
 
+### Performance Test 性能测试
+#### 服务器
+
+型号: 腾讯云计算型C6服务器
+
+配置: 4核8G
+
+### wrk测试数据
+
+```
+[root@VM-16-11-centos wrk]# wrk -t8 -c5000 -d30s --timeout 10s http://172.16.16.3
+Running 30s test @ http://172.16.16.3
+  8 threads and 5000 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency   106.89ms  441.54ms   9.26s    97.44%
+    Req/Sec     6.72k     4.18k   26.67k    72.94%
+  1601765 requests in 30.04s, 1.42GB read
+  Socket errors: connect 0, read 1313, write 0, timeout 94
+Requests/sec:  53326.48
+Transfer/sec:     48.41MB
+```
+
+单机QPS大概为6000左右，可以满足大部分中小企业需求。
+
+有更高性能需求可以增加服务器配置，或者集群部署。
+
 ### Contributor 贡献者
 
 - [chenjc](https://github.com/jx-sec)
