@@ -19,9 +19,6 @@ local cjson = require "cjson.safe"
 local ngx_re_find = ngx.re.find
 local ngx_unescape_uri = ngx.unescape_uri
 
-local _M = {}
-_M.version = "jxwaf_base_v4"
-
 local function _base64_decode(value)
   if not value then
     return value
