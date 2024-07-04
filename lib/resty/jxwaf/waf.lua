@@ -817,8 +817,8 @@ end
 
 function _M.flow_white_rule()
   local host = ngx.var.http_host or ngx.var.host
-  local protection_data = _waf_protection_data[host]
-  local flow_white_rule_data = _waf_flow_white_rule_data[host]
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local flow_white_rule_data = _waf_flow_white_rule_data[host] or _waf_flow_white_rule_data[_config_info.waf_node_uuid]
   if not protection_data or not flow_white_rule_data or (protection_data and protection_data['flow_white_rule'] == "false") then
     return 
   end
@@ -870,8 +870,8 @@ end
 
 function _M.flow_ip_region_block()
   local host = ngx.var.http_host or ngx.var.host
-  local protection_data = _waf_protection_data[host]
-  local flow_ip_region_block_data = _waf_flow_ip_region_block_data[host]
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local flow_ip_region_block_data = _waf_flow_ip_region_block_data[host] or _waf_flow_ip_region_block_data[_config_info.waf_node_uuid]
   if not protection_data or not flow_ip_region_block_data or (protection_data and protection_data['flow_ip_region_block'] == "false") or ngx.ctx.flow_bypass then
     return 
   end
@@ -911,8 +911,8 @@ end
 
 function _M.flow_rule_protection()
   local host = ngx.var.http_host or ngx.var.host
-  local protection_data = _waf_protection_data[host]
-  local flow_rule_protection_data = _waf_flow_rule_protection_data[host]
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local flow_rule_protection_data = _waf_flow_rule_protection_data[host] or _waf_flow_rule_protection_data[_config_info.waf_node_uuid]
   if not protection_data or not flow_rule_protection_data or (protection_data and protection_data['flow_rule_protection'] == "false") or ngx.ctx.flow_bypass then
     return 
   end
@@ -974,8 +974,8 @@ end
 
 function _M.flow_engine_protection()
   local host = ngx.var.http_host or ngx.var.host
-  local protection_data = _waf_protection_data[host]
-  local flow_engine_protection_data = _waf_flow_engine_protection_data[host]
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local flow_engine_protection_data = _waf_flow_engine_protection_data[host] or _waf_flow_engine_protection_data[_config_info.waf_node_uuid]
   if not protection_data or not flow_engine_protection_data or (protection_data and protection_data['flow_engine_protection'] == "false") or ngx.ctx.flow_bypass then
     return 
   end
@@ -1033,8 +1033,8 @@ end
 
 function _M.web_white_rule()
   local host = ngx.var.http_host or ngx.var.host
-  local protection_data = _waf_protection_data[host]
-  local web_white_rule_data = _waf_web_white_rule_data[host]
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local web_white_rule_data = _waf_web_white_rule_data[host] or _waf_web_white_rule_data[_config_info.waf_node_uuid]
   if not protection_data or not web_white_rule_data or (protection_data and protection_data['web_white_rule'] == "false") then
     return 
   end
@@ -1084,8 +1084,8 @@ end
 
 function _M.web_rule_protection()
   local host = ngx.var.http_host or ngx.var.host
-  local protection_data = _waf_protection_data[host]
-  local web_rule_protection_data = _waf_web_rule_protection_data[host]
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local web_rule_protection_data = _waf_web_rule_protection_data[host] or _waf_web_rule_protection_data[_config_info.waf_node_uuid]
   if not protection_data or not web_rule_protection_data or (protection_data and protection_data['web_rule_protection'] == "false") or ngx.ctx.web_bypass then
     return 
   end
@@ -1141,8 +1141,8 @@ end
 
 function _M.web_engine_protection()
   local host = ngx.var.http_host or ngx.var.host
-  local protection_data = _waf_protection_data[host]
-  local web_engine_protection_data = _waf_web_engine_protection_data[host]
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local web_engine_protection_data = _waf_web_engine_protection_data[host] or _waf_web_engine_protection_data[_config_info.waf_node_uuid]
   if not protection_data or not web_engine_protection_data or (protection_data and protection_data['web_engine_protection'] == "false") or ngx.ctx.web_bypass then
     return 
   end

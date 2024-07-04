@@ -3,8 +3,9 @@ local host = ngx.var.http_host or ngx.var.host
 local string_find = string.find
 local string_sub = string.sub
 local waf_domain_data = waf.get_waf_domain_data()
+local config_info = waf.get_config_info()
 local req_host = nil
-local proxy_pass_https = nil 
+local proxy_pass_https = nil
 
 if waf_domain_data[host] then
     req_host = waf_domain_data[host]
@@ -19,6 +20,11 @@ else
       req_host = waf_domain_data[wildcard_host]
       proxy_pass_https = req_host['proxy_pass_https']
     end
+end
+
+if not req_host and waf_domain_data[config_info.waf_node_uuid]  then
+    req_host = waf_domain_data[config_info.waf_node_uuid]
+    proxy_pass_https = req_host['proxy_pass_https']
 end
 
 if proxy_pass_https == "true" then

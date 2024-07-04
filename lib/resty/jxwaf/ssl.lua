@@ -56,6 +56,10 @@ if server_port ~= "443" then
   end
 end
 
+if not ssl_host   then
+    ssl_host = waf_domain_data[config_info.waf_node_uuid]
+end
+
 if ssl_host and ssl_host["https"] == 'true' then
     local clear_ok, clear_err = ssl.clear_certs()
     if not clear_ok then
