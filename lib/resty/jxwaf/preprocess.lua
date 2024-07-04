@@ -12,9 +12,15 @@ local tostring = tostring
 local string_char = string.char
 local string_lower = string.lower
 local bit = require("bit")
+local bit_band = bit.band
+local bit_bor = bit.bor
+local bit_rshift = bit.rshift
 local cjson = require "cjson.safe"
 local ngx_re_find = ngx.re.find
 local ngx_unescape_uri = ngx.unescape_uri
+
+local _M = {}
+_M.version = "jxwaf_base_v4"
 
 local function _base64_decode(value)
   if not value then
