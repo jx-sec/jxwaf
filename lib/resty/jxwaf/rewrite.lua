@@ -17,7 +17,7 @@ else
     end
     if wildcard_host and waf_domain_data[wildcard_host] then
       req_host = waf_domain_data[wildcard_host]
-      proxy_pass_https = waf_domain_data[host]['proxy_pass_https']
+      proxy_pass_https = req_host['proxy_pass_https']
     end
 end
 
