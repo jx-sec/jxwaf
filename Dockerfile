@@ -2,6 +2,8 @@ FROM centos:centos7 as builder
 WORKDIR /tmp
 COPY .  .
 
+RUN curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo
+
 RUN yum install -y epel-release pcre-devel openssl-devel gcc cmake make lua-devel automake
 
 RUN tar zxvf openresty-1.21.4.3.tar.gz \
