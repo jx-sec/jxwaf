@@ -39,6 +39,8 @@ local _auto_update_period = "5"
 local _waf_node_monitor_period = "60"
 local _waf_domain_data = {}
 local _waf_protection_data = {}
+local _waf_scan_attack_protection_data = {}
+local _waf_web_page_tamper_proof_data = {}
 local _waf_web_engine_protection_data = {}
 local _waf_web_rule_protection_data = {}
 local _waf_web_white_rule_data = {}
@@ -46,6 +48,7 @@ local _waf_flow_engine_protection_data = {}
 local _waf_flow_rule_protection_data = {}
 local _waf_flow_white_rule_data = {}
 local _waf_flow_ip_region_block_data = {}
+local _waf_flow_black_ip_data = {}
 local _waf_name_list_data = {}
 local _waf_base_component_data = {}
 local _waf_base_component_code = {}
@@ -169,6 +172,20 @@ local function _global_update_rule()
         ngx.log(ngx.ERR,"60 seconds and try again ")
         return _update_at(tonumber(_fail_update_period),_global_update_rule)
       end
+
+      local waf_scan_attack_protection_data = res_body['waf_scan_attack_protection_data']
+      if waf_scan_attack_protection_data == nil then
+        ngx.log(ngx.ERR,"waf_scan_attack_protection_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+
+      local waf_web_page_tamper_proof_data_data = res_body['waf_web_page_tamper_proof_data']
+      if waf_web_page_tamper_proof_data_data == nil then
+        ngx.log(ngx.ERR,"waf_web_page_tamper_proof_data_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
       
       local waf_web_engine_protection_data = res_body['waf_web_engine_protection_data'] 
       if waf_web_engine_protection_data == nil then
@@ -219,7 +236,14 @@ local function _global_update_rule()
         ngx.log(ngx.ERR,"60 seconds and try again ")
         return _update_at(tonumber(_fail_update_period),_global_update_rule)
       end
-      
+
+      local waf_flow_black_ip_data = res_body['waf_flow_black_ip_data']
+      if waf_flow_black_ip_data == nil then
+        ngx.log(ngx.ERR,"waf_flow_black_ip_data update fail")
+        ngx.log(ngx.ERR,"60 seconds and try again ")
+        return _update_at(tonumber(_fail_update_period),_global_update_rule)
+      end
+
       local waf_name_list_data = res_body['waf_name_list_data'] 
       if waf_name_list_data == nil then
         ngx.log(ngx.ERR,"waf_name_list_data update fail")
@@ -284,10 +308,7 @@ local function _global_update_rule()
         ngx.log(ngx.ERR,"60 seconds and try again ")
         return _update_at(tonumber(_fail_update_period),_global_update_rule)
       end
-    
-    
-  
-      
+
       local md5_succ, md5_err = waf_conf_data:set("conf_md5",res_body['conf_md5'])
       if md5_err then
         ngx.log(ngx.ERR,"init fail,can not set waf_conf_data md5")
@@ -339,6 +360,20 @@ local function _worker_update_rule()
     else
       _waf_protection_data = waf_protection_data
     end
+
+    local waf_scan_attack_protection_data = res_body['waf_scan_attack_protection_data']
+    if waf_scan_attack_protection_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode waf_scan_attack_protection_data")
+    else
+      _waf_scan_attack_protection_data = waf_web_engine_protection_data
+    end
+
+    local waf_web_page_tamper_proof_data = res_body['waf_web_page_tamper_proof_data']
+    if waf_web_page_tamper_proof_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode waf_web_page_tamper_proof_data")
+    else
+      _waf_web_page_tamper_proof_data = waf_web_page_tamper_proof_data
+    end
     
     local waf_web_engine_protection_data = res_body['waf_web_engine_protection_data']
     if waf_web_engine_protection_data == nil  then
@@ -388,7 +423,14 @@ local function _worker_update_rule()
     else
       _waf_flow_ip_region_block_data = waf_flow_ip_region_block_data
     end
-    
+
+    local waf_flow_black_ip_data = res_body['waf_flow_black_ip_data']
+    if waf_flow_black_ip_data == nil  then
+      ngx.log(ngx.ERR,"init fail,can not decode waf_flow_black_ip_data")
+    else
+      _waf_flow_black_ip_data = waf_flow_black_ip_data
+    end
+
     local waf_name_list_data = res_body['waf_name_list_data']
     if waf_name_list_data == nil  then
       ngx.log(ngx.ERR,"init fail,can not decode waf_name_list_data")
@@ -671,7 +713,6 @@ local function is_valid_ip(ip)
     return true
 end
 
-
 function _M.access_init()
   local req_host = ngx.ctx.req_host
   local request_uuid = uuid.generate_random()
@@ -717,7 +758,6 @@ function _M.access_init()
   if res and res['city'] then
      city = res['city']['zh-CN']
   end
-  
   ngx.ctx.iso_code = iso_code
   ngx.ctx.city = city
   ngx.ctx.base_component_result = {}
@@ -866,7 +906,41 @@ function _M.flow_white_rule()
   end
 end
 
+function _M.flow_black_ip()
+  local host = ngx.var.http_host or ngx.var.host
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local flow_black_ip_data = _waf_flow_black_ip_data[host] or _waf_flow_black_ip_data[_config_info.waf_node_uuid]
+  if not protection_data or not flow_black_ip_data or (protection_data and protection_data['flow_black_ip'] == "false") or ngx.ctx.flow_bypass then
+    return
+  end
 
+  local src_ip = request.get_args("http_args","src_ip")
+  local result = flow_black_ip_data[src_ip]
+  if result then
+    local rule_action = result['rule_action']
+    local action_value = result['action_value']
+    local waf_log = {}
+    waf_log['waf_module'] = "flow_black_ip"
+    waf_log['waf_policy'] = "流量防护-IP黑名单"
+    waf_log['waf_action'] = rule_action
+    waf_log['waf_extra'] = action_value
+    ngx.ctx.waf_log = waf_log
+    ngx.ctx.flow_black_ip_result = "true"
+    if rule_action == "block"  then
+      local page_conf = {}
+      if _sys_conf_data['custom_deny_page'] == 'true' then
+        page_conf['code'] = _sys_conf_data['waf_deny_code']
+        page_conf['html'] = _sys_conf_data['waf_deny_html']
+      end
+      unify_action.block(page_conf)
+    elseif rule_action == "reject_response"  then
+      unify_action.reject_response()
+    elseif  rule_action == "bot_check" then
+      _jxwaf_engine.bot_commit_auth(_config_info['bot_check_ip_bind'])
+      _jxwaf_engine.bot_check_ip(action_value,_config_info['waf_cc_js_website'],_config_info['bot_check_ip_bind'])
+    end
+  end
+end
 
 function _M.flow_ip_region_block()
   local host = ngx.var.http_host or ngx.var.host
@@ -916,57 +990,100 @@ function _M.flow_rule_protection()
   if not protection_data or not flow_rule_protection_data or (protection_data and protection_data['flow_rule_protection'] == "false") or ngx.ctx.flow_bypass then
     return 
   end
+  local jxwaf_inner = ngx.shared.jxwaf_inner
+  local src_ip =  request.get_args("http_args","src_ip")
+  local block_result = jxwaf_inner:get("flow_rule_block"..src_ip)
+  if block_result then
+    local block_action = cjson.decode(block_result)
+    rule_name = block_action['rule_name']
+    rule_action = block_action['rule_action']
+    action_value = block_action['action_value']
+    local waf_log = {}
+    waf_log['waf_module'] = "scan_attack_protection"
+    waf_log['waf_policy'] = "扫描攻击防护-"..rule_name
+    waf_log['waf_action'] = rule_action
+    waf_log['waf_extra'] = action_value
+    ngx.ctx.waf_log = waf_log
+    if rule_action == "block"  then
+      local page_conf = {}
+      if _sys_conf_data['custom_deny_page'] == 'true' then
+        page_conf['code'] = _sys_conf_data['waf_deny_code']
+        page_conf['html'] = _sys_conf_data['waf_deny_html']
+      end
+      unify_action.block(page_conf)
+    elseif rule_action == "reject_response"  then
+      unify_action.reject_response()
+    elseif  rule_action == "bot_check" then
+      _jxwaf_engine.bot_commit_auth(_config_info['bot_check_ip_bind'])
+      _jxwaf_engine.bot_check_ip(action_value,_config_info['waf_cc_js_website'],_config_info['bot_check_ip_bind'])
+    end
+  end
+
+
   for _,rule_conf in ipairs(flow_rule_protection_data) do
     local rule_name = rule_conf['rule_name']
+    local filter = rule_conf['filter']
     local rule_matchs = rule_conf['rule_matchs']
+    local entity = rule_conf['entity']
+    local stat_time = rule_conf['stat_time']
+    local exceed_count = rule_conf['exceed_count']
     local rule_action = rule_conf['rule_action']
     local action_value = rule_conf['action_value']
+    local block_time = rule_conf['block_time']
     local matchs_result = true
-    for _,rule_match in ipairs(rule_matchs) do
-        local match_args = rule_match['match_args']
-        local args_prepocess = rule_match['args_prepocess']
-        local match_operator = rule_match['match_operator']
-        local match_value = rule_match['match_value']
-        local operator_result = false
-        for _,match_arg in ipairs(match_args) do
-          local arg = request.get_args(match_arg.key,match_arg.value)
-          for _,arg_prepocess in ipairs(args_prepocess) do
-                 arg = preprocess.process_args(arg_prepocess,arg)
-          end
-          if arg then
-            local operator_match_result = operator.match(match_operator,arg,match_value)
-            if  operator_match_result then
-                operator_result =  true
-                break
+    if filter == "true" then
+        for _,rule_match in ipairs(rule_matchs) do
+            local match_args = rule_match['match_args']
+            local args_prepocess = rule_match['args_prepocess']
+            local match_operator = rule_match['match_operator']
+            local match_value = rule_match['match_value']
+            local operator_result = false
+            for _,match_arg in ipairs(match_args) do
+              local arg = request.get_args(match_arg.key,match_arg.value)
+              for _,arg_prepocess in ipairs(args_prepocess) do
+                     arg = preprocess.process_args(arg_prepocess,arg)
+              end
+              if arg then
+                local operator_match_result = operator.match(match_operator,arg,match_value)
+                if  operator_match_result then
+                    operator_result =  true
+                    break
+                end
+              end
             end
-          end
-        end
-        if (not operator_result) then
-          matchs_result = false
-          break
+            if (not operator_result) then
+              matchs_result = false
+              break
+            end
         end
     end
     if matchs_result then
-      local waf_log = {}
-      waf_log['waf_module'] = "flow_rule_protection"
-      waf_log['waf_policy'] = "流量防护规则-"..rule_name
-      waf_log['waf_action'] = rule_action
-      waf_log['waf_extra'] = action_value
-      ngx.ctx.waf_log = waf_log
-      ngx.ctx.flow_rule_protection_result[rule_name] = "true"
-      if rule_action == "block"  then
-        local page_conf = {}
-        if _sys_conf_data['custom_deny_page'] == 'true' then
-          page_conf['code'] = _sys_conf_data['waf_deny_code']
-          page_conf['html'] = _sys_conf_data['waf_deny_html']
+        local statics_object_table = {}
+        statics_object_table[1] = "flow_rule_stat"
+        local nil_exist
+        for _,v in ipairs(entity) do
+          local return_value = request.get_args(v.key,v.value)
+          if type(return_value) == "string" then
+            table.insert(statics_object_table,return_value)
+          elseif type(return_value) == "table" and type(return_value[1]) == "string" then
+            table.insert(statics_object_table,return_value[1])
+          else
+            nil_exist = true
+            break
+          end
         end
-        unify_action.block(page_conf)
-      elseif rule_action == "reject_response"  then
-        unify_action.reject_response()
-      elseif  rule_action == "bot_check" then
-        _jxwaf_engine.bot_commit_auth(_config_info['bot_check_ip_bind'])
-        _jxwaf_engine.bot_check_ip(action_value,_config_info['waf_cc_js_website'],_config_info['bot_check_ip_bind'])
-      end
+        if not nil_exist then
+          local statics_object_key = table.concat(statics_object_table)
+          local statics_object_result = jxwaf_inner:incr(statics_object_key,1,0,stat_time)
+          if statics_object_result > exceed_count then
+	        local src_ip =  request.get_args("http_args","src_ip")
+	        local block_action = {}
+	        block_action['rule_name'] = rule_name
+	        block_action['rule_action'] = rule_action
+	        block_action['action_value'] = action_value
+            jxwaf_inner:set("flow_rule_block"..src_ip,cjson.encode(block_action),block_time)
+          end
+        end
     end
   end
 end
@@ -979,19 +1096,61 @@ function _M.flow_engine_protection()
   if not protection_data or not flow_engine_protection_data or (protection_data and protection_data['flow_engine_protection'] == "false") or ngx.ctx.flow_bypass then
     return 
   end
+  local jxwaf_inner = ngx.shared.jxwaf_inner
+  local src_ip =  request.get_args("http_args","src_ip")
+  local block_result = jxwaf_inner:get("high_freq_cc_block"..src_ip)
+  if block_result then
+    local block_action = cjson.decode(block_result)
+    rule_name = block_action['rule_name']
+    rule_action = block_action['rule_action']
+    action_value = block_action['action_value']
+    local waf_log = {}
+    waf_log['waf_module'] = "flow_engine_protection"
+    waf_log['waf_policy'] = rule_name
+    waf_log['waf_action'] = rule_action
+    waf_log['waf_extra'] = action_value
+    ngx.ctx.waf_log = waf_log
+    if rule_action == "block" then
+      local page_conf = {}
+      if _sys_conf_data['custom_deny_page'] == 'true' then
+        page_conf['code'] = _sys_conf_data['waf_deny_code']
+        page_conf['html'] = _sys_conf_data['waf_deny_html']
+      end
+      unify_action.block(page_conf)
+    elseif rule_action == "reject_response" then
+      unify_action.reject_response()
+    elseif rule_action == "bot_check" then
+      _jxwaf_engine.bot_commit_auth(_config_info['bot_check_ip_bind'])
+      _jxwaf_engine.bot_check_ip(action_value,_config_info['waf_cc_js_website'],_config_info['bot_check_ip_bind'])
+    end
+    return
+  end
   local check_result,check_type = _jxwaf_engine.flow_check(flow_engine_protection_data)
   if check_result then
     local flow_type 
     local block_mode 
     local block_mode_extra_parameter
+    local block_time
     if check_type == "high_freq_cc_rate_check" then
       block_mode = flow_engine_protection_data['req_rate_block_mode']
       block_mode_extra_parameter =  flow_engine_protection_data['req_rate_block_mode_extra_parameter']
+      block_time = tonunber(flow_engine_protection_data['req_rate_block_time'])
       flow_type = "流量防护引擎-高频CC攻击"
+	  local block_action = {}
+	  block_action['rule_name'] = flow_type
+	  block_action['rule_action'] = block_mode
+	  block_action['action_value'] = block_mode_extra_parameter
+      jxwaf_inner:set("high_freq_cc_block"..src_ip,cjson.encode(block_action),block_time)
     elseif check_type == "high_freq_cc_count_check" then
       block_mode =  flow_engine_protection_data['req_count_block_mode']
       block_mode_extra_parameter = flow_engine_protection_data['req_count_block_mode_extra_parameter']
+      block_time = tonunber(flow_engine_protection_data['req_count_block_time'])
       flow_type = "流量防护引擎-高频CC攻击"
+	  local block_action = {}
+	  block_action['rule_name'] = flow_type
+	  block_action['rule_action'] = block_mode
+	  block_action['action_value'] = block_mode_extra_parameter
+      jxwaf_inner:set("high_freq_cc_block"..src_ip,cjson.encode(block_action),block_time)
     elseif check_type == "slow_cc_ip_count_check"  then
       block_mode = flow_engine_protection_data['ip_count_block_mode']
       block_mode_extra_parameter =  flow_engine_protection_data['ip_count_block_mode_extra_parameter']
@@ -1127,13 +1286,10 @@ function _M.web_rule_protection()
       waf_log['waf_extra'] = action_value
       ngx.ctx.waf_log = waf_log
       ngx.ctx.web_rule_protection_result[rule_name] = 'true'
-      if rule_action == "block"  then
-        local page_conf = {}
-        if _sys_conf_data['custom_deny_page'] == 'true' then
-          page_conf['code'] = _sys_conf_data['waf_deny_code']
-          page_conf['html'] = _sys_conf_data['waf_deny_html']
-        end
-        unify_action.block(page_conf)
+      ngx.ctx.waf_action = rule_action
+      if rule_action == "block"  or rule_action == "reject_response" then
+        ngx.ctx.waf_action = rule_action
+        return
       end
     end
   end
@@ -1147,26 +1303,164 @@ function _M.web_engine_protection()
     return 
   end
   local check_result,check_type,check_action,web_engine_type = _jxwaf_engine.web_check(web_engine_protection_data)
-  if check_result then           
-    local waf_log = {}
-    waf_log['waf_module'] = "web_engine_protection"
-    waf_log['waf_policy'] = "Web防护引擎-"..web_engine_type
-    waf_log['waf_action'] = check_action
-    waf_log['waf_extra'] = ""
-    ngx.ctx.waf_log = waf_log
+  if check_result then
+    if not ngx.ctx.waf_action then
+        local waf_log = {}
+        waf_log['waf_module'] = "web_engine_protection"
+        waf_log['waf_policy'] = "Web防护引擎-"..web_engine_type
+        waf_log['waf_action'] = check_action
+        waf_log['waf_extra'] = ""
+        ngx.ctx.waf_log = waf_log
+    end
     ngx.ctx.web_engine_protection_result[check_type] = 'true'
-    if  check_action == "block" then
-        local page_conf = {}
-        if _sys_conf_data['custom_deny_page'] == 'true' then
-          page_conf['code'] = _sys_conf_data['waf_deny_code']
-          page_conf['html'] = _sys_conf_data['waf_deny_html']
+    if not ngx.ctx.waf_action and (check_action == "block"  or check_action == "reject_response") then
+       ngx.ctx.waf_action = rule_action
+       return
+    end
+  end
+end
+
+function _M.scan_attack_protection()
+  local host = ngx.var.http_host or ngx.var.host
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local scan_attack_protection_data = _waf_scan_attack_protection_data[host] or _waf_scan_attack_protection_data[_config_info.waf_node_uuid]
+  if not protection_data or not scan_attack_protection_data or (protection_data and protection_data['scan_attack_protection'] == "false") or ngx.ctx.web_bypass then
+    return
+  end
+  local jxwaf_inner = ngx.shared.jxwaf_inner
+  local src_ip =  request.get_args("http_args","src_ip")
+  local block_result = jxwaf_inner:get("scan_block"..src_ip)
+  if block_result then
+    local block_action = cjson.decode(block_result)
+    rule_name = block_action['rule_name']
+    rule_action = block_action['rule_action']
+    action_value = block_action['action_value']
+    local waf_log = {}
+    waf_log['waf_module'] = "scan_attack_protection"
+    waf_log['waf_policy'] = "扫描攻击防护-"..rule_name
+    waf_log['waf_action'] = rule_action
+    waf_log['waf_extra'] = action_value
+    ngx.ctx.waf_log = waf_log
+    ngx.ctx.waf_action = rule_action
+    return
+  end
+  for _,rule_conf in ipairs(scan_attack_protection_data) do
+    local rule_name = rule_conf['rule_name']
+    local rule_module = rule_conf['rule_module']
+    local statics_object = rule_conf['statics_object']
+    local statics_time = tonumber(rule_conf['statics_time'])
+    local statics_count =  tonumber(rule_conf['statics_count'])
+    local rule_action = rule_conf['rule_action']
+    local action_value = rule_conf['action_value']
+    local block_time = tonumber(rule_conf['block_time'])
+    local rule_module_result
+    for _,check_module in ipairs(rule_module) do
+      local arg = request.get_args(check_module.key,check_module.value)
+      if arg then
+        rule_module_result = true
+        break
+      end
+    end
+    if rule_module_result then
+        local statics_object_table = {}
+        statics_object_table[1] = "scan_stat"
+        local nil_exist
+        for _,v in ipairs(statics_object) do
+          local return_value = request.get_args(v.key,v.value)
+          if type(return_value) == "string" then
+            table.insert(statics_object_table,return_value)
+          elseif type(return_value) == "table" and type(return_value[1]) == "string" then
+            table.insert(statics_object_table,return_value[1])
+          else
+            nil_exist = true
+            break
+          end
         end
-        unify_action.block(page_conf)
-    elseif check_action == "reject_response" then
+        if not nil_exist then
+          local statics_object_key = table.concat(statics_object_table)
+          local statics_object_result = jxwaf_inner:incr(statics_object_key,1,0,statics_time)
+          if statics_object_result > statics_count then
+	        local block_action = {}
+	        block_action['rule_name'] = rule_name
+	        block_action['rule_action'] = rule_action
+	        block_action['action_value'] = action_value
+            jxwaf_inner:set("scan_block"..src_ip,cjson.encode(block_action),block_time)
+          end
+        end
+    end
+  end
+
+end
+
+function _M.waf_action_process()
+  local waf_action =  ngx.ctx.waf_action
+  if  waf_action == "block" then
+    local page_conf = {}
+    if _sys_conf_data['custom_deny_page'] == 'true' then
+      page_conf['code'] = _sys_conf_data['waf_deny_code']
+      page_conf['html'] = _sys_conf_data['waf_deny_html']
+     end
+     unify_action.block(page_conf)
+    elseif waf_action == "reject_response" then
       unify_action.reject_response()
     end
   end
 end
+
+
+
+
+function _M.web_page_tamper_proof()
+  local host = ngx.var.http_host or ngx.var.host
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local web_page_tamper_proof_data = _waf_web_page_tamper_proof_data[host] or _waf_web_page_tamper_proof_data[_config_info.waf_node_uuid]
+  if not protection_data or not scan_attack_protection_data or (protection_data and protection_data['web_page_tamper_proof'] == "false") or ngx.ctx.web_bypass then
+    return
+  end
+
+  for _,rule_conf in ipairs(web_page_tamper_proof_data) do
+    local rule_name = rule_conf['rule_name']
+    local rule_matchs = rule_conf['rule_matchs']
+    local cache_page_url = rule_conf['cache_page_url']
+    local cache_content_type = rule_conf['cache_content_type']
+    local cache_page_content = rule_conf['cache_page_content']
+    local matchs_result = true
+    for _,rule_match in ipairs(rule_matchs) do
+        local match_args = rule_match['match_args']
+        local args_prepocess = rule_match['args_prepocess']
+        local match_operator = rule_match['match_operator']
+        local match_value = rule_match['match_value']
+        local operator_result = false
+        for _,match_arg in ipairs(match_args) do
+          local arg = request.get_args(match_arg.key,match_arg.value)
+          for _,arg_prepocess in ipairs(args_prepocess) do
+                 arg = preprocess.process_args(arg_prepocess,arg)
+          end
+          if arg then
+            local operator_match_result = operator.match(match_operator,arg,match_value)
+            if  operator_match_result then
+                operator_result =  true
+                break
+            end
+          end
+        end
+        if (not operator_result) then
+          matchs_result = false
+          break
+        end
+    end
+    if matchs_result then
+      local waf_log = {}
+      waf_log['waf_module'] = "web_page_tamper_proof"
+      waf_log['waf_policy'] = "网页防篡改-"..rule_name
+      waf_log['waf_action'] = "page_tamper_proof"
+      waf_log['waf_extra'] = cache_page_url
+      ngx.ctx.waf_log = waf_log
+      unify_action.page_tamper_proof(cache_content_type,cache_page_content)
+    end
+  end
+end
+
 
 function _M.analysis_component()
   for _,web_analysis_component_conf in ipairs(_waf_analysis_component_data) do
@@ -1185,6 +1479,8 @@ function _M.analysis_component()
 end
 
 
+
+
 function _M.redirect_https()
   local req_host = ngx.ctx.req_host
   local host = ngx.var.http_host or ngx.var.host
@@ -1200,5 +1496,14 @@ function _M.redirect_https()
     return ngx.redirect(table_concat(force_https), 301)
   end
 end
+
+function _M.init_jxwaf_devid()
+   local cookie_jxwaf_devid = request.get_args("cookie_args","jxwaf_devid")
+   if cookie_jxwaf_devid then
+      return
+   end
+   _jxwaf_engine.init_jxwaf_devid(_config_info.waf_auth)
+end
+
 
 return _M

@@ -27,6 +27,11 @@ if not flow_white_rule_result then
   ngx.log(ngx.ERR,flow_white_rule_error)
 end
 
+local flow_black_ip_result,flow_black_ip_error = pcall(waf.flow_black_ip)
+if not flow_black_ip_result then
+  ngx.log(ngx.ERR,flow_black_ip_error)
+end
+
 local flow_ip_region_block_result,flow_ip_region_block_error = pcall(waf.flow_ip_region_block)
 if not flow_ip_region_block_result then
   ngx.log(ngx.ERR,flow_ip_region_block_error)
@@ -57,6 +62,22 @@ if not web_engine_protection_result then
   ngx.log(ngx.ERR,web_engine_protection_error)
 end
 
+local scan_attack_protection_result,scan_attack_protection_error = pcall(waf.scan_attack_protection)
+if not scan_attack_protection_result then
+  ngx.log(ngx.ERR,scan_attack_protection_error)
+end
+
+local waf_action_process_result,waf_action_process_error = pcall(waf.waf_action_process)
+if not waf_action_process_result then
+  ngx.log(ngx.ERR,waf_action_process_error)
+end
+
+local web_page_tamper_proof_result,web_page_tamper_proof_error = pcall(waf.web_page_tamper_proof)
+if not web_page_tamper_proof_result then
+  ngx.log(ngx.ERR,web_page_tamper_proof_error)
+end
+
+
 local analysis_component_result,analysis_component_error = pcall(waf.analysis_component)
 if not analysis_component_result then
   ngx.log(ngx.ERR,analysis_component_error)
@@ -67,5 +88,8 @@ if not redirect_https_result then
   ngx.log(ngx.ERR,redirect_https_error)
 end
 
-
+local init_jxwaf_devid_result,init_jxwaf_devid_error = pcall(waf.init_jxwaf_devid)
+if not init_jxwaf_devid_result then
+  ngx.log(ngx.ERR,init_jxwaf_devid_error)
+end
 

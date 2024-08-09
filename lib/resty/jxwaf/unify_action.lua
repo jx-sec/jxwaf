@@ -184,6 +184,15 @@ function _M.allow()
   return ngx.exit(0)
 end
 
+function _M.page_tamper_proof(cache_content_type,cache_page_content)
+  local request_uuid = ngx.ctx.request_uuid
+  ngx.header.request_uuid = request_uuid
+  ngx.header.content_type = cache_content_type
+  ngx.status = 200
+  ngx.say(cache_page_content)
+  return ngx.exit(200)
+end
+
 function _M.reject_response()
   return ngx.exit(444)
 end

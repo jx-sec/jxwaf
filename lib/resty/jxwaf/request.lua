@@ -98,7 +98,7 @@ local function get_http_args(key)
   elseif key == "user_agent" then
     return_value = ngx.var.http_user_agent
   elseif key == "host" then
-    return_value = ngx.var.http_host
+    return_value = ngx.var.http_host or ngx.var.host
   elseif key == "cookie" then
     return_value = ngx.var.http_cookie
   end

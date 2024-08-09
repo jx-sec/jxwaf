@@ -23,6 +23,7 @@ if sys_conf_data["log_conf_remote"] == "true" and (ctx_waf_log or sys_conf_data[
   waf_log['request_time'] = ngx.localtime()
   waf_log['ssl_protocol'] = ngx.var.ssl_protocol or ""
   waf_log['ssl_cipher'] = ngx.var.ssl_cipher or ""
+  waf_log['jxwaf_devid'] = request.get_args("cookie_args","jxwaf_devid") or ""
   local raw_headers = request.get_args("http_args","raw_header")
   if #raw_headers > 4096 then
     waf_log['raw_headers'] = string_sub(raw_headers,1,4096)
