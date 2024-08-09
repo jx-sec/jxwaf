@@ -365,7 +365,7 @@ local function _worker_update_rule()
     if waf_scan_attack_protection_data == nil  then
       ngx.log(ngx.ERR,"init fail,can not decode waf_scan_attack_protection_data")
     else
-      _waf_scan_attack_protection_data = waf_web_engine_protection_data
+      _waf_scan_attack_protection_data = waf_scan_attack_protection_data
     end
 
     local waf_web_page_tamper_proof_data = res_body['waf_web_page_tamper_proof_data']
@@ -995,9 +995,9 @@ function _M.flow_rule_protection()
   local block_result = jxwaf_inner:get("flow_rule_block"..src_ip)
   if block_result then
     local block_action = cjson.decode(block_result)
-    rule_name = block_action['rule_name']
-    rule_action = block_action['rule_action']
-    action_value = block_action['action_value']
+    local rule_name = block_action['rule_name']
+    local rule_action = block_action['rule_action']
+    local action_value = block_action['action_value']
     local waf_log = {}
     waf_log['waf_module'] = "scan_attack_protection"
     waf_log['waf_policy'] = "扫描攻击防护-"..rule_name
@@ -1101,9 +1101,9 @@ function _M.flow_engine_protection()
   local block_result = jxwaf_inner:get("high_freq_cc_block"..src_ip)
   if block_result then
     local block_action = cjson.decode(block_result)
-    rule_name = block_action['rule_name']
-    rule_action = block_action['rule_action']
-    action_value = block_action['action_value']
+    local rule_name = block_action['rule_name']
+    local rule_action = block_action['rule_action']
+    local action_value = block_action['action_value']
     local waf_log = {}
     waf_log['waf_module'] = "flow_engine_protection"
     waf_log['waf_policy'] = rule_name
@@ -1134,7 +1134,7 @@ function _M.flow_engine_protection()
     if check_type == "high_freq_cc_rate_check" then
       block_mode = flow_engine_protection_data['req_rate_block_mode']
       block_mode_extra_parameter =  flow_engine_protection_data['req_rate_block_mode_extra_parameter']
-      block_time = tonunber(flow_engine_protection_data['req_rate_block_time'])
+      block_time = tonumber(flow_engine_protection_data['req_rate_block_time'])
       flow_type = "流量防护引擎-高频CC攻击"
 	  local block_action = {}
 	  block_action['rule_name'] = flow_type
@@ -1144,7 +1144,7 @@ function _M.flow_engine_protection()
     elseif check_type == "high_freq_cc_count_check" then
       block_mode =  flow_engine_protection_data['req_count_block_mode']
       block_mode_extra_parameter = flow_engine_protection_data['req_count_block_mode_extra_parameter']
-      block_time = tonunber(flow_engine_protection_data['req_count_block_time'])
+      block_time = tonumber(flow_engine_protection_data['req_count_block_time'])
       flow_type = "流量防护引擎-高频CC攻击"
 	  local block_action = {}
 	  block_action['rule_name'] = flow_type
@@ -1314,7 +1314,7 @@ function _M.web_engine_protection()
     end
     ngx.ctx.web_engine_protection_result[check_type] = 'true'
     if not ngx.ctx.waf_action and (check_action == "block"  or check_action == "reject_response") then
-       ngx.ctx.waf_action = rule_action
+       ngx.ctx.waf_action = check_action
        return
     end
   end
@@ -1332,9 +1332,9 @@ function _M.scan_attack_protection()
   local block_result = jxwaf_inner:get("scan_block"..src_ip)
   if block_result then
     local block_action = cjson.decode(block_result)
-    rule_name = block_action['rule_name']
-    rule_action = block_action['rule_action']
-    action_value = block_action['action_value']
+    local rule_name = block_action['rule_name']
+    local rule_action = block_action['rule_action']
+    local action_value = block_action['action_value']
     local waf_log = {}
     waf_log['waf_module'] = "scan_attack_protection"
     waf_log['waf_policy'] = "扫描攻击防护-"..rule_name
@@ -1401,9 +1401,8 @@ function _M.waf_action_process()
       page_conf['html'] = _sys_conf_data['waf_deny_html']
      end
      unify_action.block(page_conf)
-    elseif waf_action == "reject_response" then
+  elseif waf_action == "reject_response" then
       unify_action.reject_response()
-    end
   end
 end
 
@@ -1414,7 +1413,7 @@ function _M.web_page_tamper_proof()
   local host = ngx.var.http_host or ngx.var.host
   local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
   local web_page_tamper_proof_data = _waf_web_page_tamper_proof_data[host] or _waf_web_page_tamper_proof_data[_config_info.waf_node_uuid]
-  if not protection_data or not scan_attack_protection_data or (protection_data and protection_data['web_page_tamper_proof'] == "false") or ngx.ctx.web_bypass then
+  if not protection_data or not web_page_tamper_proof_data or (protection_data and protection_data['web_page_tamper_proof'] == "false") or ngx.ctx.web_bypass then
     return
   end
 
