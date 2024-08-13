@@ -98,7 +98,7 @@ sub process_file {
     my $ret = blank("luac -p -l $file | grep -E '[GS]ETGLOBAL' | grep -vE '\\<(require|type|tostring|error|ngx|ndk|jit|setmetatable|getmetatable|string|table|io|os|print|tonumber|math|pcall|xpcall|unpack|pairs|ipairs|assert|module|package|coroutine|[gs]etfenv|next|rawget|rawset|rawlen)\\>'");
     unless ($no_long_line_check) {
         p("Checking line length exceeding 80...");
-        blank("grep -H -n -E --color '.{16100}' $file");
+        blank("grep -H -n -E --color '.{161}' $file");
     }
 
 	return !$ret;

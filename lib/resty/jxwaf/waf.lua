@@ -917,25 +917,25 @@ function _M.flow_black_ip()
   local src_ip = request.get_args("http_args","src_ip")
   local result = flow_black_ip_data[src_ip]
   if result then
-    local rule_action = result['rule_action']
+    local block_action = result['block_action']
     local action_value = result['action_value']
     local waf_log = {}
     waf_log['waf_module'] = "flow_black_ip"
     waf_log['waf_policy'] = "流量防护-IP黑名单"
-    waf_log['waf_action'] = rule_action
+    waf_log['waf_action'] = block_action
     waf_log['waf_extra'] = action_value
     ngx.ctx.waf_log = waf_log
     ngx.ctx.flow_black_ip_result = "true"
-    if rule_action == "block"  then
+    if block_action == "block"  then
       local page_conf = {}
       if _sys_conf_data['custom_deny_page'] == 'true' then
         page_conf['code'] = _sys_conf_data['waf_deny_code']
         page_conf['html'] = _sys_conf_data['waf_deny_html']
       end
       unify_action.block(page_conf)
-    elseif rule_action == "reject_response"  then
+    elseif block_action == "reject_response"  then
       unify_action.reject_response()
-    elseif  rule_action == "bot_check" then
+    elseif  block_action == "bot_check" then
       _jxwaf_engine.bot_commit_auth(_config_info['bot_check_ip_bind'])
       _jxwaf_engine.bot_check_ip(action_value,_config_info['waf_cc_js_website'],_config_info['bot_check_ip_bind'])
     end
@@ -999,8 +999,8 @@ function _M.flow_rule_protection()
     local rule_action = block_action['rule_action']
     local action_value = block_action['action_value']
     local waf_log = {}
-    waf_log['waf_module'] = "scan_attack_protection"
-    waf_log['waf_policy'] = "扫描攻击防护-"..rule_name
+    waf_log['waf_module'] = "flow_rule_protection"
+    waf_log['waf_policy'] = "流量防护规则-"..rule_name
     waf_log['waf_action'] = rule_action
     waf_log['waf_extra'] = action_value
     ngx.ctx.waf_log = waf_log
@@ -1025,11 +1025,11 @@ function _M.flow_rule_protection()
     local filter = rule_conf['filter']
     local rule_matchs = rule_conf['rule_matchs']
     local entity = rule_conf['entity']
-    local stat_time = rule_conf['stat_time']
-    local exceed_count = rule_conf['exceed_count']
+    local stat_time = tonumber(rule_conf['stat_time'])
+    local exceed_count = tonumber(rule_conf['exceed_count'])
     local rule_action = rule_conf['rule_action']
     local action_value = rule_conf['action_value']
-    local block_time = rule_conf['block_time']
+    local block_time = tonumber(rule_conf['block_time'])
     local matchs_result = true
     if filter == "true" then
         for _,rule_match in ipairs(rule_matchs) do

@@ -181,6 +181,13 @@ local function get_cookie_args(key)
   end
 end
 
+local function get_web_rule_protection_result(key)
+  return ngx.ctx.web_rule_protection_result[key]
+end
+
+local function get_web_engine_protection_result(key)
+  return ngx.ctx.web_engine_protection_result[key]
+end
 
 function _M.get_args(k,v,extra)
   if k == "http_args" then
@@ -197,6 +204,10 @@ function _M.get_args(k,v,extra)
     return get_uri_args(v)
   elseif k == "string" then
     return tostring(v)
+  elseif k == "web_rule_protection_result" then
+    return get_web_rule_protection_result(v)
+  elseif k == "web_engine_protection_result" then
+    return get_web_engine_protection_result(v)
   else
     return nil 
   end
