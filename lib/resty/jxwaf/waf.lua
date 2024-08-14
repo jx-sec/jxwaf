@@ -745,21 +745,31 @@ function _M.access_init()
   
   local iso_code = ""
   local city = ""
+  local latitude = ""
+  local longitude = ""
   if not geo.initted() then
      geo.init(_config_geo_path)
   end
   local src_ip =  request.get_args("http_args","src_ip")
   local res,err = geo.lookup(src_ip)
 
-  if res and res['registered_country'] then
-     iso_code = res['registered_country']['iso_code']
+  if res and res['country'] then
+     iso_code = res['country']['iso_code']
   end
   
-  if res and res['city'] then
-     city = res['city']['zh-CN']
+  if res and res['city'] and res['city']['names'] then
+     city = res['city']['names']['en']
   end
+
+  if res and res['location']  then
+     latitude = res['location']['latitude']
+     longitude = res['location']['longitude']
+  end
+
   ngx.ctx.iso_code = iso_code
   ngx.ctx.city = city
+  ngx.ctx.latitude = latitude
+  ngx.ctx.longitude = longitude
   ngx.ctx.base_component_result = {}
   ngx.ctx.name_list_result = {}
   ngx.ctx.flow_rule_protection_result = {}
