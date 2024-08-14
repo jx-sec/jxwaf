@@ -1398,6 +1398,9 @@ end
 
 function _M.waf_action_process()
   local waf_action =  ngx.ctx.waf_action
+  if not waf_action then
+    return
+  end
   if  waf_action == "block" then
     local page_conf = {}
     if _sys_conf_data['custom_deny_page'] == 'true' then
