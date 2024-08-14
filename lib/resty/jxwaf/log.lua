@@ -71,8 +71,6 @@ if sys_conf_data["log_conf_remote"] == "true" and (ctx_waf_log or sys_conf_data[
 
    waf_log['iso_code'] = ngx.ctx.iso_code  or ""
    waf_log['city'] = ngx.ctx.city  or ""
-   waf_log['latitude'] = ngx.ctx.latitude  or ""
-   waf_log['longitude'] = ngx.ctx.longitude  or ""
 
   if ctx_waf_log then
     waf_log['waf_module']  = ctx_waf_log['waf_module']

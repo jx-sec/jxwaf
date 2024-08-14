@@ -761,15 +761,9 @@ function _M.access_init()
      city = res['city']['names']['en']
   end
 
-  if res and res['location']  then
-     latitude = res['location']['latitude']
-     longitude = res['location']['longitude']
-  end
 
   ngx.ctx.iso_code = iso_code
   ngx.ctx.city = city
-  ngx.ctx.latitude = latitude
-  ngx.ctx.longitude = longitude
   ngx.ctx.base_component_result = {}
   ngx.ctx.name_list_result = {}
   ngx.ctx.flow_rule_protection_result = {}
