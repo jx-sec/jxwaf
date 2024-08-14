@@ -1,5 +1,5 @@
 #!/bin/bash
-curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo
+curl -o /etc/yum.repos.d/CentOS-Base.repo https://mirrors.aliyun.com/repo/Centos-7.repo
 yum install -y  pcre-devel openssl-devel gcc cmake make  lua-devel  automake
 tar zxvf openresty-1.21.4.3.tar.gz
 tar zxvf libmaxminddb-1.6.0.tar.gz

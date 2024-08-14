@@ -724,6 +724,23 @@ function _M.access_init()
   end
 
   if req_host and req_host['advanced_conf'] == 'true' and req_host['pre_proxy'] == 'true' then
+     local src_ip = ngx.var.remote_addr
+     if req_host['real_ip_conf'] == 'XRI' then
+         local xri_ip = ngx.req.get_headers()['X-REAL-IP']
+         if xri_ip and is_valid_ip(xri_ip) then
+            ngx.ctx.src_ip = xri_ip
+         end
+     elseif req_host['real_ip_conf'] == 'XFF' then
+        local xff = ngx.req.get_headers()['X-Forwarded-For']
+        local xff_ip = ngx.re.match(xff,[=[^\d{1,3}+\.\d{1,3}+\.\d{1,3}+\.\d{1,3}+]=],'oj')[0]
+        if xff_ip and is_valid_ip(xff_ip) then
+            ngx.ctx.src_ip = xff_ip
+        end
+     end
+  end
+
+ --[[
+  if req_host and req_host['advanced_conf'] == 'true' and req_host['pre_proxy'] == 'true' then
       local src_ip = ngx.var.remote_addr
       local white_ip_list = req_host['white_ip_list']
       local whitelist = iputils.parse_cidrs(white_ip_list)
@@ -742,7 +759,7 @@ function _M.access_init()
         end
       end
   end
-  
+  --]]
   local iso_code = ""
   local city = ""
   local latitude = ""
