@@ -43,6 +43,7 @@ if sys_conf_data["log_conf_remote"] == "true" and (ctx_waf_log or sys_conf_data[
     waf_log['raw_body'] = raw_body
   end
   waf_log['src_ip'] = ngx.ctx.src_ip or ngx.var.remote_addr
+  waf_log['raw_src_ip'] = ngx.var.remote_addr
   waf_log['user_agent'] = ngx.var.http_user_agent or ""
   waf_log['cookie'] = ngx.var.cookie or ""
   local raw_resp_headers = ngx.resp.get_headers() 
