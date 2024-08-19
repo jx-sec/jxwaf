@@ -717,6 +717,13 @@ function _M.access_init()
   local req_host = ngx.ctx.req_host
   local request_uuid = uuid.generate_random()
   ngx.ctx.request_uuid = request_uuid
+  ngx.ctx.base_component_result = {}
+  ngx.ctx.name_list_result = {}
+  ngx.ctx.flow_rule_protection_result = {}
+  ngx.ctx.flow_engine_protection_result  = {}
+  ngx.ctx.web_rule_protection_result = {}
+  ngx.ctx.web_engine_protection_result = {}
+  ngx.ctx.analysis_comaponent_result = {}
   
   if _sys_conf_data['log_response'] == "true" then
     ngx.req.clear_header('Accept-Encoding')
@@ -762,6 +769,7 @@ function _M.access_init()
       end
   end
   --]]
+
   local iso_code = ""
   local city = ""
   local latitude = ""
@@ -776,20 +784,16 @@ function _M.access_init()
      iso_code = res['country']['iso_code']
   end
   
-  if res and res['city'] and res['city']['names'] then
-     city = res['city']['names']['en']
-  end
+  --if res and res['city'] and res['city']['names'] then
+  --   city = res['city']['names']['en']
+  --end
 
+  if res and res['subdivisions'] and res['subdivisions'][1]['iso_code'] then
+	city = res['subdivisions'][1]['iso_code']
+  end
 
   ngx.ctx.iso_code = iso_code
   ngx.ctx.city = city
-  ngx.ctx.base_component_result = {}
-  ngx.ctx.name_list_result = {}
-  ngx.ctx.flow_rule_protection_result = {}
-  ngx.ctx.flow_engine_protection_result  = {}
-  ngx.ctx.web_rule_protection_result = {}
-  ngx.ctx.web_engine_protection_result = {}
-  ngx.ctx.analysis_comaponent_result = {}
 end
 
 
