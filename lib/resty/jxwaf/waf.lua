@@ -732,10 +732,12 @@ function _M.access_init()
          end
      elseif req_host['real_ip_conf'] == 'XFF' then
         local xff = ngx.req.get_headers()['X-Forwarded-For']
-        local xff_ip = ngx.re.match(xff,[=[^\d{1,3}+\.\d{1,3}+\.\d{1,3}+\.\d{1,3}+]=],'oj')[0]
-        if xff_ip and is_valid_ip(xff_ip) then
-            ngx.ctx.src_ip = xff_ip
-        end
+	if xff then
+	    local xff_ip = ngx.re.match(xff,[=[^\d{1,3}+\.\d{1,3}+\.\d{1,3}+\.\d{1,3}+]=],'oj')[0]
+	    if xff_ip and is_valid_ip(xff_ip) then
+		ngx.ctx.src_ip = xff_ip
+	    end
+	end
      end
   end
 
