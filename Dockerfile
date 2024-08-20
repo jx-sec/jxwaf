@@ -2,8 +2,8 @@ FROM centos:centos7 as builder
 WORKDIR /tmp
 COPY .  .
 
-RUN curl -o /etc/yum.repos.d/CentOS-Base.repo https://mirrors.aliyun.com/repo/Centos-7.repo
-RUN curl -o /etc/yum.repos.d/epel.repo https://mirrors.aliyun.com/repo/epel-7.repo
+RUN curl -o /etc/yum.repos.d/CentOS-Base-aliyun.repo https://mirrors.aliyun.com/repo/Centos-7.repo
+RUN curl -o /etc/yum.repos.d/CentOS-Base-tuna.repo https://mirrors.tuna.tsinghua.edu.cn/repos/CentOS-7.repo
 
 
 RUN yum install -y pcre-devel openssl-devel gcc cmake make lua-devel automake
