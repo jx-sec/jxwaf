@@ -2,7 +2,7 @@ FROM centos:centos7 as builder
 WORKDIR /tmp
 COPY .  .
 
-RUN curl -o /etc/yum.repos.d/CentOS-Base.repo http://mirrors.aliyun.com/repo
+RUN curl -o /etc/yum.repos.d/CentOS-Base.repo https://mirrors.aliyun.com/repo/Centos-7.repo
 
 RUN yum install -y pcre-devel openssl-devel gcc cmake make lua-devel automake
 
