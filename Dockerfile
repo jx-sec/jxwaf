@@ -3,6 +3,8 @@ WORKDIR /tmp
 COPY .  .
 
 RUN curl -o /etc/yum.repos.d/CentOS-Base.repo https://mirrors.aliyun.com/repo/Centos-7.repo
+RUN curl -o /etc/yum.repos.d/epel.repo https://mirrors.aliyun.com/repo/epel-7.repo
+
 
 RUN yum install -y pcre-devel openssl-devel gcc cmake make lua-devel automake
 
