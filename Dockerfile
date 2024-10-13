@@ -1,4 +1,4 @@
-FROM centos:centos7 as builder
+FROM centos:centos7 AS builder
 WORKDIR /tmp
 COPY .  .
 
@@ -32,7 +32,7 @@ RUN ./configure \
 
 RUN /opt/jxwaf/nginx/sbin/nginx -t
 
-FROM golang:1.19 as go_builder
+FROM golang:1.19 AS go_builder
 WORKDIR /opt/app
 
 COPY ./tools/dockerun /opt/app
