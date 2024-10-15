@@ -1031,7 +1031,7 @@ function _M.flow_rule_protection()
     waf_log['waf_action'] = rule_action
     waf_log['waf_extra'] = action_value
     ngx.ctx.waf_log = waf_log
-    ngx.ctx.flow_engine_protection_result[rule_name] = true
+    ngx.ctx.flow_engine_protection_result[rule_name] = "true"
     if rule_action == "block"  then
       local page_conf = {}
       if _sys_conf_data['custom_deny_page'] == 'true' then
