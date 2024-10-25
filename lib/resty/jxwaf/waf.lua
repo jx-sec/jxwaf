@@ -884,8 +884,8 @@ end
 
 function _M.flow_white_rule()
   local host = ngx.var.http_host or ngx.var.host
-  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
-  local flow_white_rule_data = _waf_flow_white_rule_data[host] or _waf_flow_white_rule_data[_config_info.waf_node_uuid]
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[ngx.ctx.wildcard_host] or _waf_protection_data[_config_info.waf_node_uuid] 
+  local flow_white_rule_data = _waf_flow_white_rule_data[host] or _waf_flow_white_rule_data[ngx.ctx.wildcard_host] or _waf_flow_white_rule_data[_config_info.waf_node_uuid] 
   if not protection_data or not flow_white_rule_data or (protection_data and protection_data['flow_white_rule'] == "false") then
     return 
   end
@@ -935,8 +935,8 @@ end
 
 function _M.flow_black_ip()
   local host = ngx.var.http_host or ngx.var.host
-  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
-  local flow_black_ip_data = _waf_flow_black_ip_data[host] or _waf_flow_black_ip_data[_config_info.waf_node_uuid]
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[ngx.ctx.wildcard_host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local flow_black_ip_data = _waf_flow_black_ip_data[host] or _waf_flow_black_ip_data[ngx.ctx.wildcard_host] or _waf_flow_black_ip_data[_config_info.waf_node_uuid]
   if not protection_data or not flow_black_ip_data or (protection_data and protection_data['flow_black_ip'] == "false") or ngx.ctx.flow_bypass then
     return
   end
@@ -971,8 +971,8 @@ end
 
 function _M.flow_ip_region_block()
   local host = ngx.var.http_host or ngx.var.host
-  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
-  local flow_ip_region_block_data = _waf_flow_ip_region_block_data[host] or _waf_flow_ip_region_block_data[_config_info.waf_node_uuid]
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[ngx.ctx.wildcard_host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local flow_ip_region_block_data = _waf_flow_ip_region_block_data[host] or _waf_flow_ip_region_block_data[ngx.ctx.wildcard_host] or _waf_flow_ip_region_block_data[_config_info.waf_node_uuid]
   if not protection_data or not flow_ip_region_block_data or (protection_data and protection_data['flow_ip_region_block'] == "false") or ngx.ctx.flow_bypass then
     return 
   end
@@ -1012,8 +1012,8 @@ end
 
 function _M.flow_rule_protection()
   local host = ngx.var.http_host or ngx.var.host
-  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
-  local flow_rule_protection_data = _waf_flow_rule_protection_data[host] or _waf_flow_rule_protection_data[_config_info.waf_node_uuid]
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[ngx.ctx.wildcard_host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local flow_rule_protection_data = _waf_flow_rule_protection_data[host] or _waf_flow_rule_protection_data[ngx.ctx.wildcard_host] or _waf_flow_rule_protection_data[_config_info.waf_node_uuid]
   if not protection_data or not flow_rule_protection_data or (protection_data and protection_data['flow_rule_protection'] == "false") or ngx.ctx.flow_bypass then
     return 
   end
@@ -1119,8 +1119,8 @@ end
 
 function _M.flow_engine_protection()
   local host = ngx.var.http_host or ngx.var.host
-  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
-  local flow_engine_protection_data = _waf_flow_engine_protection_data[host] or _waf_flow_engine_protection_data[_config_info.waf_node_uuid]
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[ngx.ctx.wildcard_host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local flow_engine_protection_data = _waf_flow_engine_protection_data[host] or _waf_flow_engine_protection_data[ngx.ctx.wildcard_host] or _waf_flow_engine_protection_data[_config_info.waf_node_uuid]
   if not protection_data or not flow_engine_protection_data or (protection_data and protection_data['flow_engine_protection'] == "false") or ngx.ctx.flow_bypass then
     return 
   end
@@ -1220,8 +1220,8 @@ end
 
 function _M.web_white_rule()
   local host = ngx.var.http_host or ngx.var.host
-  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
-  local web_white_rule_data = _waf_web_white_rule_data[host] or _waf_web_white_rule_data[_config_info.waf_node_uuid]
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[ngx.ctx.wildcard_host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local web_white_rule_data = _waf_web_white_rule_data[host] or _waf_web_white_rule_data[ngx.ctx.wildcard_host] or _waf_web_white_rule_data[_config_info.waf_node_uuid]
   if not protection_data or not web_white_rule_data or (protection_data and protection_data['web_white_rule'] == "false") then
     return 
   end
@@ -1271,8 +1271,8 @@ end
 
 function _M.web_rule_protection()
   local host = ngx.var.http_host or ngx.var.host
-  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
-  local web_rule_protection_data = _waf_web_rule_protection_data[host] or _waf_web_rule_protection_data[_config_info.waf_node_uuid]
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[ngx.ctx.wildcard_host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local web_rule_protection_data = _waf_web_rule_protection_data[host] or _waf_web_rule_protection_data[ngx.ctx.wildcard_host] or _waf_web_rule_protection_data[_config_info.waf_node_uuid]
   if not protection_data or not web_rule_protection_data or (protection_data and protection_data['web_rule_protection'] == "false") or ngx.ctx.web_bypass then
     return 
   end
@@ -1325,8 +1325,8 @@ end
 
 function _M.web_engine_protection()
   local host = ngx.var.http_host or ngx.var.host
-  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
-  local web_engine_protection_data = _waf_web_engine_protection_data[host] or _waf_web_engine_protection_data[_config_info.waf_node_uuid]
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[ngx.ctx.wildcard_host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local web_engine_protection_data = _waf_web_engine_protection_data[host] or _waf_web_engine_protection_data[ngx.ctx.wildcard_host] or _waf_web_engine_protection_data[_config_info.waf_node_uuid]
   if not protection_data or not web_engine_protection_data or (protection_data and protection_data['web_engine_protection'] == "false") or ngx.ctx.web_bypass then
     return 
   end
@@ -1350,8 +1350,8 @@ end
 
 function _M.scan_attack_protection()
   local host = ngx.var.http_host or ngx.var.host
-  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
-  local scan_attack_protection_data = _waf_scan_attack_protection_data[host] or _waf_scan_attack_protection_data[_config_info.waf_node_uuid]
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[ngx.ctx.wildcard_host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local scan_attack_protection_data = _waf_scan_attack_protection_data[host] or _waf_scan_attack_protection_data[ngx.ctx.wildcard_host] or _waf_scan_attack_protection_data[_config_info.waf_node_uuid]
   if not protection_data or not scan_attack_protection_data or (protection_data and protection_data['scan_attack_protection'] == "false") or ngx.ctx.web_bypass then
     return
   end
@@ -1442,8 +1442,8 @@ end
 
 function _M.web_page_tamper_proof()
   local host = ngx.var.http_host or ngx.var.host
-  local protection_data = _waf_protection_data[host] or _waf_protection_data[_config_info.waf_node_uuid]
-  local web_page_tamper_proof_data = _waf_web_page_tamper_proof_data[host] or _waf_web_page_tamper_proof_data[_config_info.waf_node_uuid]
+  local protection_data = _waf_protection_data[host] or _waf_protection_data[ngx.ctx.wildcard_host] or _waf_protection_data[_config_info.waf_node_uuid]
+  local web_page_tamper_proof_data = _waf_web_page_tamper_proof_data[host] or _waf_web_page_tamper_proof_data[ngx.ctx.wildcard_host] or _waf_web_page_tamper_proof_data[_config_info.waf_node_uuid]
   if not protection_data or not web_page_tamper_proof_data or (protection_data and protection_data['web_page_tamper_proof'] == "false") or ngx.ctx.web_bypass then
     return
   end
