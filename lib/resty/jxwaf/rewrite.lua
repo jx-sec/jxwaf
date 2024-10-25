@@ -19,6 +19,7 @@ else
     if wildcard_host and waf_domain_data[wildcard_host] then
       req_host = waf_domain_data[wildcard_host]
       proxy_pass_https = req_host['proxy_pass_https']
+      ngx.ctx.wildcard_host = wildcard_host
     end
 end
 
