@@ -1314,7 +1314,6 @@ function _M.web_rule_protection()
       waf_log['waf_extra'] = action_value
       ngx.ctx.waf_log = waf_log
       ngx.ctx.web_rule_protection_result[rule_name] = 'true'
-      ngx.ctx.waf_action = rule_action
       if rule_action == "block"  or rule_action == "reject_response" then
         ngx.ctx.waf_action = rule_action
         return
