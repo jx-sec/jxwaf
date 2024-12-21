@@ -268,7 +268,7 @@ Transfer/sec:     48.41MB
 
 ### Introduced 介绍
 
-适合中大型公司自建私有云WAF系统
+适合中大型企业自建私有云WAF系统
 
 ### Production Environment Deployment 生产环境部署
 
@@ -285,7 +285,7 @@ Transfer/sec:     48.41MB
 
 服务器 IP 地址
 
-- 公网地址: 47.236.166.110
+- 公网地址: 47.236.121.36
 
 ```
 # 安装docker
@@ -302,7 +302,7 @@ docker compose  up -d
 
 服务器 IP 地址
 
-- 公网地址: 47.236.166.110
+- 公网地址: 47.245.89.209
 
 ```
 # 安装docker
@@ -320,7 +320,7 @@ docker compose  up -d
 
 服务器 IP 地址
 
-- 公网地址: 47.236.166.110
+- 公网地址: 8.219.77.80
 
 ```
 # 安装docker
@@ -340,7 +340,7 @@ vim docker-compose.yml
 ```
 修改文件中的 JXWAF_SERVER 和 WAF_AUTH
 
-JXWAF_SERVER 的值为 云WAF控制台服务器地址，这里为 http://47.236.166.110 ，注意这里地址不能带路径，即 http://47.236.166.110/ 是错误输入
+JXWAF_SERVER 的值为 云WAF控制台服务器地址，这里为 http://47.236.121.36 ，注意这里地址不能带路径，即 http://47.236.121.36/ 是错误输入
 
 其中 WAF_AUTH 为 系统配置 -> 基础信息 中 waf_auth 的值
 
@@ -349,12 +349,3 @@ docker compose  up -d
 ```
 
 启动后，可以在 运营中心 -> 节点状态 查看节点是否上线
-
-
-
-
-
-
-
-
-
