@@ -75,7 +75,7 @@ http://demo.jxwaf.com:8000/
 申请一台按量计费服务器，IP 地址为 119.45.234.74 ，完成下面部署步骤
 
 ```
-# 安装docker，国内网络建议输入 curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
+# 安装docker，国内网络建议输入 curl -fsSL https://get.docker.com | sh -s -- --mirror Aliyun
 curl -sSLk https://get.docker.com/ | bash
 service docker start
 # 下载docker compose文件,国内网络建议输入 git clone https://gitclone.com/github.com/jx-sec/jxwaf-docker-file.git
@@ -305,8 +305,9 @@ docker compose  up -d
 - 公网地址: 47.245.89.209
 
 ```
-# 安装docker
+# 安装docker  
 apt update
+# 国内输入 curl -fsSL https://get.docker.com | sh -s -- --mirror Aliyun
 curl -sSLk https://get.docker.com/ | bash
 # 下载docker compose文件
 apt install git -y
