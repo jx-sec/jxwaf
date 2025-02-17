@@ -56,14 +56,6 @@ https://docs.jxwaf.com/
 
 <kbd><img src="img/jxwaf_architecture.jpg" width="1000"></kbd>
 
-### Demo Environment 线上演示环境
-
-http://demo.jxwaf.com:8000/
-
-帐号 test
-
-密码 123456
-
 ### Test Environment Deployment 测试环境部署
 
 #### 环境要求
