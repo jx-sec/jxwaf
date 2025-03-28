@@ -1,0 +1,25 @@
+services:
+  jxwaf_base:
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_node:v1.25
+    network_mode: host
+    privileged: true
+    ulimits:
+      nofile:
+        soft: 602400
+        hard: 602400
+    environment:
+      HTTP_PORT: 80
+      HTTPS_PORT: 443
+      WAF_CONF_DATA: 1000m
+      JXWAF_INNER: 2000m
+      JXWAF_PUBLIC: 2000m
+      JXWAF_REQUEST_COUNT: 200m
+      JXWAF_REQUEST_IP: 200m
+      JXWAF_REQUEST_IP_COUNT: 200m
+      JXWAF_LIMIT_BOT: 200m
+      JXWAF_SERVER: you_jxwaf_server_url
+      WAF_AUTH: you_auth_key
+      TZ: Asia/Shanghai
+    restart: unless-stopped
+    volumes:
+      - /opt/jxwaf_data/nginx_cache:/opt/jxwaf_data/nginx_cache

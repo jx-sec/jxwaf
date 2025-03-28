@@ -1,0 +1,44 @@
+services:
+  clickhouse:
+    image: "ccr.ccs.tencentyun.com/jxwaf/clickhouse-server:22.8.5-alpine"
+    ports:
+      - "9000:9000"
+      - "9004:9004"
+    environment:
+      CLICKHOUSE_DB: jxwaf
+      CLICKHOUSE_USER: jxlog_user
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      CLICKHOUSE_PASSWORD: jxlog_password
+      TZ: Asia/Shanghai
+    volumes:
+      - /opt/jxwaf_data/clickhouse:/var/lib/clickhouse
+    restart: unless-stopped
+    networks:
+      clickhouse_network:
+        ipv4_address: 172.10.0.10
+
+  jxlog:
+    container_name: jxlog
+    image: "ccr.ccs.tencentyun.com/jxwaf/jxcloud-jxlog:v1.6"
+    ports:
+      - "8877:8877"
+    environment:
+      CLICKHOUSE: 172.10.0.10:9000
+      DATABASE: jxwaf
+      USERNAME: jxlog_user
+      PASSWORD: jxlog_password
+      TCPSERVER: 0.0.0.0
+      TZ: Asia/Shanghai
+    depends_on:
+      - clickhouse
+    restart: unless-stopped
+    networks:
+      clickhouse_network:
+        ipv4_address: 172.10.0.11
+
+networks:
+  clickhouse_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.10.0.0/24

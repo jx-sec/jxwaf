@@ -1,0 +1,43 @@
+services:
+  mysql_db:
+    image: ccr.ccs.tencentyun.com/jxwaf/mysql:5.7
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: 958fba75-56c6-4e81-a892-62517a9e1739
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_unicode_ci
+      TZ: Asia/Shanghai
+    volumes:
+      - /opt/jxwaf_data/mysql:/var/lib/mysql
+    networks:
+      app_net:
+        ipv4_address: 172.20.0.2
+
+  jxwaf_admin_server:
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server:v1.41
+    restart: unless-stopped
+    environment:
+      ENABLE_HTTPS: false
+      MYSQL_HOST: 172.20.0.2
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: jxwaf_admin_server
+      MYSQL_USER: root
+      MYSQL_PASSWORD: 958fba75-56c6-4e81-a892-62517a9e1739
+      WTDS_UPDATE_CONF_DATA: 1000m
+      TZ: Asia/Shanghai
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./ssl_certs/server.crt:/opt/jxwaf_admin_server/nginx/conf/server.crt
+      - ./ssl_certs/server.key:/opt/jxwaf_admin_server/nginx/conf/server.key
+    networks:
+      app_net:
+        ipv4_address: 172.20.0.3
+
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24

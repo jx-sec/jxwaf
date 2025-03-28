@@ -1,198 +1,198 @@
 # JXWAF
 
-[中文版](https://github.com/jx-sec/jxwaf/blob/master/README.md)
-[English](https://github.com/jx-sec/jxwaf/blob/master/English.md)
+[中文版](https://github.com/jx-sec/jxwaf/blob/master/README.md) | [English](https://github.com/jx-sec/jxwaf/blob/master/English.md)
 
-### Introduction
+## Introduction
 
-JXWAF is an open-source WEB Application Firewall.
+JXWAF is a cloud-based Web Application Firewall (WAF) that analyzes and detects web application traffic. It filters malicious traffic and forwards legitimate traffic to backend servers to ensure secure and stable web service operations.
 
-### Notice
+🌟 Cloud WAF System | CDN Functionality | Semantic Analysis Engine | WebTDS Deep Inspection
 
-- Release of JXWAF4.
-
-### Docs
+## Documentation
 
 https://docs.jxwaf.com/
 
-### Features
+## Features
 
 - Protection Management
   - Website Protection
+    - Protection Configuration
+      - Web Protection Engine
+      - Web Protection Rules
+      - Scan & Attack Protection
+      - Anti-Tampering
+      - Web Whitelist Rules
+      - Traffic Protection Engine
+      - Traffic Protection Rules
+      - IP Geo-Blocking
+      - IP Blacklist 
+      - Traffic Whitelist Rules
+    - Cache Configuration
+      - Cache Policy
+      - No-Cache Policy
+      - Cache Bypass Policy
+    - Advanced Configuration
+      - Custom Request Headers
+      - Custom Response Headers
+      - Custom Response Content
+      - Custom Origin Server
   - List Protection
   - Basic Components
   - Analysis Components
 - Operations Center
-  - Business Data Statistics
+  - Statistics
   - Web Security Reports
   - Traffic Security Reports
   - Attack Events
-  - Log Inquiry
+  - Log Query
+  - Network Blacklist
+  - Network Whitelist
   - Node Status
 - System Management
   - Basic Information
   - SSL Certificate Management
-  - Log Transmission Configuration
-  - Log Inquiry Configuration
+  - CNAME Configuration
+  - Log Transfer Configuration
+  - Log Query Configuration
+  - WebTDS Detection Configuration
   - Block Page Configuration
-  - Configuration Backup & Load
+  - Configuration Backup & Restore
 
-### Architecture
+## Architecture
 
-- The JXWAF system is composed of three subsystems:
-  - jxwaf Console
-  - jxwaf Node
-  - jxlog Logging System
+- JXWAF consists of three subsystems:
+  - JXWAF Admin Console
+  - JXWAF Node
+  - JXLOG System
 
-<kbd><img src="img/jxwaf_architecture.jpg" width="1000"></kbd>
+<kbd><img src="img/jxwaf_architecture.png" width="1000"></kbd>
 
-### Demo Environment
+## Deployment
 
-http://demo.jxwaf.com:8000/  
+### Requirements
 
-Account: test  
+- OS: Debian 12.x
+- Minimum Server Specs: 4-core CPU, 8GB RAM
 
-Password: 123456  
+### JXWAF Admin Console Deployment
 
-### Test Environment Deployment
-#### Requirements
-- Server System: Centos 7.x
-#### Quick Deployment
-Allocate a pay-as-you-go server with IP address 119.45.234.74 and complete the following deployment steps:
+Server IP Addresses:
+- Public IP: 47.120.63.196
+- Private IP: 172.29.198.241
+
 ```bash
-curl -sSLk https://get.docker.com/ | bash
-service docker start
-yum install git -y
-git clone https://github.com/jx-sec/jxwaf-docker-file.git
-cd jxwaf-docker-file/test_env
+# 1. Install Docker
+curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
+# 2. Clone repository (Use https://gitclone.com/github.com/jx-sec/jxwaf.git in China)
+git clone https://github.com/jx-sec/jxwaf.git
+# 3. Start container
+cd jxwaf/jxwaf_admin_server
 docker compose up -d
 ```
-#### Verification
-Access the console at http://119.45.234.74:8000 with the default account 'test' and password '123456'. After logging in to the console, create a new website under "Website Protection," using the following configuration as a reference:
-<kbd><img src="img/website_conf.jpg" width="600"></kbd>
 
-After configuring, return to the server:
+After deployment, access the console at http://47.120.63.196. First-time visitors will be redirected to the registration page.
+
+After registration and login, navigate to **System Management > Basic Information** to obtain the `waf_auth` value for node configuration.
+
+<kbd><img src="img/waf_auth.png" width="500"></kbd>
+
+### JXWAF Node Deployment
+
+Server IP Addresses:
+- Public IP: 47.84.176.156
+- Private IP: 172.22.168.117
 
 ```bash
-[root@VM-0-11-centos test_env_cn]# pwd
-/tmp/jxwaf-docker-file/test_env_cn
-[root@VM-0-11-centos test_env_cn]# cd ../waf_test/
-[root@VM-0-11-centos waf_test]# python waf_poc_test.py -u http://119.45.234.74
-```
-
-After running the WAF test script, you can view the protection effect in the "Operations Center" on the console.
-
-<kbd><img src="img/web_flow.jpg"></kbd>
-
-### Production Environment Deployment
-#### Requirements
-- Server system: Centos 7.x
-- Recommended server specification: At least 4 cores, 8 GB RAM
-#### Deployment of jxwaf Console
-Server IP Address:
-- Public address: 175.27.128.142
-- Private address: 10.206.0.10
-```
-curl -sSLk https://get.docker.com/ | bash
-service docker start
-yum install git -y
-git clone https://github.com/jx-sec/jxwaf-docker-file.git
-cd jxwaf-docker-file/prod_env/jxwaf-mini-server
-docker compose  up -d
-```
-After deployment, access the console at http://175.27.128.142:8000. The first visit will redirect you to the account registration page. For security considerations, it is recommended to restrict the IP addresses that can access the console, such as allowing only office network IPs. After registration and logging into the console, click on "System Configuration" -> "Basic Information" to see the 'waf_auth' value required for subsequent node configuration.
-
-<kbd><img src="img/waf_auth.jpg" width="500"></kbd>
-
-#### Deployment of jxwaf Node
-
-Server IP Address
-
-- Public address: 1.13.193.150
-- Private address: 10.206.0.3
-
-```
-curl -sSLk https://get.docker.com/ | bash
-service docker start
-yum install git -y
-git clone https://github.com/jx-sec/jxwaf-docker-file.git
-cd jxwaf-docker-file/prod_env/jxwaf
+# 1. Install Docker
+curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
+# 2. Clone repository (Use https://gitclone.com/github.com/jx-sec/jxwaf.git in China)
+git clone https://github.com/jx-sec/jxwaf.git
+# 3. Start container
+cd jxwaf/jxwaf_node
 vim docker-compose.yml
 ```
 
-Modify the values of 'JXWAF_SERVER' and 'WAF_AUTH' in the file
+Modify `JXWAF_SERVER` and `WAF_AUTH` in the compose file:
+- `JXWAF_SERVER`: Admin Console URL (e.g., `http://47.120.63.196`)
+- `WAF_AUTH`: Value from **System Management > Basic Information**
 
-<kbd><img src="img/compose_conf.jpg" width="500"></kbd>
+<kbd><img src="img/compose_conf_edit.png" width="500"></kbd>
 
-The value of 'JXWAF_SERVER' should be the address of the jxwaf console server, here it is http://10.206.0.10:8000. Note that the address should not include a path, so http://10.206.0.10:8000/ would be incorrect.
-
-'WAF_AUTH' is the value found in System Configuration -> Basic Information under 'waf_auth'.
-
-After modification
-
-<kbd><img src="img/compose_conf_edit.jpg" width="500"></kbd>
-
-```
-docker compose  up -d
+```bash
+docker compose up -d
 ```
 
-After starting, you can check if the node is online in the Operations Center -> Node Status on the console.
+Verify node status in **Operations Center > Node Status**.
 
-<kbd><img src="img/node_status.jpg"></kbd>
+<kbd><img src="img/node_status.png"></kbd>
 
-#### Deployment of jxlog
+### JXLOG Deployment
 
-Server IP Address
+Server IP Addresses:
+- Public IP: 47.115.222.190
+- Private IP: 172.29.198.239
 
-- Internal address: 10.206.0.13
-
-```
-curl -sSLk https://get.docker.com/ | bash
-service docker start
-yum install git -y
-git clone https://github.com/jx-sec/jxwaf-docker-file.git
-cd jxwaf-docker-file/prod_env/jxlog
-docker compose  up -d
-```
-
-After deployment, configure "Log Transfer Configuration" in the console under "System Configuration":
-
-<kbd><img src="img/jxlog_conf.jpg" width="500"></kbd>
-
-In the console under "System Configuration" -> "Log Query Configuration," configure as follows. The ClickHouse database credentials can be modified in the docker-compose.yml file.
-
-<kbd><img src="img/clickhouse_conf.jpg" width="500"></kbd>
-
-#### Verification
-
-In the console, under "Protection Management" -> "Website Configuration," create a new website using the following configuration as a reference:
-
-<kbd><img src="img/prod_test.jpg" width="500"></kbd>
-
-After configuration, return to the jxlog server:
-
-```
-[root@VM-0-13-centos jxlog]# pwd
-/root/jxwaf-docker-file/prod_env_cn/jxlog
-[root@VM-0-13-centos jxlog]# cd ../../waf_test/
-[root@VM-0-13-centos waf_test]# python waf_poc_test.py -u http://1.13.193.150
+```bash
+# 1. Install Docker
+curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
+# 2. Clone repository (Use https://gitclone.com/github.com/jx-sec/jxwaf.git in China)
+git clone https://github.com/jx-sec/jxwaf.git
+# 3. Start container
+cd jxwaf/jxlog
+docker compose up -d
 ```
 
-Run the WAF test script and then you can view the protection effect under "Operations Center" -> "Attack Events" in the console.
+Configure log settings in the Admin Console:
+- **System Management > Log Transfer Configuration**
+- **System Management > Log Query Configuration** (Use ClickHouse credentials from `docker-compose.yml`)
 
-<kbd><img src="img/attack_event.jpg" width="1000"></kbd>
+<kbd><img src="img/jxlog_conf.png" width="500"></kbd>
+<kbd><img src="img/clickhouse_conf.png" width="500"></kbd>
 
-### Contributor 
+### Validation
+
+1. Create a protection group under **Protection Management > Website Protection**:
+<kbd><img src="img/prod_group_conf.png" width="500"></kbd>
+
+2. Add a website configuration:
+<kbd><img src="img/prod_website_conf.png" width="500"></kbd>
+
+3. Run test script on JXLOG server:
+```bash
+cd waf_test/
+python3 waf_poc_test.py -u http://47.113.220.170
+```
+
+4. Check attack events in **Operations Center > Attack Events**:
+<kbd><img src="img/attack_event.png" width="1000"></kbd>
+
+## Performance Testing
+
+### Environment
+- Instance: Alibaba Cloud Compute c6
+- Specs: 4-core CPU, 8GB RAM
+- OS: Debian 12.8
+
+### Results
+
+#### HTTP Performance
+```
+Requests/sec: 65726.31
+Transfer/sec: 16.36MB
+```
+
+#### HTTPS Performance
+```
+Requests/sec: 35161.18
+Transfer/sec: 8.75MB
+```
+
+## Contributors
 
 - [chenjc](https://github.com/jx-sec)
 - [jiongrizi](https://github.com/jiongrizi)
 - [thankfly](https://github.com/thankfly)
 
-### BUG&Requirement 
+## BUGs & Feature Requests
 
-- WeChat: 574604532, please add a note stating jxwaf when adding.
-
-- The WeChat group is updated periodically.
-
-<kbd><img src="img/wx_qrcode.png" width="300"></kbd>
-
+- WeChat: 574604532 (Add note "jxwaf")
