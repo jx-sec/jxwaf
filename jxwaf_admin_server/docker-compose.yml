@@ -23,7 +23,7 @@ services:
       MYSQL_DATABASE: jxwaf_admin_server
       MYSQL_USER: root
       MYSQL_PASSWORD: 958fba75-56c6-4e81-a892-62517a9e1739
-      WTDS_UPDATE_CONF_DATA: 1000m
+      WAF_UPDATE_CONF_DATA: 1000m
       TZ: Asia/Shanghai
     ports:
       - "80:80"
