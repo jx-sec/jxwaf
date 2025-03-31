@@ -200,7 +200,9 @@ root@iZf8z5lulvvv47480fig8gZ:~/jxwaf# pwd
 [root@VM-0-13-centos waf_test]# python3 waf_poc_test.py -u http://47.113.220.170
 ```
 
-运行 waf 测试脚本后,即可在控制台中的 运营中心 -> 攻击事件 查看防护效果
+运行 waf 测试脚本后,即可在控制台中的 运营中心 -> Web安全报表 和 运营中心 -> Web安全报表 查看防护效果
+
+<kbd><img src="img/web_attack_chart.png" width="1000"></kbd>
 
 <kbd><img src="img/attack_event.png" width="1000"></kbd>
 
