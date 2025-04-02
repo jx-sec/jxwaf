@@ -29,7 +29,7 @@ JXWAF采用云原生架构设计，支持弹性扩展与多节点集群部署，
 
 ## 文档
 
-[JXWAF文档](https://docs.jxwaf.com/jxwaf/Product-Introduction.html)
+[JXWAF产品文档](https://docs.jxwaf.com/jxwaf/Product-Introduction.html)
 
 ## 功能
 
