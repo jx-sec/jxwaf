@@ -14,7 +14,7 @@ services:
         ipv4_address: 172.20.0.2
 
   jxwaf_admin_server:
-    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server:v1.42
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server:v1.47
     restart: unless-stopped
     environment:
       ENABLE_HTTPS: false
