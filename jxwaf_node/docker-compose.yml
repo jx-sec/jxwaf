@@ -1,6 +1,6 @@
 services:
   jxwaf_base:
-    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_node:v1.27
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_node:v1.28
     network_mode: host
     privileged: true
     ulimits:
