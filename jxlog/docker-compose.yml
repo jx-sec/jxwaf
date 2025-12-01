@@ -28,6 +28,10 @@ services:
       USERNAME: jxlog_user
       PASSWORD: jxlog_password
       TCPSERVER: 0.0.0.0
+      BATCH_SIZE: 100
+      BATCH_WAIT_TIMEOUT: 3
+      TTL_DAYS: 180
+      ENGINE: MergeTree
       TZ: Asia/Shanghai
     depends_on:
       - clickhouse
