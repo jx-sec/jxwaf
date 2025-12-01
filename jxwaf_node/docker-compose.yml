@@ -18,7 +18,6 @@ services:
       JXWAF_REQUEST_IP_COUNT: 200m
       JXWAF_LIMIT_BOT: 200m
       JXWAF_SERVER: you_jxwaf_server_url
-      LOG_ALL: "true"
       WAF_AUTH: you_auth_key
       TZ: Asia/Shanghai
     restart: unless-stopped
