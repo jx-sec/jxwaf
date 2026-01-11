@@ -1,0 +1,91 @@
+services:
+  mysql_db:
+    image: ccr.ccs.tencentyun.com/jxwaf/mysql:8.0
+    restart: always
+    network_mode: host
+    environment:
+      MYSQL_ROOT_PASSWORD: 958fba75-56c6-4e81-a892-62517a9e1739
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_0900_ai_ci
+      MYSQL_DEFAULT_AUTHENTICATION_PLUGIN: mysql_native_password
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --innodb_buffer_pool_size=256M
+      - --bind-address=127.0.0.1
+    volumes:
+      - /opt/jxwaf_data/mysql:/var/lib/mysql
+
+  jxwaf_admin_server:
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server_standard:6.13
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      HTTP_PORT: 8000
+      HTTPS_PORT: 8443
+      ENABLE_HTTPS: false
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: jxwaf_admin_server
+      MYSQL_USER: root
+      MYSQL_PASSWORD: 958fba75-56c6-4e81-a892-62517a9e1739
+      JXWAF_MODEL_QUERY: true   # 是否开启JXWAF模型缓存服务，值为 true 或者 false
+      JXWAF_MODEL_QUERY_HOST: model.jxwaf.com
+      JXWAF_MODEL_QUERY_PORT: 29977
+      #AI_BACKUP_WAF_URL: https://demo.waf-ce.chaitin.cn:10084/hello.html # AI模型分析失败，使用WAF进行分析
+      #AI_BACKUP_WAF_BLOCK_CODE: 403
+      WAF_AUTH: ade1e4c0-d644-46fe-9675-5fb59b486381
+    volumes:
+      - ./ssl_certs/server.crt:/opt/jxwaf_admin_server/nginx/conf/server.crt
+      - ./ssl_certs/server.key:/opt/jxwaf_admin_server/nginx/conf/server.key
+    depends_on:
+      - mysql_db
+
+  jxwaf_node_standard:
+    image: "ccr.ccs.tencentyun.com/jxwaf/jxwaf_node_standard:6.5"
+    network_mode: host
+    privileged: true
+    ulimits:
+      nofile:
+        soft: 602400
+        hard: 602400
+    environment:
+      HTTP_PORT: 80
+      HTTPS_PORT: 443
+      WAF_CONF_DATA: 1000m
+      JXWAF_INNER: 200m
+      JXWAF_PUBLIC: 200m
+      JXWAF_LIMIT_BOT: 200m
+      LOG_IP: 127.0.0.1
+      LOG_PORT: 12997
+      JXWAF_SERVER: http://127.0.0.1:8000
+      WAF_AUTH: ade1e4c0-d644-46fe-9675-5fb59b486381
+      TZ: Asia/Shanghai
+    restart: unless-stopped
+
+  log_send_to_mysql:
+    image: ccr.ccs.tencentyun.com/jxwaf/log_send_to_mysql:v2
+    container_name: data_send_to_mysql
+    network_mode: host
+    environment:
+      LISTEN_ADDR: ":12997"
+      BATCH_SIZE: "50"
+      BATCH_WAIT_TIMEOUT: "2s"
+
+      MAX_CONNECTIONS: "1000"
+      MAX_IDLE_CONNS: "10"
+      CONN_MAX_LIFETIME: "10m"
+
+      DB_HOST: "127.0.0.1"
+      DB_PORT: "3306"
+      DB_DATABASE: "jxwaf_admin_server"
+      DB_USER: "root"
+      DB_PASSWORD: "958fba75-56c6-4e81-a892-62517a9e1739"
+      DB_TABLE: "jxwaf_waf_attack_log"
+      DB_CHARSET: "utf8mb4"
+    restart: unless-stopped
+    depends_on:
+      - mysql_db
+
+
