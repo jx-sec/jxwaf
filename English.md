@@ -122,7 +122,7 @@ Using the sample set provided by the blazehttp project from Chaitin, results are
 
 Welcome to follow our WeChat Official Account for future updates and technical sharing.
 
-<kbd><img src="img/wx_code.jpeg" width="500"></kbd>
+<kbd><img src="img/wx_code.jpeg"></kbd>
 
 ## Contributors
 
