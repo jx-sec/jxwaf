@@ -1,191 +1,128 @@
 # JXWAF
 
-[中文版](https://github.com/jx-sec/jxwaf/blob/master/README.md) | [English](https://github.com/jx-sec/jxwaf/blob/master/English.md)
-
 ## Introduction
 
-JXWAF is a cloud-based Web Application Firewall (WAF) that analyzes and detects web application traffic. It filters malicious traffic and forwards legitimate traffic to backend servers to ensure secure and stable web service operations.
-
-🌟 Cloud WAF System | CDN Functionality | Semantic Analysis Engine | WebTDS Deep Inspection
-
-## Documentation
-
-https://docs.jxwaf.com/
+JXWAF6 Standard Edition is a Web Application Firewall based on AI large models.
 
 ## Features
 
-- Protection Management
-  - Website Protection
-    - Protection Configuration
-      - Web Protection Engine
-      - Web Protection Rules
-      - Scan & Attack Protection
-      - Anti-Tampering
-      - Web Whitelist Rules
-      - Traffic Protection Engine
-      - Traffic Protection Rules
-      - IP Geo-Blocking
-      - IP Blacklist 
-      - Traffic Whitelist Rules
-    - Cache Configuration
-      - Cache Policy
-      - No-Cache Policy
-      - Cache Bypass Policy
-    - Advanced Configuration
-      - Custom Request Headers
-      - Custom Response Headers
-      - Custom Response Content
-      - Custom Origin Server
-  - List Protection
-  - Basic Components
-  - Analysis Components
-- Operations Center
-  - Statistics
-  - Web Security Reports
-  - Traffic Security Reports
-  - Attack Events
-  - Log Query
-  - Network Blacklist
-  - Network Whitelist
-  - Node Status
-- System Management
-  - Basic Information
-  - SSL Certificate Management
-  - CNAME Configuration
-  - Log Transfer Configuration
-  - Log Query Configuration
-  - WebTDS Detection Configuration
-  - Block Page Configuration
-  - Configuration Backup & Restore
-
-## Architecture
-
-- JXWAF consists of three subsystems:
-  - JXWAF Admin Console
-  - JXWAF Node
-  - JXLOG System
-
-<kbd><img src="img/jxwaf_architecture.png" width="1000"></kbd>
+- Data Statistics
+- Attack Events
+- Attack Logs
+- Website Protection
+  - Website Integration
+  - Certificate Management
+- AI Protection Configuration
+  - Web Security Protection
+  - AI Analysis Records
+- Protection Configuration
+  - Web Protection Rules
+  - Traffic Protection Rules
+  - IP Region Blocking
+  - Whitelist Rules
+- Protection Components
+- Node Status
 
 ## Deployment
 
-### Requirements
+### Environment Requirements
 
-- OS: Debian 12.x
-- Minimum Server Specs: 4-core CPU, 8GB RAM
+- Server System: Debian 12.x
+- Minimum Server Configuration: 4 cores, 8GB RAM
 
-### JXWAF Admin Console Deployment
+### One-Click Deployment
 
 Server IP Addresses:
-- Public IP: 47.120.63.196
-- Private IP: 172.29.198.241
+- Public Address: 47.120.63.196
+- Internal Address: 172.29.198.241
 
 ```bash
 # 1. Install Docker
 curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
-# 2. Clone repository (Use https://gitclone.com/github.com/jx-sec/jxwaf.git in China)
+
+# 2. Clone Repository
 git clone https://github.com/jx-sec/jxwaf.git
-# 3. Start container
-cd jxwaf/jxwaf_admin_server
+
+# 3. Start Container
+cd jxwaf/standard
 docker compose up -d
 ```
 
-After deployment, access the console at http://47.120.63.196. First-time visitors will be redirected to the registration page.
+WAF Console Address: http://47.120.63.196:8000
 
-After registration and login, navigate to **System Management > Basic Information** to obtain the `waf_auth` value for node configuration.
+## Configuration Instructions
+
+### Docker Compose File Configuration
+
+- **JXWAF_MODEL_QUERY**  
+  Whether to enable JXWAF large model semantic caching service and join the group immunity network. Values: `true` or `false`.  
+  - **Large Model Semantic Caching Service**: When encountering unknown requests, it first queries the cache. If a hit occurs, there's no need to query through the large model, which can significantly save large model usage costs.
+  - **Group Immunity Network**: When other WAFs detect new attack POCs, they synchronize model parameters to the local WAF through the group immunity network, enabling real-time acquisition of the latest detection capabilities.
+
+- **AI_BACKUP_WAF_URL**  
+  When the large model service is unavailable for various reasons, this configuration can be used to obtain detection capabilities from other WAFs. Since requests need to be forwarded to the target WAF, there may be data leakage risks.
+
+### Console AI Protection Configuration
+
+#### Protection Mode Description
+
+Unlike traditional WAFs' black-and-white detection mode, AI WAF adopts a **non-white-then-black** detection mode.
+
+- **Online Learning**  
+  Trains the local model based on online business traffic without taking any actions.
+  
+- **Online Protection - Business Priority**  
+  Known attack traffic is intercepted. Unknown traffic is first allowed through, and after AI analysis produces results, the local model is synchronously updated for processing.
+
+- **Online Protection - Security Priority**  
+  Known attack traffic is intercepted. Unknown traffic is first intercepted, and after AI analysis produces results, the local model is synchronously updated for processing.
+
+- **Offline Protection**  
+  Both known attack traffic and unknown traffic are intercepted, and the local model is no longer updated.
+
+## Protection Effectiveness Comparison
+
+**Testing Method**:  
+```bash
+docker run --rm --net=host ccr.ccs.tencentyun.com/jxwaf/blazehttp:latest /app/blazehttp -t http://172.30.42.104/xxx
+```
+Using the sample set provided by the blazehttp project from Chaitin, results are as follows:
+
+### JXWAF6 Standard Edition - DeepSeek
+- Total Samples: 33877, Successful: 33877, Errors: 0
+- Detection Rate: 41.03% (Malicious Samples: 658, Correctly Blocked: 270, Missed: 388)
+- False Positive Rate: 0.14% (Normal Samples: 33219, Correctly Allowed: 33172, False Blocked: 47)
+- Accuracy: 98.72% ((Correctly Blocked + Correctly Allowed) / Total Samples)
+- Average Processing Time: 28.19 milliseconds
+
+### JXWAF5 - Semantic Analysis Engine
+- Total Samples: 33877, Successful: 33877, Errors: 0
+- Detection Rate: 26.90% (Malicious Samples: 658, Correctly Blocked: 177, Missed: 481)
+- False Positive Rate: 0.20% (Normal Samples: 33219, Correctly Allowed: 33153, False Blocked: 66)
+- Accuracy: 98.39%
+- Average Processing Time: 43.68 milliseconds
+
+### Cloud WAF A - Default Configuration
+- Total Samples: 33877, Successful: 33877, Errors: 0
+- Detection Rate: 40.12% (Malicious Samples: 658, Correctly Blocked: 264, Missed: 394)
+- False Positive Rate: 0.23% (Normal Samples: 33219, Correctly Allowed: 33143, False Blocked: 76)
+- Accuracy: 98.61%
+- Average Processing Time: 43.36 milliseconds
+
+### WAF B - Official Demo Configuration
+- Total Samples: 33877, Successful: 33877, Errors: 0
+- Detection Rate: 44.38% (Malicious Samples: 658, Correctly Blocked: 292, Missed: 366)
+- False Positive Rate: 0.19% (Normal Samples: 33219, Correctly Allowed: 33155, False Blocked: 64)
+- Accuracy: 98.73%
+- Average Processing Time: 33.02 milliseconds
+
+**Conclusion**: JXWAF6 Standard Edition shows significant improvement in detection effectiveness compared to JXWAF5, reaching commercial WAF detection standards.
+
+## WeChat Official Account
+
+Welcome to follow our WeChat Official Account for future updates and technical sharing.
 
 <kbd><img src="img/waf_auth.png" width="500"></kbd>
-
-### JXWAF Node Deployment
-
-Server IP Addresses:
-- Public IP: 47.84.176.156
-- Private IP: 172.22.168.117
-
-```bash
-# 1. Install Docker
-curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
-# 2. Clone repository (Use https://gitclone.com/github.com/jx-sec/jxwaf.git in China)
-git clone https://github.com/jx-sec/jxwaf.git
-# 3. Start container
-cd jxwaf/jxwaf_node
-vim docker-compose.yml
-```
-
-Modify `JXWAF_SERVER` and `WAF_AUTH` in the compose file:
-- `JXWAF_SERVER`: Admin Console URL (e.g., `http://47.120.63.196`)
-- `WAF_AUTH`: Value from **System Management > Basic Information**
-
-<kbd><img src="img/compose_conf_edit.png" width="500"></kbd>
-
-```bash
-docker compose up -d
-```
-
-Verify node status in **Operations Center > Node Status**.
-
-<kbd><img src="img/node_status.png"></kbd>
-
-### JXLOG Deployment
-
-Server IP Addresses:
-- Public IP: 47.115.222.190
-- Private IP: 172.29.198.239
-
-```bash
-# 1. Install Docker
-curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
-# 2. Clone repository (Use https://gitclone.com/github.com/jx-sec/jxwaf.git in China)
-git clone https://github.com/jx-sec/jxwaf.git
-# 3. Start container
-cd jxwaf/jxlog
-docker compose up -d
-```
-
-Configure log settings in the Admin Console:
-- **System Management > Log Transfer Configuration**
-- **System Management > Log Query Configuration** (Use ClickHouse credentials from `docker-compose.yml`)
-
-<kbd><img src="img/jxlog_conf.png" width="500"></kbd>
-<kbd><img src="img/clickhouse_conf.png" width="500"></kbd>
-
-### Validation
-
-1. Create a protection group under **Protection Management > Website Protection**:
-<kbd><img src="img/prod_group_conf.png" width="500"></kbd>
-
-2. Add a website configuration:
-<kbd><img src="img/prod_website_conf.png" width="500"></kbd>
-
-3. Run test script on JXLOG server:
-```bash
-cd waf_test/
-python3 waf_poc_test.py -u http://47.113.220.170
-```
-
-4. Check attack events in **Operations Center > Attack Events**:
-<kbd><img src="img/attack_event.png" width="1000"></kbd>
-
-## Performance Testing
-
-### Environment
-- Instance: Alibaba Cloud Compute c6
-- Specs: 4-core CPU, 8GB RAM
-- OS: Debian 12.8
-
-### Results
-
-#### HTTP Performance
-```
-Requests/sec: 65726.31
-Transfer/sec: 16.36MB
-```
-
-#### HTTPS Performance
-```
-Requests/sec: 35161.18
-Transfer/sec: 8.75MB
-```
 
 ## Contributors
 
@@ -193,6 +130,6 @@ Transfer/sec: 8.75MB
 - [jiongrizi](https://github.com/jiongrizi)
 - [thankfly](https://github.com/thankfly)
 
-## BUGs & Feature Requests
+## BUG & Requirements
 
-- WeChat: 574604532 (Add note "jxwaf")
+- WeChat: 574604532 (Please add note "jxwaf" when connecting)
