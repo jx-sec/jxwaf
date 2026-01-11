@@ -122,7 +122,7 @@ docker run --rm --net=host ccr.ccs.tencentyun.com/jxwaf/blazehttp:latest /app/bl
 
 欢迎关注微信公众号，后续更新与技术分享将在公众号发布。
 
-<kbd><img src="img/waf_auth.png" width="500"></kbd>
+<kbd><img src="img/wx_code.jpeg" width="500"></kbd>
 
 ## 贡献者
 
