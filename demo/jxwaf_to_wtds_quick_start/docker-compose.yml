@@ -1,0 +1,120 @@
+services:
+  wtds_server:
+    image: ccr.ccs.tencentyun.com/jxwaf/wtds_server_authorizatio:1.5
+    ulimits:
+      nofile:
+        soft: 602400
+        hard: 602400
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    environment:
+      OPEN_REGIST: true
+      MYSQL_HOST: gz-cynosdbmysql-grp-ftb3773p.sql.tencentcdb.com
+      MYSQL_PORT: 24535
+      MYSQL_DATABASE: wtds_admin
+      MYSQL_USER: root
+      MYSQL_PASSWORD: chuan14999124!
+      WTDS_UPDATE_CONF_DATA: 100m
+      AUTH_CODE: 修改为你的授权码
+      TZ: Asia/Shanghai
+
+  jxwaf_admin_server:
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server:v1.52
+    restart: unless-stopped
+    ports:
+      - "7000:80"
+    environment:
+      ENABLE_HTTPS: false
+      MYSQL_HOST: gz-cynosdbmysql-grp-ftb3773p.sql.tencentcdb.com
+      MYSQL_PORT: 24535
+      MYSQL_DATABASE: jxwaf_admin_server
+      MYSQL_USER: root
+      MYSQL_PASSWORD: chuan14999124!
+      WAF_UPDATE_CONF_DATA: 100m
+      TZ: Asia/Shanghai
+
+  jxwaf_base:
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_node:v1.35
+    network_mode: host
+    privileged: true
+    ulimits:
+      nofile:
+        soft: 602400
+        hard: 602400
+    environment:
+      HTTP_PORT: 80
+      HTTPS_PORT: 443
+      WAF_CONF_DATA: 100m
+      JXWAF_INNER: 200m
+      JXWAF_PUBLIC: 200m
+      JXWAF_REQUEST_COUNT: 200m
+      JXWAF_REQUEST_IP: 200m
+      JXWAF_REQUEST_IP_COUNT: 200m
+      JXWAF_LIMIT_BOT: 200m
+      JXWAF_SERVER: http://127.0.0.1:7000
+      WAF_AUTH: 修改为对应的WAF_AUTH
+      TZ: Asia/Shanghai
+    restart: unless-stopped
+    volumes:
+      - /opt/jxwaf_data/nginx_cache:/opt/jxwaf_data/nginx_cache
+
+  wtds:
+    image: "ccr.ccs.tencentyun.com/jxwaf/wtds_authorizatio:1.0"
+    network_mode: host
+    ulimits:
+      nofile:
+        soft: 602400
+        hard: 602400
+    environment:
+      WTDS_SERVER: http://127.0.0.1:8000
+      WTDS_AUTH: 修改为对应的WTDS_AUTH
+      CONF_DATA: 100m
+      INNER_DICT: 100m
+      GLOBAL_DICT: 100m
+      USER_DATA: 100m
+      SUPPRESS: 100m
+      TZ: Asia/Shanghai
+      RESOLVER_IPS: "100.100.2.136 100.100.2.138 223.5.5.5 114.114.114.114 1.1.1.1"
+    restart: unless-stopped
+
+  tcp-forwarder:
+    image: ccr.ccs.tencentyun.com/jxwaf/tcp-forwarder:v1
+    container_name: tcp-forwarder
+    environment:
+      LISTEN_ADDR: 0.0.0.0:9988
+      TARGET_ADDR: 127.0.0.1:9977
+    network_mode: host
+    restart: unless-stopped
+
+
+  clickhouse:
+    image: "ccr.ccs.tencentyun.com/jxwaf/clickhouse-server:22.8.5-alpine"
+    network_mode: host
+    environment:
+      CLICKHOUSE_DB: wtds3
+      CLICKHOUSE_USER: jxlog
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      CLICKHOUSE_PASSWORD: jxlog
+    volumes:
+      - /opt/wtds_data/clickhouse:/var/lib/clickhouse
+    restart: unless-stopped
+
+  wtds_log:
+    container_name: wtds_log
+    image: "ccr.ccs.tencentyun.com/jxwaf/wtds_log:1.0"
+    network_mode: host
+    environment:
+      CLICKHOUSE: 127.0.0.1:9000
+      DATABASE: wtds3
+      USERNAME: jxlog
+      PASSWORD: jxlog
+      TABLE: wtds_log
+      TCPSERVER: 127.0.0.1
+      TCPPORT: 8866
+      TTL_DAYS: 30
+      BATCH_SIZE: 100
+      FLUSH_MS: 1000
+    depends_on:
+      - clickhouse
+    restart: unless-stopped
