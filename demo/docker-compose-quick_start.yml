@@ -14,9 +14,9 @@ services:
       MYSQL_PORT: 24535
       MYSQL_DATABASE: wtds_admin
       MYSQL_USER: root
-      MYSQL_PASSWORD: chuan14999124!
+      MYSQL_PASSWORD: 
       WTDS_UPDATE_CONF_DATA: 100m
-      AUTH_CODE: 修改为你的授权码
+      AUTH_CODE: b50da80c59b11024c6a7b2fc9e9037ddc211b9e3d171496455610abef4505d39de31ad044b1515c69dc8cf5a10921ff1bea1a83bccec3ab2c52c30ca271adc6e2916666f7f045021cf072c4a0ee4d6a02dd609b727840a68f59bcf075671ac0dc05b5ab0b5a02526a6515fd7cbaf9b2fe9a8807f0aa9ad8e207b1cdb9fb2bf74f1cc071297db730f6570ba10099b93b9
       TZ: Asia/Shanghai
 
   jxwaf_admin_server:
@@ -30,7 +30,7 @@ services:
       MYSQL_PORT: 24535
       MYSQL_DATABASE: jxwaf_admin_server
       MYSQL_USER: root
-      MYSQL_PASSWORD: chuan14999124!
+      MYSQL_PASSWORD: 
       WAF_UPDATE_CONF_DATA: 100m
       TZ: Asia/Shanghai
 
@@ -96,6 +96,7 @@ services:
       CLICKHOUSE_USER: jxlog
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
       CLICKHOUSE_PASSWORD: jxlog
+      CLICKHOUSE_HOST: 127.0.0.1
     volumes:
       - /opt/wtds_data/clickhouse:/var/lib/clickhouse
     restart: unless-stopped
