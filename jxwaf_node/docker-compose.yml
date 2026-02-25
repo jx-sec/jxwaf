@@ -23,3 +23,4 @@ services:
     restart: unless-stopped
     volumes:
       - /opt/jxwaf_data/nginx_cache:/opt/jxwaf_data/nginx_cache
+      #- ./nginx.conf.tmpl:/opt/jxwaf/nginx/conf/nginx.conf.tmpl:ro
