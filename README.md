@@ -322,7 +322,7 @@ docker compose up -d
 
 ## 贡献者
 
-- [chenjc](https://github.com/jx-sec)
+- [青冰](https://github.com/jx-sec)
 - [jiongrizi](https://github.com/jiongrizi)
 
 ## 问题反馈
