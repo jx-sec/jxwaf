@@ -321,7 +321,7 @@ docker compose up -d
 
 扫码加入微信用户群，与更多开发者交流讨论。
 
-<p align="center"><img src="img/wx_group.jpg" width="200"></p>
+<p align="center"><img src="img/wx_group.jpg" width="240"></p>
 
 > 群二维码过期或满员时，请联系管理员微信：`574604532`（添加请备注 jxwaf）
 
