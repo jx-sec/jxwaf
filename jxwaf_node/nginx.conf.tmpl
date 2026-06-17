@@ -1,0 +1,137 @@
+worker_processes  auto;
+
+worker_rlimit_nofile 602400;
+events {
+    worker_connections  10240;
+}
+
+
+http {
+    include       mime.types;
+    default_type  application/octet-stream;
+    access_log off;
+    client_body_buffer_size  5m;
+    client_max_body_size 100m;
+    sendfile        on;
+    resolver  223.5.5.5 119.29.29.29 114.114.114.114 1.1.1.1 ipv6=off;
+    #keepalive_timeout  0;
+    keepalive_timeout  65;
+    lua_ssl_trusted_certificate  /etc/ssl/certs/ca-certificates.crt;
+    lua_ssl_verify_depth 3;
+lua_max_running_timers 10240;
+lua_max_pending_timers 10240;
+lua_shared_dict waf_conf_data {{.WafConfData}};
+lua_shared_dict jxwaf_inner {{.JxwafInner}};
+lua_shared_dict jxwaf_public {{.JxwafPublic}};
+lua_shared_dict jxwaf_request_count {{.JxwafRequestCount}};
+lua_shared_dict jxwaf_request_ip {{.JxwafRequestIp}};
+lua_shared_dict jxwaf_request_ip_count {{.JxwafRequestIpCount}};
+lua_shared_dict jxwaf_limit_bot {{.JxwafLimitBot}};
+
+
+init_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/init.lua;
+init_worker_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/init_worker.lua;
+rewrite_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/rewrite.lua;
+access_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/access.lua;
+body_filter_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/body_filter.lua;
+log_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/log.lua;
+rewrite_by_lua_no_postpone on;
+lua_socket_pool_size 1000;
+        upstream jxwaf {
+        server www.jxwaf.com;
+  balancer_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/balancer.lua;
+}
+lua_code_cache on;
+proxy_cache_path /opt/jxwaf_data/nginx_cache levels=1:2 keys_zone=cache_zone:512m  use_temp_path=off inactive=1d max_size=100g min_free=10g;
+lua_need_request_body on;
+gzip on;
+gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript application/font-woff application/font-woff2;
+gzip_vary on;
+gzip_min_length 4096;
+gzip_proxied any;
+    map $http_upgrade $connection_upgrade {
+        default "";
+        websocket "upgrade";
+    }
+    server {
+        listen       {{.HTTPPort}};
+        server_name  localhost;
+        set $proxy_pass_https_flag "false";
+        set $cache_key '';
+        set $cache_bypass 0;
+        set $no_cache 1;
+
+        location / {
+          if ($proxy_pass_https_flag = "true"){
+            proxy_pass https://jxwaf;
+          }
+          if ($proxy_pass_https_flag = "false"){
+            proxy_pass http://jxwaf;
+          }
+
+           proxy_set_header Host  $http_host;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection $connection_upgrade;
+           proxy_buffer_size 64k;
+           proxy_buffers 4 128k;
+           proxy_busy_buffers_size 256k;
+           proxy_cache cache_zone;
+           proxy_cache_valid 200 1d;
+           proxy_cache_key "$cache_key";
+           proxy_cache_bypass $cache_bypass;
+           proxy_no_cache $no_cache;
+           proxy_http_version 1.1;
+        }
+    }
+
+    server {
+        listen       {{.HTTPSPort}} ssl;
+        server_name  localhost;
+        http2 on;
+        ssl_certificate      full_chain.pem;
+        ssl_certificate_key  private.key;
+
+        ssl_session_cache    shared:SSL:100m;
+        ssl_session_timeout  1d;
+        ssl_session_tickets off;
+        ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
+        ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-SHA256:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384:AES256-GCM-SHA384:AES128-GCM-SHA256:AES256-SHA256:AES128-SHA256:ECDHE-ECDSA-AES128-SHA:ECDHE-ECDSA-AES256-SHA:ECDHE-RSA-AES128-SHA:ECDHE-RSA-AES256-SHA:AES256-SHA:AES128-SHA:DES-CBC3-SHA';
+        ssl_prefer_server_ciphers  on;
+        ssl_certificate_by_lua_file /opt/jxwaf/lualib/resty/jxwaf/ssl.lua;
+        set $proxy_pass_https_flag "false";
+        set $cache_key '';
+        set $cache_bypass 0;
+        set $no_cache 1;
+
+        location / {
+
+          if ($proxy_pass_https_flag = "true"){
+            proxy_pass https://jxwaf;
+          }
+          if ($proxy_pass_https_flag = "false"){
+            proxy_pass http://jxwaf;
+          }
+
+
+
+            proxy_ssl_server_name on;
+            proxy_ssl_name $http_host;
+            proxy_ssl_session_reuse on;
+           proxy_set_header Host  $http_host;
+           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection $connection_upgrade;
+           proxy_buffer_size 64k;
+           proxy_buffers 4 128k;
+           proxy_busy_buffers_size 256k;
+           proxy_cache cache_zone;
+           proxy_cache_valid 200 1d;
+           proxy_cache_key "$cache_key";
+           proxy_cache_bypass $cache_bypass;
+           proxy_no_cache $no_cache;
+               proxy_http_version 1.1;
+
+        }
+    }
+}

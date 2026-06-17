@@ -1,0 +1,153 @@
+services:
+  # ============================================================================
+  # JXWAF 安全模型平台
+  # 采用语义缓存 + 多轮投票机制，实现高并发、低成本、低幻觉的安全检测
+  # ============================================================================
+  jxwaf_model_platform:
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_model_platform:1.28
+    # 容器名称
+    container_name: jxwaf_model_platform
+    # 容器退出时自动重启
+    restart: unless-stopped
+    # 使用宿主机网络模式，直接监听宿主机的 80/443 端口
+    network_mode: host
+    # 文件描述符限制，提高高并发下的连接处理能力
+    ulimits:
+      nofile:
+        soft: 602400
+        hard: 602400
+    depends_on:
+      - mysql                     # 确保 MySQL 容器先启动（不检查健康状态）
+    environment:
+      # ==================== 基础配置 ====================
+
+      # 时区设置
+      TZ: Asia/Shanghai
+
+      # 测试用授权码，过期时间 2026-12-31 
+      AUTH_CODE: 4640fd0e421c9aadece16dba476d4c8e092c3ce802e2c5e4805b993784b64dd24eb4c3de0483f01c4de7cfcc18b65c0a3ddf62c3735afbfc3d2278c3432a540ff8a9bea956d0ba09c93f510e4229f0b61343dd3e054c732caa45bb27f97ead8525002a47723d3b93164827111cb0283a63992e6764b9fb6f01a4b331c91254eec5a8b397e39e6c984a7ac3edbb37491e7425a71f7fc12ebd9b1a4cc1981d130f536c78afb1b6bbf5bb345a57e1cf0816b1042e7cbd6d022169a7cbbf993b25fddb08ccf829cb1d3b8760b73725e34589
+
+      # 单 IP 24 小时内最大请求次数，超过则临时封禁
+      IP_RATE_LIMIT: "1000"
+
+      # ==================== MySQL 数据库配置 ====================
+
+      # MySQL 数据库主机地址（本地 MySQL 同样使用 host 网络，通过 127.0.0.1 连接）
+      MYSQL_HOST: 127.0.0.1
+      # MySQL 端口
+      MYSQL_PORT: "3306"
+      # MySQL 用户名（与下方 MySQL 服务创建的用户一致）
+      MYSQL_USER: root
+      # MySQL 密码（请修改为强密码）
+      MYSQL_PASSWORD: jxwaf_password
+      # MySQL 数据库名
+      MYSQL_DATABASE: jxwaf_model_platform
+
+      # ==================== AI 平台配置 ====================
+
+      # AI 平台调用优先级，按顺序依次尝试，当前仅使用 deepseek
+      AI_PLATFORM_ORDER: deepseek
+
+      # AI 平台详细配置（JSON 格式）
+      # 可配置多个 AI 平台，按 AI_PLATFORM_ORDER 顺序调用
+      PLATFORMS: |-
+        {
+              "deepseek": {
+                  # DeepSeek API 密钥
+                  "api_key": "",
+                  # DeepSeek API 地址
+                  "api_url": "https://api.deepseek.com/chat/completions",
+                  # 使用的模型名称
+                  "model": "deepseek-v4-flash",
+                  # 温度参数，控制输出随机性（0-2），越低越确定性
+                  "temperature": 0.2,
+                  # API 调用超时时间（秒）
+                  "timeout": 300,
+                  # API 调用失败最大重试次数
+                  "max_retries":2,
+                  # 思考模式：enabled 开启深度推理 / disabled 关闭（更快、成本更低）
+                  "thinking_type": "disabled",
+                  # 是否启用流式输出
+                  "stream": false
+              }
+          }
+
+      # ==================== 数据同步配置 ====================
+
+      # 缓存数据同步间隔（秒），定时从数据库同步模型数据到内存缓存
+      SYNC_INTERVAL: "3"
+      # 每次同步的最大记录数
+      SYNC_BATCH_SIZE: "1000"
+
+      # ==================== 扫描分析配置 ====================
+
+      # 待分析数据扫描间隔（秒），定时扫描数据库中未分析的请求数据
+      SCAN_INTERVAL: "3"
+      # 每次扫描处理的记录数
+      SCAN_BATCH_SIZE: "50"
+
+      # ==================== AI 分析配置 ====================
+
+      # 多轮投票次数，对同一条数据独立调用 AI N 次
+      ANALYSIS_COUNT: "3"
+      # 投票结果不一致时的最大重试轮数，降低大模型随机性带来的误报/漏报
+      ANALYSIS_CONSISTENCY_RETRIES: "2"
+      # 最大并发 AI 分析任务数
+      MAX_CONCURRENT_TASKS: "50"
+
+      # ==================== 共享内存配置 ====================
+
+      # 模型数据缓存共享内存大小（用于存储检测结果缓存，加速查询）
+      MODEL_DATA_SIZE: 1000m
+      # IP 访问统计共享内存大小（用于 IP 限流计数）
+      IP_STAT_SIZE: 100m
+
+      # ==================== DNS 解析配置 ====================
+
+      # DNS 解析服务器 IP 列表（Nginx resolver 使用）
+      RESOLVER_IPS: 223.5.5.5 119.29.29.29 114.114.114.114
+
+      # ==================== HTTP/HTTPS 端口配置 ====================
+
+      # HTTP 监听端口
+      HTTP_PORT: "80"
+      # HTTPS 监听端口
+      HTTPS_PORT: "443"
+      # 是否启用 TLS/SSL 加密
+      ENABLE_TLS: "false"
+
+    # ==================== 挂载卷 ====================
+    #volumes:
+    # SSL 证书文件（只读挂载）
+    #- ./ssl/server.crt:/opt/jxwaf/nginx/conf/server.crt:ro
+    # SSL 私钥文件（只读挂载）
+    #- ./ssl/server.key:/opt/jxwaf/nginx/conf/server.key:ro
+
+  # ============================================================================
+  # 本地 MySQL 数据库（新增）
+  # 采用宿主机网络模式，仅监听 127.0.0.1，仅供本机 JXWAF 使用
+  # ============================================================================
+  mysql:
+    image: ccr.ccs.tencentyun.com/jxwaf/mysql:8.0
+    container_name: jxwaf_mysql
+    restart: unless-stopped
+    network_mode: host          # 与 JXWAF 共用宿主网络
+    command:
+      # 仅监听本地回环地址，宿主机外部无法访问
+      - --bind-address=127.0.0.1
+      # 如果宿主机 3306 端口已被占用，可修改端口，并同步更新 JXWAF 的 MYSQL_PORT
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --innodb_buffer_pool_size=256M
+    environment:
+      TZ: Asia/Shanghai
+      MYSQL_ROOT_PASSWORD: jxwaf_password          # 请修改为强密码
+      MYSQL_DATABASE: jxwaf_model_platform        # 与 JXWAF 中的 MYSQL_DATABASE 一致
+    volumes:
+      # 数据库文件持久化到宿主机当前目录下的 mysql_data 目录
+      - ./mysql_data:/var/lib/mysql
+      # 可选：挂载自定义 MySQL 配置
+      # - ./mysql/conf:/etc/mysql/conf.d:ro
+      # 可选：挂载初始化脚本
+      # - ./mysql/init:/docker-entrypoint-initdb.d:ro

@@ -1,0 +1,46 @@
+services:
+  jxwaf_base:
+    image: "ccr.ccs.tencentyun.com/jxwaf/jxwaf_node_professional:6.1.16"
+    network_mode: host
+    privileged: true
+    ulimits:
+      nofile:
+        soft: 602400
+        hard: 602400
+    environment:
+      # 多端口用逗号分隔，如: HTTP_PORT: 80,8080,8888
+      HTTP_PORT: 80
+      # 多端口用逗号分隔，如: HTTPS_PORT: 443,8443
+      HTTPS_PORT: 443
+      JXWAF_INNER: 200m
+      SSL_ATTACK_STAT_SIZE: 100m
+      SSL_BLACK_IP_SIZE: 100m
+      SSL_ATTACK_PROTECT: "false"
+      SSL_ATTACK_STAT_TIME: 60
+      SSL_ATTACK_STAT_COUNT: 10000
+      SSL_ATTACK_BLOCK_TIME: 600
+      # 例如  http://dev.jxwaf.com
+      JXWAF_SERVER: you_jxwaf_server_url
+      # 例如 2e69b351-8ca2-4861-9c4c-d46035b582cc
+      WAF_AUTH: you_auth_key
+      TZ: Asia/Shanghai
+    restart: unless-stopped
+    # 如需自定义 Nginx 模板，取消下面注释并修改 nginx.conf.tmpl
+    #volumes:
+    #  - ./nginx.conf.tmpl:/opt/jxwaf/nginx/conf/nginx.conf.tmpl:ro
+
+
+  jxwaf_nft_node:
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_nft_node:6.0
+    container_name: jxwaf_nft_node
+    restart: always
+    network_mode: host
+    privileged: true
+    environment:
+      # 例如  http://dev.jxwaf.com
+      WAF_SERVER_URL: you_jxwaf_server_url
+      # 例如 2e69b351-8ca2-4861-9c4c-d46035b582cc
+      WAF_AUTH: you_auth_key
+      SYNC_INTERVAL: 3
+      TZ: Asia/Shanghai
+      #WAF_FILTER_PORTS: "80,443"

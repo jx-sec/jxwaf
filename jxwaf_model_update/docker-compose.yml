@@ -1,0 +1,90 @@
+services:
+  jxwaf_model_update:
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_model_update:1.13
+    container_name: jxwaf_model_update
+    restart: unless-stopped
+    depends_on:
+      - mysql_db
+    network_mode: host
+    ulimits:
+      nofile:
+        soft: 602400
+        hard: 602400
+    environment:
+      # ==================== 基础配置 ====================
+      TZ: Asia/Shanghai                                          # 时区
+      AUTH_CODE: 输入授权码
+      
+      # ==================== MySQL 数据库配置 ====================
+      MYSQL_HOST: 127.0.0.1                                         # MySQL 主机地址
+      MYSQL_PORT: 3306                                               # MySQL 端口
+      MYSQL_USER: root                                               # MySQL 用户名
+      MYSQL_PASSWORD: 958fba75-56c6-4e81-a892-62517a9e1739          # MySQL 密码
+      MYSQL_DATABASE: jxwaf_model_platform                           # MySQL 数据库名
+      
+      # ==================== AI 平台配置 ====================
+      AI_PLATFORM_ORDER: deepseek                                 # AI 平台优先级顺序（逗号分隔），如: deepseek,minimax,bailian
+                                                                  # 模型查询时按此顺序依次尝试，直到获取到有效结果
+      
+      # AI 平台详细配置（JSON 格式），字段说明：
+      #   api_key: API Key | api_url: 请求地址 | model: 模型名称 | temperature: 温度参数 (0-2)
+      #   timeout: 单次请求超时（秒）| max_retries: 失败重试次数 | thinking_type: 思考模式 | stream: 是否启用流式
+      PLATFORMS: |-
+        {
+            "deepseek": {
+                "api_key": "",
+                "api_url": "https://api.deepseek.com/chat/completions",
+                "model": "deepseek-v4-flash",
+                "temperature": 0.2,
+                "timeout": 300,
+                "max_retries": 2,
+                "thinking_type": "enabled",
+                "stream": false
+            }
+        }
+      
+      # ==================== 定时任务配置 ====================
+      SYNC_INTERVAL: "3"                                           # 本地 DB 数据同步到 shared dict 的间隔（秒）
+      SYNC_BATCH_SIZE: "1000"                                      # 每次同步最大拉取行数
+      SCAN_INTERVAL: "3"                                           # AI 分析扫描间隔（秒），从 DB 取待分析数据发送 AI
+      SCAN_BATCH_SIZE: "50"                                        # 每次扫描最大行数
+      ANALYSIS_COUNT: "3"                                          # 同一条数据需要几个 AI 平台分析结果一致才采纳（默认全部）
+      ANALYSIS_CONSISTENCY_RETRIES: "2"                            # AI 分析结果不一致时的重试次数
+      PLATFORM_BLACKLIST_TTL: "10"                                 # AI 平台黑名单 TTL（分钟），平台连续失败后暂时跳过
+      
+      # ==================== Nginx / shared dict 配置 ====================
+      MODEL_DATA_SIZE: 1000m                                       # model_data shared dict 大小（存放 AI 分析结果缓存）
+      IP_STAT_SIZE: 10m                                            # ip_stat shared dict 大小（IP 统计）
+      AI_PLATFORM_STATE_SIZE: 10m                                  # ai_platform_state shared dict 大小（平台状态）
+      RESOLVER_IPS: 223.5.5.5 119.29.29.29 114.114.114.114        # DNS 解析器 IP（用于 HTTPS 出站请求）
+      
+      # ==================== 部署配置 ====================
+      STREAM_PORT: "39977"                                         # 部署监听端口
+      ENABLE_TLS: "false"                                          # 是否开启 HTTPS（true 开启，开启后需取消下方 volumes 证书挂载注释并配置证书路径）
+      
+      # ==================== 云端模型同步配置（可选，连接远程 Model Server 拉取 AI 分析结果） ====================
+      JXWAF_MODEL_SERVER_ENABLE: "false"                          # 是否启用云端模型同步（true 启用）
+      JXWAF_MODEL_SERVER_HOST: "model.jxwaf.com"                   # 远程云端 Model Server 主机地址
+      JXWAF_MODEL_SERVER_PORT: "39977"                             # 远程云端 Model Server 端口
+      JXWAF_MODEL_SERVER_SSL: "true"                               # 是否通过 TLS 连接远程云端
+    #volumes:
+      #- ./ssl/server.crt:/opt/jxwaf_model_update/nginx/conf/server.crt:ro
+      #- ./ssl/server.key:/opt/jxwaf_model_update/nginx/conf/server.key:ro
+
+  mysql_db:
+    image: ccr.ccs.tencentyun.com/jxwaf/mysql:8.0
+    restart: always
+    network_mode: host
+    environment:
+      MYSQL_ROOT_PASSWORD: 958fba75-56c6-4e81-a892-62517a9e1739
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_0900_ai_ci
+      MYSQL_DEFAULT_AUTHENTICATION_PLUGIN: mysql_native_password
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --innodb_buffer_pool_size=256M
+      - --bind-address=127.0.0.1
+    volumes:
+      - /opt/jxwaf_data/mysql_model:/var/lib/mysql
