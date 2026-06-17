@@ -132,7 +132,7 @@ The following results are from BlazeHTTP cross‑WAF benchmark tests. CloudFlare
 | **JXWAF Daily Protection (Official Free Model)** | **71.28%** | **0.64%** | **98.81%** |
 | **JXWAF Daily Protection (Self‑Hosted Model)** | **69.91%** | **0.20%** | **99.22%** |
 
-From the test data:
+The test data shows:
 
 - **Detection Rate**: JXWAF Standard Edition (71.28%) is on par with SafeLine (71.65%); ModSecurity is around 69.74%; CloudFlare Free is only 10.70%.
 - **False Positive Rate**: JXWAF Standard Edition (0.64%) significantly outperforms ModSecurity (17.58%). With a self‑hosted model, the false positive rate drops further to 0.20%, with accuracy reaching 99.22%.
