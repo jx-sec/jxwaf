@@ -4,9 +4,9 @@
 
 基于 AI 大模型的 Web 应用防火墙，实时分析检测 Web 应用流量，清洗恶意流量后转发至业务服务器，保障业务安全稳定运行。
 
-> 📖 完整使用文档请访问 **[https://docs.jxwaf.com](https://docs.jxwaf.com)**
+> 📖 **完整使用文档请访问** **[https://docs.jxwaf.com](https://docs.jxwaf.com)**
 
-> 🔗 **专业版在线体验**：[https://waf-demo.jxwaf.com](https://waf-demo.jxwaf.com)  
+> 🔗 **专业版在线体验**：**[https://waf-demo.jxwaf.com](https://waf-demo.jxwaf.com)**  
 > 账号：`demo`　密码：`123456`
 
 > WAF默认使用官方提供的安全模型服务，大模型推理费用由平台承担，用户可免费使用。
