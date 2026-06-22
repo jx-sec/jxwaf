@@ -4,6 +4,8 @@
 
 An AI‑powered Web Application Firewall. It analyses web traffic in real time, scrubs malicious requests, and forwards clean traffic to your backend servers — keeping your business secure and stable.
 
+> 🌐 **Homepage**: **[https://www.jxwaf.com](https://www.jxwaf.com)**
+
 > 📖 **Full documentation**: **[https://docs.jxwaf.com](https://docs.jxwaf.com)**
 
 > 🔗 **Professional Edition Live Demo**: **[https://waf-demo.jxwaf.com](https://waf-demo.jxwaf.com)**  
