@@ -13,8 +13,8 @@ services:
     environment:
       # ==================== 基础配置 ====================
       TZ: Asia/Shanghai                                          # 时区
-      # 测试用授权码，过期时间 2026-12-31 
-      AUTH_CODE: 4640fd0e421c9aadece16dba476d4c8e0cd97c51356c904ce6c5d7531df2cd8c1f16c381c61ed41ec590409d9883ab0a8ad9a24a8cdd392d8a93ebf54358b9017408d9fd384ab684989371f1b59185c2923efc95b7b1fdeff6fff3f8fec4aefdfee0ab95b78960ab08f5fc92d0373bf44e7ef84218c8d5694c7aaf092338c728002cb0f7259e7c090a66f3ce60779af1868416b3845b932f9878050b1932a94c4a17d1180cb066500448cc105000c662444164f1ccbb80ae0c71737b0fac74b8eef64a98d885abac99f0dd5592250014f59b4eaafc39646938f32ebacd1e668b
+      # 测试用授权码，过期时间 2036-12-31 
+      AUTH_CODE: 4640fd0e421c9aadece16dba476d4c8e9f643054ea277e3b6991ac79289998fa19a2ccd8aad5cd05ca80eef5b8a460b5d086aa8fe832e737054e5a7f9c925a3218f1caf6b60fe6a57ea247074f6a2632f679a50d9296bbc6c9e9bd4fa81fb842bd2fac8fa4e9e26d5ef88eb71e6c636cb349a8da8e6a48b078461c521e049653a59f572519cc9c1214f5ebfc6313f8917e3ef26ba21c8163267164e46cdd1cfa37d719d2f100e2df1eb452b8fb4fb5d60b9ab3ac748cd64bcbd24de931a79e62b0186ac3e7e6f2f759da85291accd8b1
       
       # ==================== MySQL 数据库配置 ====================
       MYSQL_HOST: 127.0.0.1                                         # MySQL 主机地址
