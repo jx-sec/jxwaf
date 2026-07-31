@@ -1,0 +1,72 @@
+services:
+  mysql_db:
+    image: ccr.ccs.tencentyun.com/jxwaf/mysql:8.0
+    restart: always
+    network_mode: host
+    environment:
+      MYSQL_ROOT_PASSWORD: 958fba75-56c6-4e81-a892-62517a9e1739
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_0900_ai_ci
+      MYSQL_DEFAULT_AUTHENTICATION_PLUGIN: mysql_native_password
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --innodb_buffer_pool_size=256M
+      - --bind-address=127.0.0.1
+      - --max-connections=1000
+    volumes:
+      - /opt/jxwaf_data/mysql_cloud:/var/lib/mysql
+
+  jxwaf_admin_server:
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server_cloud:6.2.1
+    restart: unless-stopped
+    depends_on:
+      - mysql_db
+    network_mode: host
+    environment:
+      ENABLE_HTTPS: false
+      MYSQL_HOST: 127.0.0.1
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: jxwaf_admin_server
+      MYSQL_USER: root
+      MYSQL_PASSWORD: 958fba75-56c6-4e81-a892-62517a9e1739
+      HTTP_PORT: 8000
+      #HTTPS_PORT: 443
+      JXWAF_MODEL_SERVER_HOST: model.jxwaf.com
+      JXWAF_MODEL_SERVER_PORT: 39980
+      JXWAF_MODEL_SERVER_SSL: "true"
+      WAF_UPDATE_CONF_DATA_SIZE: "100m"
+      CONF_DATA_SIZE: "100m"
+      MODEL_DATA_SIZE: "100m"
+      USER_API_ENABLE: "true"
+      # 资源配额模板（可选，不设置则使用内置默认8项配额模板）
+      # 自定义示例：增减配额项或修改中文显示名称，前端通过 /get_resource_quota_template 接口获取
+      # RESOURCE_QUOTA_TEMPLATE: >-
+      #   [{"key":"website_count","name":"网站数量","group":"网站资源","value":""},{"key":"website_total_rpm_limit","name":"网站总RPM限制","group":"网站资源","value":""},{"key":"web_protection_rule_count","name":"Web防护规则数量","group":"Web防护","value":""},{"key":"web_tamper_protection_rule_count","name":"网页防篡改规则数量","group":"Web防护","value":""},{"key":"web_whitelist_rule_count","name":"Web白名单规则数量","group":"Web防护","value":""},{"key":"traffic_protection_rule_count","name":"流量防护规则数量","group":"流量防护","value":""},{"key":"traffic_whitelist_rule_count","name":"流量白名单规则数量","group":"流量防护","value":""},{"key":"ip_list_entry_count","name":"IP名单条目数量","group":"名单管理","value":""}]
+      # 时区设置
+      TZ: Asia/Shanghai
+    #volumes:
+      #- ./ssl_certs/server.crt:/opt/jxwaf_admin_server/nginx/conf/server.crt
+      #- ./ssl_certs/server.key:/opt/jxwaf_admin_server/nginx/conf/server.key
+
+  ssl_cert_service:
+    image: ccr.ccs.tencentyun.com/jxwaf/ssl_cert_service:6.2.1
+    container_name: ssl_cert_service
+    restart: always
+    depends_on:
+      - jxwaf_admin_server
+    network_mode: host
+    environment:
+      CONSOLE_API_URL: http://127.0.0.1:8000
+      POLL_INTERVAL: 60s
+      RENEWAL_CHECK_INTERVAL: 6h
+      RENEWAL_DAYS: 30
+      ACME_DIRECTORY_URL: https://acme-v02.api.letsencrypt.org/directory
+      ACME_ACCOUNT_DIR: /data/acme_accounts
+      ACME_EMAIL_DOMAIN: jxwaf.com
+      ACME_ACCOUNT_MODE: shared
+      ACME_SHARED_EMAIL: admin@jxwaf.com
+      TZ: Asia/Shanghai
+    volumes:
+      - /opt/jxwaf_data/ssl_cert_service:/data

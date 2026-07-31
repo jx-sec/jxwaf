@@ -1,0 +1,37 @@
+services:
+  jxwaf_base:
+    image: "ccr.ccs.tencentyun.com/jxwaf/jxwaf_node_cloud:6.2.1"
+    network_mode: host
+    privileged: true
+    ulimits:
+      nofile:
+        soft: 602400
+        hard: 602400
+    environment:
+      # 多端口用逗号分隔，如: HTTP_PORT: 80,8080,8888
+      HTTP_PORT: 80
+      # 多端口用逗号分隔，如: HTTPS_PORT: 443,8443
+      HTTPS_PORT: 443
+      JXWAF_INNER: 200m
+      # 例如  http://dev.jxwaf.com
+      JXWAF_SERVER: you_jxwaf_server_url
+      # 例如 2e69b351-8ca2-4861-9c4c-d46035b582cc
+      WAF_AUTH: you_auth_key
+      TZ: Asia/Shanghai
+    restart: unless-stopped
+#    volumes:
+#      - ./waf.lua:/opt/jxwaf/lualib/resty/jxwaf/waf.lua
+
+  jxwaf_nft_node:
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_nft_node:6.0
+    container_name: jxwaf_nft_node
+    restart: always
+    network_mode: host
+    privileged: true
+    environment:
+      # 例如  http://dev.jxwaf.com
+      WAF_SERVER_URL: you_jxwaf_server_url
+      # 例如 2e69b351-8ca2-4861-9c4c-d46035b582cc
+      WAF_AUTH: you_auth_key
+      SYNC_INTERVAL: 3
+      TZ: Asia/Shanghai

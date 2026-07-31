@@ -1,0 +1,15 @@
+services:
+  jxwaf_cloud_user:
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_cloud_user:6.2.1
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      # Cloud 主控台 API 地址（必填）
+      CLOUD_API_URL: you_jxwaf_server_url
+      # Cloud 主控台分配的 API_KEY，即主账号的 waf_auth（必填）
+      CLOUD_API_KEY: you_auth_key
+      # 默认接入配置名称（必填，注册子账号时自动绑定，需与主账号在 Cloud 控制台创建的接入配置名一致）
+      DEFAULT_WEBSITE_ACCESS_CONF: you_default_conf_name
+      # HTTP 监听端口
+      HTTP_PORT: "80"
+      TZ: Asia/Shanghai
