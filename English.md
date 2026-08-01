@@ -12,7 +12,8 @@ An AI‑powered Web Application Firewall. It analyses web traffic in real time, 
 > Account: `demo`　Password: `123456`
 
 > JXWAF uses the officially provided security model service by default. AI model inference costs are covered by the platform — free for all users.
-> Both Standard and Professional editions have no performance limits. Simply choose the edition that fits your needs.
+
+> All three editions are free with no performance limits. Simply choose the edition that fits your needs.
 
 ### Protection Test Comparison
 
@@ -33,15 +34,16 @@ The test data shows:
 
 ## Edition Selection
 
-JXWAF offers **Standard** and **Professional** editions to meet different business needs:
+JXWAF offers **Standard**, **Professional**, and **Cloud WAF** editions to meet different business needs:
 
-| Dimension | Standard Edition | Professional Edition |
-|-----------|-----------------|---------------------|
-| Deployment Architecture | Single‑node deployment | Console, node, and log subsystems deployed separately |
-| Log Storage | MySQL | ClickHouse (high‑performance analytics) |
-| Scalability | Single node | Cluster deployment, horizontal scaling |
-| WebTDS | Not supported | Supported |
-| Use Cases | Personal sites, small businesses | Medium to large enterprises |
+| Dimension | Standard | Professional | Cloud WAF |
+|-----------|----------|-------------|-----------|
+| Deployment Architecture | Single‑node deployment | Console, node, and log subsystems deployed separately | Management console + User console + Node |
+| Scalability | Single node | Cluster deployment, horizontal scaling | Cluster deployment, horizontal scaling |
+| Multi‑tenant Management | Not supported | Not supported | Supported |
+| CNAME Auto‑Access | Not supported | Not supported | Supported |
+| WebTDS | Not supported | Supported | Supported |
+| Use Cases | Personal sites, small businesses | Medium to large enterprises | Enterprise multi‑department unified management |
 
 ## Standard Edition
 
@@ -79,7 +81,7 @@ The Standard Edition packages five subsystems — WAF node, console, MySQL, log 
 # 1. Install Docker (skip if already installed)
 curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
 
-# 2. Clone the repository
+# 2. Clone the repository (also available via wget: wget https://github.com/jx-sec/jxwaf/archive/refs/heads/master.zip)
 git clone --depth=1 https://github.com/jx-sec/jxwaf.git
 cd jxwaf/Standard/
 
@@ -101,13 +103,11 @@ All subsystems of the Standard Edition run on a single server:
 
 | Subsystem | Description |
 |-----------|-------------|
-| `jxwaf_node_standard` | WAF node (OpenResty) — traffic entry, high‑performance proxy and real‑time attack detection |
+| `jxwaf_node_standard` | WAF node — traffic processing and real‑time attack detection |
 | `jxwaf_admin_server` | WAF console — visual operations UI and API |
 | `mysql_db` | MySQL 8.0 — stores site configurations and attack logs |
-| `log_send_to_mysql` | Log collector — asynchronously batches node attack logs into MySQL |
+| `log_send_to_mysql` | Log collector — writes node attack logs to MySQL |
 | `jxwaf_nft_node` | Network ban module — blocks attack IPs at the network layer |
-
-> Attack logs are written directly to MySQL — no need to deploy ClickHouse, reducing operational complexity.
 
 ### Performance Test (Single Node, 4C8G)
 
@@ -157,8 +157,8 @@ Detailed category pass rates: [Protection Capability Test Report](https://docs.j
 The Professional Edition consists of three independently deployed subsystems:
 
 - **JXWAF Console (jxwaf_admin_server)** – Web UI for operations: site onboarding management, policy configuration, and report display.
-- **JXWAF Node (jxwaf_node)** – High‑performance traffic proxy and real‑time attack detection engine built on OpenResty. Supports clustering and elastic scaling.
-- **JXLOG Log System (jxlog)** – Lightweight Go‑based log collection, stored in ClickHouse. Supports event analysis and report statistics.
+- **JXWAF Node (jxwaf_node)** – High‑performance traffic processing and real‑time attack detection engine. Supports clustering and elastic scaling.
+- **JXLOG Log System (jxlog)** – Log collection and analysis. Supports event analysis and report statistics.
 
 <table align="center">
   <tr>
@@ -200,8 +200,8 @@ Integrated with a Web traffic threat perception system. A self‑developed real�
 JXWAF Professional Edition consists of three independently deployed subsystems:
 
 - **JXWAF Console (jxwaf_admin_server)** – Web UI for operations: site onboarding management, policy configuration, and report display.
-- **JXWAF Node (jxwaf_node)** – High‑performance traffic proxy and real‑time attack detection engine built on OpenResty. Supports clustering and elastic scaling.
-- **JXLOG Log System (jxlog)** – Lightweight Go‑based log collection, stored in ClickHouse. Supports event analysis and report statistics.
+- **JXWAF Node (jxwaf_node)** – High‑performance traffic processing and real‑time attack detection engine. Supports clustering and elastic scaling.
+- **JXLOG Log System (jxlog)** – Log collection and analysis. Supports event analysis and report statistics.
 
 ### Quick Deployment
 
@@ -218,7 +218,7 @@ JXWAF Professional Edition consists of three independently deployed subsystems:
 #### 1. JXWAF Console Deployment
 
 ```bash
-git clone https://github.com/jx-sec/jxwaf.git
+git clone https://github.com/jx-sec/jxwaf.git   # also available via wget: wget https://github.com/jx-sec/jxwaf/archive/refs/heads/master.zip
 cd jxwaf/Professional/jxwaf_admin_server/
 
 # Edit docker-compose.yml as needed (e.g., MySQL password, HTTPS toggle)
@@ -262,11 +262,11 @@ After deployment, complete the following configuration in the console:
 | Log server address    | `<jxlog internal IP>`         |
 | Log server port       | `8877`                        |
 
-**System Configuration → Log Query Settings** (query logs via ClickHouse)
+**System Configuration → Log Query Settings** (log query)
 
 | Setting               | Value                         |
 | --------------------- | ----------------------------- |
-| ClickHouse address    | `<jxlog internal IP>`         |
+| Server address        | `<jxlog internal IP>`         |
 | Port                  | `9004`                        |
 | Username / Password   | `jxlog` / `jxlog` (must be changed in production) |
 | Database / Table      | `jxwaf` / `jxlog`             |
@@ -310,6 +310,152 @@ Category pass rates:
 
 Full details including unblocked samples: [Protection Capability Test Report](https://docs.jxwaf.com/jxwaf-professional/Protection-Capability-Test.html).
 
+## Cloud WAF
+
+**Multi‑tenant Architecture** | **CNAME Auto‑Access** | **User Console** | **CDN Functionality**
+
+JXWAF Cloud WAF provides a multi‑tenant web security protection solution for enterprises. It supports deployment in your own data centre or hybrid cloud environment. With a "management console + user console + node" architecture, it enables unified security management and resource isolation across multiple departments and business lines.
+
+### Product Highlights
+
+#### Multi‑tenant Architecture
+Unified management by the admin account, with self‑service operations for sub‑accounts (business departments). The management team handles global protection and system configuration, while each department independently manages its own domains, protection policies, certificates, and cache through the user console — with complete data isolation.
+
+#### CNAME Auto‑Access
+Departments configure DNS provider credentials (Alibaba Cloud / Tencent Cloud / Cloudflare) in the user console. Once a domain is added, the system automatically completes DNS configuration — no manual intervention required.
+
+#### Wildcard Certificate Auto‑Issuance
+Automatically issues and renews wildcard certificates via the ACME protocol (Let's Encrypt). Departments can apply with a single click in the user console.
+
+#### CDN Functionality
+Provides static resource caching, cache warming, and cache refresh to accelerate business access.
+
+### Component Overview
+
+| Component | Description |
+|-----------|-------------|
+| Management Console (jxwaf_admin_server) | Management platform for sub‑account management, global protection, security operations, and system configuration |
+| Node (jxwaf_node) | Traffic processing and real‑time attack detection |
+| User Console (jxwaf_user_console) | Self‑service management platform for business departments, providing domain management, protection configuration, certificate management, CDN functionality, and more |
+| Log Service (jxlog) | Log collection and analysis |
+
+### Quick Deployment
+
+#### Requirements
+
+| Item           | Requirement                  |
+| -------------- | ---------------------------- |
+| Operating system | Debian 12.x / Ubuntu 20.04+ |
+| Minimum specs  | Management console: 4 vCPU, 8 GB RAM; each node: 4 vCPU, 8 GB RAM |
+| Dependencies   | Docker, Docker Compose       |
+
+> Install command: `curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun`
+
+#### 1. Management Console Deployment
+
+The management console provides sub‑account management, global protection, security operations, and system configuration — it is the core of Cloud WAF.
+
+```bash
+git clone --depth=1 https://github.com/jx-sec/jxwaf.git   # also available via wget: wget https://github.com/jx-sec/jxwaf/archive/refs/heads/master.zip
+cd jxwaf/Cloud/jxwaf_cloud_admin_server/
+
+# Edit docker-compose.yml as needed (e.g., MySQL password, HTTPS toggle)
+vim docker-compose.yml
+
+docker compose up -d
+```
+
+After deployment, visit `http://<server-IP>:8000`. Register the admin account on your first visit.
+
+> The management console only supports single‑user registration by default. Registration closes automatically after the first account is created. It is recommended to enable OTP authentication in production.
+
+After logging in, go to **System Management → Basic Configuration** to obtain `waf_auth` for later node and user console configuration.
+
+Key environment variables:
+
+| Variable | Default | Description |
+|---|---|---|
+| `ENABLE_HTTPS` | `false` | Enable HTTPS |
+| `HTTP_PORT` | `8000` | HTTP listening port |
+| `ADMIN_API_ENABLE` | `false` | Enable Admin API |
+| `USER_API_ENABLE` | `false` | Enable User API — required by the user console, **must be set to `"true"`** |
+| `JXWAF_MODEL_SERVER_HOST` | `model.jxwaf.com` | AI model service address |
+
+#### 2. Node Deployment
+
+The node provides traffic processing and real‑time attack detection, supporting cluster elastic scaling. Run on each access node server:
+
+```bash
+cd jxwaf/Cloud/jxwaf_cloud_node/
+
+# Edit docker-compose.yml and set:
+#   JXWAF_SERVER = management console address (e.g. http://47.120.63.196:8000)
+#   WAF_AUTH      = waf_auth obtained from the management console
+#   HTTP_PORT / HTTPS_PORT = listening ports (comma‑separated for multiple)
+vim docker-compose.yml
+
+docker compose up -d
+```
+
+After starting, check **Operations Center → Node Status** in the management console to confirm the node is online.
+
+Key environment variables:
+
+| Variable | Default | Description |
+|---|---|---|
+| `HTTP_PORT` | `80` | HTTP listening port, comma‑separated for multiple |
+| `HTTPS_PORT` | `443` | HTTPS listening port |
+| `JXWAF_SERVER` | — | Management console address (required) |
+| `WAF_AUTH` | — | Node authentication key (required) |
+
+#### 3. User Console Deployment
+
+The user console is the self‑service management platform for business departments, providing domain management, protection configuration, certificate management, CDN functionality, and more.
+
+**Prerequisites**:
+
+- Management console is deployed with `USER_API_ENABLE=true`
+- A **Website Access Configuration** has been created in the management console (System Management → Website Access Configuration)
+
+```bash
+cd jxwaf/Cloud/jxwaf_cloud_user/
+
+# Edit docker-compose.yml and set:
+#   CLOUD_API_URL = management console address
+#   CLOUD_API_KEY = management console waf_auth
+#   DEFAULT_WEBSITE_ACCESS_CONF = website access configuration name
+vim docker-compose.yml
+
+docker compose up -d
+```
+
+After deployment, visit `http://<server-IP>`. Business departments can register accounts and log in.
+
+#### 4. Log Service Deployment
+
+```bash
+cd jxwaf/Cloud/jxlog/
+docker compose up -d
+```
+
+After deployment, complete the following configuration in the management console:
+
+**System Management → Log Forwarding Configuration**
+
+| Setting               | Value                         |
+| --------------------- | ----------------------------- |
+| Log server address    | `<jxlog internal IP>`         |
+| Log server port       | `8877`                        |
+
+**System Management → Log Query Configuration**
+
+| Setting               | Value                         |
+| --------------------- | ----------------------------- |
+| Server address        | `<jxlog internal IP>`         |
+| Port                  | `9004`                        |
+| Username / Password   | `jxlog` / `jxlog` (must be changed in production) |
+| Database / Table      | `jxwaf` / `jxlog`             |
+
 ## Community Support
 
 ### WeChat Official Account
@@ -322,7 +468,7 @@ Follow our official account for the latest updates and technical articles.
 
 Join our WeChat group to discuss and exchange ideas with other developers.
 
-<p align="center"><img src="img/wx_group.jpg" width="200"></p>
+<p align="center"><img src="img/wx_group.jpg" width="240"></p>
 
 > If the group QR code expires or is full, contact admin via WeChat: `574604532` (add note: jxwaf)
 
