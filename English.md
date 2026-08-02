@@ -13,8 +13,6 @@ An AI‑powered Web Application Firewall. It analyses web traffic in real time, 
 
 > JXWAF uses the officially provided security model service by default. AI model inference costs are covered by the platform — free for all users.
 
-> All three editions are free with no performance limits. Simply choose the edition that fits your needs.
-
 ### Protection Test Comparison
 
 The following results are from BlazeHTTP cross‑WAF benchmark tests. CloudFlare, ModSecurity, and SafeLine data were published by BlazeHTTP; JXWAF Daily Protection results were tested with the latest BlazeHTTP version:

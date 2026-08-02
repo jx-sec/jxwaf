@@ -13,8 +13,6 @@
 
 > WAF 默认使用官方提供的安全模型服务，大模型推理费用由平台承担，用户可免费使用。
 
-> 三个版本均免费，无性能限制，用户只需根据业务需要选择合适的版本。
-
 ### 防护效果测试对比
 
 以下是通过 BlazeHTTP 对多款 WAF 横向测试结果。其中 CloudFlare、ModSecurity、SafeLine 数据由 BlazeHTTP 公开发布，JXWAF 日常防护数据为最新版本 BlazeHTTP 实测结果：
