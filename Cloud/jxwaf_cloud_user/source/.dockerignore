@@ -1,0 +1,7 @@
+node_modules
+front-end/node_modules
+front-end/dist
+.git
+*.md
+.DS_Store
+jxwaf_user_console
