@@ -19,7 +19,7 @@ services:
       - /opt/jxwaf_data/mysql_cloud:/var/lib/mysql
 
   jxwaf_admin_server:
-    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server_cloud:6.2.2
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server_cloud:6.2.3
     restart: unless-stopped
     depends_on:
       - mysql_db
@@ -31,6 +31,7 @@ services:
       MYSQL_DATABASE: jxwaf_admin_server
       MYSQL_USER: root
       MYSQL_PASSWORD: 958fba75-56c6-4e81-a892-62517a9e1739
+      AUTH_CODE: f1d2d4e44c9351ceaa5c917c26434e353b84f577d04f87c366aed46cefe09ed2ce220b1c7372622afa46f3d5513923c8e9a79f655f59b1334a76aaa6b9379b95008b37a80de0db9142fc5063a81492ec158b41d024f61a56f605d84285799d4f9e5352745a85fd537d679e172732a0cb6619bb27dc2d8ea12a31eef2f6229ed1a8ab75aa6a908fa757e884ad12af2ed75ddb4aef4a1665aeb9d1c2d8a08c6229ba69fe20c8f3ce2c8d4d4dd73752c749c574083dc89b125ab998f15ed399077cb42cbc0a85bf161ac96148fe06fdd2f7
       HTTP_PORT: 8000
       #HTTPS_PORT: 443
       JXWAF_MODEL_SERVER_HOST: model.jxwaf.com
