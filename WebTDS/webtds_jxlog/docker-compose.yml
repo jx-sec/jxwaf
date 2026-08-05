@@ -28,7 +28,7 @@ services:
     ports:
       - "8866:8866"
     environment:
-      CLICKHOUSE: 172.10.0.10:9000
+      CLICKHOUSE: 172.60.0.10:9000
       DATABASE: wtds
       USERNAME: jxlog
       PASSWORD: jxlog
