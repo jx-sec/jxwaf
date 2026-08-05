@@ -1,0 +1,42 @@
+networks:
+  clickhouse_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.60.0.0/24
+
+services:
+  clickhouse:
+    image: "ccr.ccs.tencentyun.com/jxwaf/clickhouse-server:22.8.5-alpine"
+    ports:
+      - "9000:9000"
+      - "9004:9004"
+    environment:
+      CLICKHOUSE_DB: wtds
+      CLICKHOUSE_USER: jxlog
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      CLICKHOUSE_PASSWORD: jxlog
+    volumes:
+      - /opt/wtds_data/clickhouse:/var/lib/clickhouse
+    restart: unless-stopped
+    networks:
+      clickhouse_network:
+        ipv4_address: 172.60.0.10
+  jxlog:
+    container_name: jxlog
+    image: "ccr.ccs.tencentyun.com/jxwaf/wtds_log:2.0"
+    ports:
+      - "8866:8866"
+    environment:
+      CLICKHOUSE: 172.10.0.10:9000
+      DATABASE: wtds
+      USERNAME: jxlog
+      PASSWORD: jxlog
+      TABLE: wtds_log
+      TCPSERVER: 0.0.0.0
+    depends_on:
+      - clickhouse
+    restart: unless-stopped
+    networks:
+      clickhouse_network:
+        ipv4_address: 172.60.0.11

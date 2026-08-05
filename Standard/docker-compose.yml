@@ -121,7 +121,7 @@ services:
   #   network_mode: host
   #   ulimits:
   #     nofile:
-  #       soft: 60
+  #       soft: 602400
   #       hard: 602400
   #   environment:
   #     # ==================== 基础配置 ====================

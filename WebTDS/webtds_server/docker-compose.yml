@@ -1,0 +1,62 @@
+services:
+  wtds_server:
+    image: ccr.ccs.tencentyun.com/jxwaf/wtds_server_authorizatio:2.4
+    networks:
+      app_net:
+        ipv4_address: 172.20.0.3
+    ulimits:
+      nofile:
+        soft: 602400
+        hard: 602400
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      MYSQL_HOST: 172.20.0.2
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: wtds_admin
+      MYSQL_USER: root
+      MYSQL_PASSWORD: 958fba75-56c6-4e81-a892-62517a9e1739
+      WTDS_UPDATE_CONF_DATA: 100m
+      # 是否开放注册功能（首次创建管理员账号时建议设为 "true"，账号创建后可改回 "false"）
+      OPEN_REGIST: "false"
+      # Admin API 对外开放（默认关闭，启用时可选配置 IP/域名白名单，空则不限制）
+      ADMIN_API_ENABLE: "true"
+      # IP/域名白名单，逗号分隔，空则不限制。示例："192.168.1.100,10.0.0.5,api.example.com"
+      # 纯 IPv4 直接匹配客户端 IP；非 IP 条目视为域名走 DNS 解析（结果缓存 300s）
+      ADMIN_API_WHITELIST: ""
+      # auth_code 授权码，仅供测试使用
+      AUTH_CODE: f1d2d4e44c9351ceaa5c917c26434e353b84f577d04f87c366aed46cefe09ed2ce220b1c7372622afa46f3d5513923c81b0c3d0731c8781edb95d5250479531e13e8266476b9a78cc3ce9d016b9a3c0926e21ce2c1c40949879731c164daf45dc70ca362ba441691ebedf7929de562d9090769b1c51e92fcd67976595ce94806613b23cf5969eb16756ae45965019a951b8759772aaf6b301d5e8b4106922215ce7ea144e774737ed01a80d6e4383e7ca524f20d55542e7983c35b2b9386530d
+      TZ: Asia/Shanghai
+    volumes:
+      - ./ssl_certs/server.crt:/opt/wtds_server/nginx/conf/server.crt
+      - ./ssl_certs/server.key:/opt/wtds_server/nginx/conf/server.key
+
+  mysql_db:
+    image: ccr.ccs.tencentyun.com/jxwaf/mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 958fba75-56c6-4e81-a892-62517a9e1739
+      MYSQL_CHARSET: utf8mb4
+      MYSQL_COLLATION: utf8mb4_0900_ai_ci
+      MYSQL_DEFAULT_AUTHENTICATION_PLUGIN: mysql_native_password
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --innodb_buffer_pool_size=256M
+    volumes:
+      - /opt/jxwaf_data/wtds_server_mysql:/var/lib/mysql
+    ports:
+      - "127.0.0.1:3306:3306"
+    networks:
+      app_net:
+        ipv4_address: 172.20.0.2
+
+networks:
+  app_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

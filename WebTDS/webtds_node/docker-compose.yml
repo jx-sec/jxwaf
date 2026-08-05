@@ -1,0 +1,29 @@
+services:
+  wtds:
+    image: "ccr.ccs.tencentyun.com/jxwaf/wtds_authorizatio:2.1"
+    container_name: wtds
+    network_mode: host
+    ulimits:
+      nofile:
+        soft: 602400
+        hard: 602400
+    environment:
+      WTDS_SERVER: you_wtds_server
+      WTDS_AUTH: you_auth_key
+      CONF_DATA: 100m
+      INNER_DICT: 100m
+      GLOBAL_DICT: 100m
+      USER_DATA: 100m
+      SUPPRESS: 100m
+      #EXTRA_SHARED_DICTS: "node_data:100m"
+      TZ: Asia/Shanghai
+    restart: unless-stopped
+
+  tcp-forwarder:
+    image: ccr.ccs.tencentyun.com/jxwaf/tcp-forwarder:v1
+    container_name: tcp-forwarder
+    environment:
+      LISTEN_ADDR: 0.0.0.0:9988
+      TARGET_ADDR: 127.0.0.1:9977
+    network_mode: host
+    restart: unless-stopped

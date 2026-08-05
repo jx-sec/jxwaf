@@ -71,3 +71,114 @@ services:
       TZ: Asia/Shanghai
     volumes:
       - /opt/jxwaf_data/ssl_cert_service:/data
+
+  # ==================== AI 模型更新服务（可选，按需取消注释启用） ====================
+  # jxwaf_model_update2:
+  #   image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_model_update:2.9
+  #   container_name: jxwaf_model_update2
+  #   restart: unless-stopped
+  #   depends_on:
+  #     - mysql_db
+  #   network_mode: host
+  #   ulimits:
+  #     nofile:
+  #       soft: 602400
+  #       hard: 602400
+  #   environment:
+  #     # ==================== 基础配置 ====================
+  #     TZ: Asia/Shanghai                                          # 时区
+  #     # 测试用授权码，过期时间 2036-12-31
+  #     AUTH_CODE: 4640fd0e421c9aadece16dba476d4c8e9f643054ea277e3b6991ac79289998fa19a2ccd8aad5cd05ca80eef5b8a460b5d086aa8fe832e737054e5a7f9c925a3218f1caf6b60fe6a57ea247074f6a2632f679a50d9296bbc6c9e9bd4fa81fb842bd2fac8fa4e9e26d5ef88eb71e6c636cb349a8da8e6a48b078461c521e049653a59f572519cc9c1214f5ebfc6313f8917e3ef26ba21c8163267164e46cdd1cfa37d719d2f100e2df1eb452b8fb4fb5d60b9ab3ac748cd64bcbd24de931a79e62b0186ac3e7e6f2f759da85291accd8b1
+  #     MYSQL_HOST: 127.0.0.1
+  #     MYSQL_PORT: 3306
+  #     MYSQL_USER: root
+  #     MYSQL_PASSWORD: 958fba75-56c6-4e81-a892-62517a9e1739
+  #     MYSQL_DATABASE: jxwaf_model_update2                     # MySQL 数据库名
+  #
+  #     # ==================== AI 平台配置 ====================
+  #     # AI 平台详细配置（JSON 格式），所有配置的平台将并行运行
+  #     # 字段说明：
+  #     #   api_key: API Key | api_url: 请求地址 | model: 模型名称 | temperature: 温度参数 (0-2)
+  #     #   timeout: 单次请求超时（秒）| max_retries: 失败重试次数 | thinking_type: 思考模式 | stream: 是否启用流式
+  #     PLATFORMS: |-
+  #       {
+  #           "deepseek": {
+  #               "api_key": "",
+  #               "api_url": "https://api.deepseek.com/chat/completions",
+  #               "model": "deepseek-v4-flash",
+  #               "temperature": 0.2,
+  #               "timeout": 300,
+  #               "max_retries": 1,
+  #               "thinking_type": "disabled",
+  #               "stream": false
+  #           }
+  #       }
+  #
+  #     # WAF 引擎配置（JSON 格式），所有配置的引擎将并行运行
+  #     # 字段说明：
+  #     #   url: WAF 引擎 POST 请求地址
+  #     #   timeout: 单次请求超时（秒）
+  #     #   match_type: 匹配方式，"status_code" 或 "content_contains"（互斥二选一）
+  #     #   match_value: status_code 时为整数（如 403），content_contains 时为字符串（如 "blocked"）
+  #     WAF_ENGINES: |-
+  #        {
+  #            "safeline": {
+  #                "url": "https://waf-ce.demo.chaitin.cn:10084/hello.html",
+  #                "timeout": 5,
+  #                "match_type": "status_code",
+  #                "match_value": 403
+  #            }
+  #        }
+  #
+  #     # ==================== 定时任务配置 ====================
+  #     # 本地 DB 数据同步到 shared dict 的间隔（秒）
+  #     SYNC_INTERVAL: "3"
+  #     # 每次同步最大拉取行数
+  #     SYNC_BATCH_SIZE: "5000"
+  #     # AI/WAF 分析扫描间隔（秒），per engine 容量驱动增量扫描
+  #     SCAN_INTERVAL: "2"
+  #     # 单个 AI platform 对同一条记录连续分析 N 次，要求 N 次结果完全一致才采纳
+  #     # 每个 AI platform 独立统计，不跨 platform 投票
+  #     #   1 = 单次调用直接采纳（最快，无一致性校验）
+  #     #   2 = 同一 platform 调用 2 次要求一致（平衡，API 成本翻倍）
+  #     #   3 = 同一 platform 调用 3 次要求一致（高可信，成本 3 倍）
+  #     # 例：2 个 platform + ANALYSIS_COUNT=2 → 每个 platform 各自跑 2 次要求一致，共 4 次 API 调用
+  #     ANALYSIS_COUNT: "2"
+  #     # 结果不一致时的重试轮数，每轮重新跑 ANALYSIS_COUNT 次
+  #     # 最坏情况单条记录单 platform 最多调用 ANALYSIS_COUNT × (1 + 此值) 次 API
+  #     # 如 ANALYSIS_COUNT=2 + 本项=2，最坏单 platform 2×3=6 次 API 调用
+  #     ANALYSIS_CONSISTENCY_RETRIES: "2"
+  #     # Review 补偿扫描间隔（秒），per engine 独立处理失败/遗漏记录
+  #     REVIEW_INTERVAL: "60"
+  #     # 每次 Review 扫描最大行数
+  #     REVIEW_BATCH_SIZE: "1000"
+  #     # processing 标记 TTL（秒），防 per record×engine 重复分析
+  #     PROCESSING_TTL: "120"
+  #     # cooldown 标记 TTL（秒），network_error/5xx 后短暂冷却防雪崩
+  #     COOLDOWN_TTL: "60"
+  #     # per engine 最大失败次数（config_error/确定性错误累计），达到后该 engine 被查询剔除
+  #     MAX_FAIL_COUNT: "3"
+  #     # 单 engine 最大并发任务数
+  #     MAX_CONCURRENT_TASKS: "20"
+  #     # 查询结果返回模式：
+  #     #   any (默认) - 任一非 fail engine 完成即返回部分结果（不等其他 engine）
+  #     #   all        - 所有非 fail engine 都完成才返回，否则返回 none（严格模式，多 engine 一致更可信）
+  #     QUERY_RESULT_MODE: "all"
+  #
+  #     # ==================== Nginx / shared dict 配置 ====================
+  #     MODEL_DATA_SIZE: 1000m                                       # model_data shared dict 大小（存放 AI 分析结果缓存）
+  #     AI_PLATFORM_STATE_SIZE: 10m                                  # ai_platform_state shared dict 大小（平台状态）
+  #     RESOLVER_IPS: 223.5.5.5 119.29.29.29 114.114.114.114        # DNS 解析器 IP（用于 HTTPS 出站请求）
+  #
+  #     # ==================== 调试与网络配置 ====================
+  #     STREAM_PORT: "39980"                                         # 监听端口
+  #     ENABLE_TLS: "false"                                          # 是否启用 TLS 加密（true 启用，需取消下方 volumes 证书挂载注释并配置证书路径）
+  #
+  #     # ==================== 云端模型同步配置（可选，连接远程 Model Server 拉取 AI 分析结果） ====================
+  #     JXWAF_MODEL_SERVER_ENABLE: "false"                          # 是否启用云端模型同步（true 启用）
+  #     JXWAF_MODEL_SERVER_HOST: "model.jxwaf.com"                   # 远程云端 Model Server 主机地址
+  #     JXWAF_MODEL_SERVER_PORT: "39977"                             # 远程云端 Model Server 端口
+  #     JXWAF_MODEL_SERVER_SSL: "true"                               # 是否通过 TLS 连接远程云端
+  #   #volumes:
+  #     #- ./ssl/server.crt:/opt/jxwaf_model_update/nginx/conf/server.crt:ro
+  #     #- ./ssl/server.key:/opt/jxwaf_model_update/nginx/conf/server.key:ro
