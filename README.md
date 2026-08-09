@@ -14,7 +14,7 @@
 >
 > 以上体验环境统一账号：`demo`　密码：`123456`
 >
-> 技术分享：**[AI大模型语义缓存技术分享]([AI大模型语义缓存技术分享](https://mp.weixin.qq.com/s/eGFhzsFtSwRhShwgh9j0mg))** 
+> 技术分享：**[AI大模型语义缓存技术分享](https://mp.weixin.qq.com/s/eGFhzsFtSwRhShwgh9j0mg)** 
 
 ### 防护效果测试对比
 
