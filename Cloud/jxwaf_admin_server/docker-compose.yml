@@ -2,7 +2,8 @@ services:
   mysql_db:
     image: ccr.ccs.tencentyun.com/jxwaf/mysql:8.0
     restart: always
-    network_mode: host
+    ports:
+      - "127.0.0.1:3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: 958fba75-56c6-4e81-a892-62517a9e1739
       MYSQL_CHARSET: utf8mb4
@@ -13,7 +14,6 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_0900_ai_ci
       - --innodb_buffer_pool_size=256M
-      - --bind-address=127.0.0.1
       - --max-connections=1000
     volumes:
       - /opt/jxwaf_data/mysql_cloud:/var/lib/mysql
