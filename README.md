@@ -5,13 +5,16 @@
 基于 AI 大模型的 Web 应用防火墙，实时分析检测 Web 应用流量，清洗恶意流量后转发至业务服务器，保障业务安全稳定运行。
 
 > 🌐 **产品首页**：**[https://www.jxwaf.com](https://www.jxwaf.com)**
-
 > 📖 **产品文档**：**[https://docs.jxwaf.com](https://docs.jxwaf.com)**
-
-> 🔗 **专业版在线体验**：**[https://waf-demo.jxwaf.com](https://waf-demo.jxwaf.com)**  
-> 账号：`demo`　密码：`123456`
-
-> WAF 默认使用官方提供的安全模型服务，大模型推理费用由平台承担，用户可免费使用。
+>
+> **🔗 在线体验**
+> - **专业版**：**[https://waf-demo.jxwaf.com](https://waf-demo.jxwaf.com)**
+> - **云 WAF 版 — 管理员控制台**：**[https://cloud-admin-demo.jxwaf.com](https://cloud-admin-demo.jxwaf.com)**
+> - **云 WAF 版 — 用户控制台**：**[https://cloud-user-demo.jxwaf.com](https://cloud-user-demo.jxwaf.com)**
+>
+> 以上体验环境统一账号：`demo`　密码：`123456`
+>
+> 技术分享：**[AI大模型语义缓存技术分享](https://mp.weixin.qq.com/s/eGFhzsFtSwRhShwgh9j0mg)** 
 
 ### 防护效果测试对比
 
