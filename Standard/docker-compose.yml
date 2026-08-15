@@ -100,6 +100,29 @@ services:
     depends_on:
       - mysql_db
 
+  # ==================== SSL 证书自动申请服务（Let's Encrypt 泛域名证书，配合管理台证书管理功能）====================
+  # 注意：依赖管理台镜像包含证书管理功能（/request_wildcard_cert 及内部 API），上线前需确认管理台镜像版本已更新
+  ssl_cert_service:
+    image: ccr.ccs.tencentyun.com/jxwaf/ssl_cert_service:6.2.2
+    container_name: ssl_cert_service
+    restart: always
+    depends_on:
+      - jxwaf_admin_server
+    network_mode: host
+    environment:
+      CONSOLE_API_URL: http://127.0.0.1:8000
+      POLL_INTERVAL: 60s
+      RENEWAL_CHECK_INTERVAL: 6h
+      RENEWAL_DAYS: 30
+      ACME_DIRECTORY_URL: https://acme-v02.api.letsencrypt.org/directory
+      ACME_ACCOUNT_DIR: /data/acme_accounts
+      ACME_EMAIL_DOMAIN: jxwaf.com
+      ACME_ACCOUNT_MODE: per_user
+      TZ: Asia/Shanghai
+    volumes:
+      # ACME 账户持久化，避免容器重建后重复注册账号（Let's Encrypt 有每账号速率限制）
+      - /opt/jxwaf_data/ssl_cert_service:/data
+
   jxwaf_nft_node:
     image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_nft_node:7.0
     container_name: jxwaf_nft_node

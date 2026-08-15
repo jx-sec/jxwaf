@@ -48,6 +48,30 @@ services:
     #  - ./ssl_certs/server.crt:/opt/jxwaf_admin_server/nginx/conf/server.crt
     #  - ./ssl_certs/server.key:/opt/jxwaf_admin_server/nginx/conf/server.key
 
+  # ==================== SSL 证书自动申请服务（Let's Encrypt 泛域名证书，配合管理台证书管理功能）====================
+  # 注意：依赖管理台镜像包含证书管理功能（/request_wildcard_cert 及内部 API），上线前需确认管理台镜像版本已更新
+  # 管理台 HTTP_PORT 为 80，回调地址相应使用 80 端口
+  ssl_cert_service:
+    image: ccr.ccs.tencentyun.com/jxwaf/ssl_cert_service:6.2.2
+    container_name: ssl_cert_service
+    restart: always
+    depends_on:
+      - jxwaf_admin_server
+    network_mode: host
+    environment:
+      CONSOLE_API_URL: http://127.0.0.1:80
+      POLL_INTERVAL: 60s
+      RENEWAL_CHECK_INTERVAL: 6h
+      RENEWAL_DAYS: 30
+      ACME_DIRECTORY_URL: https://acme-v02.api.letsencrypt.org/directory
+      ACME_ACCOUNT_DIR: /data/acme_accounts
+      ACME_EMAIL_DOMAIN: jxwaf.com
+      ACME_ACCOUNT_MODE: per_user
+      TZ: Asia/Shanghai
+    volumes:
+      # ACME 账户持久化，避免容器重建后重复注册账号（Let's Encrypt 有每账号速率限制）
+      - /opt/jxwaf_data/ssl_cert_service:/data
+
   # ==================== AI 模型更新服务（可选，按需取消注释启用） ====================
   # jxwaf_model_update2:
   #   image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_model_update:2.9

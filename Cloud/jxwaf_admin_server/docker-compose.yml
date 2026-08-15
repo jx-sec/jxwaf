@@ -52,7 +52,7 @@ services:
       #- ./ssl_certs/server.key:/opt/jxwaf_admin_server/nginx/conf/server.key
 
   ssl_cert_service:
-    image: ccr.ccs.tencentyun.com/jxwaf/ssl_cert_service:6.2.1
+    image: ccr.ccs.tencentyun.com/jxwaf/ssl_cert_service:6.2.2
     container_name: ssl_cert_service
     restart: always
     depends_on:
@@ -66,8 +66,7 @@ services:
       ACME_DIRECTORY_URL: https://acme-v02.api.letsencrypt.org/directory
       ACME_ACCOUNT_DIR: /data/acme_accounts
       ACME_EMAIL_DOMAIN: jxwaf.com
-      ACME_ACCOUNT_MODE: shared
-      ACME_SHARED_EMAIL: admin@jxwaf.com
+      ACME_ACCOUNT_MODE: per_user
       TZ: Asia/Shanghai
     volumes:
       - /opt/jxwaf_data/ssl_cert_service:/data
