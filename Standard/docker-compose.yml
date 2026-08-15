@@ -19,7 +19,7 @@ services:
       - /opt/jxwaf_data/standard_mysql:/var/lib/mysql
 
   jxwaf_admin_server:
-    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server_standard:6.2.3
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server_standard:6.2.4
     restart: unless-stopped
     network_mode: host
     environment:
