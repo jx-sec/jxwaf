@@ -21,7 +21,7 @@ services:
 
   # JXWAF 控制台
   jxwaf_admin_server:
-    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server_professional:6.2.8
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server_professional:6.2.9
     restart: unless-stopped
     depends_on:
       - mysql_db
