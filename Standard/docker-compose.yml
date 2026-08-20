@@ -45,7 +45,7 @@ services:
       - mysql_db
 
   jxwaf_node_standard:
-    image: "ccr.ccs.tencentyun.com/jxwaf/jxwaf_node_standard:6.2.2"
+    image: "ccr.ccs.tencentyun.com/jxwaf/jxwaf_node_standard:6.2.3"
     network_mode: host
     privileged: true
     ulimits:
