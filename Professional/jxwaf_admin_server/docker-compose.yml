@@ -74,7 +74,7 @@ services:
 
   # ==================== AI 模型更新服务（可选，按需取消注释启用） ====================
   # jxwaf_model_update2:
-  #   image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_model_update:2.9
+  #   image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_model_update:2.11
   #   container_name: jxwaf_model_update2
   #   restart: unless-stopped
   #   network_mode: host
