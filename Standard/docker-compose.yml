@@ -9,6 +9,7 @@ services:
       MYSQL_CHARSET: utf8mb4
       MYSQL_COLLATION: utf8mb4_0900_ai_ci
       MYSQL_DEFAULT_AUTHENTICATION_PLUGIN: mysql_native_password
+      TZ: Asia/Shanghai
     command:
       - --default-authentication-plugin=mysql_native_password
       - --character-set-server=utf8mb4
@@ -38,6 +39,7 @@ services:
       WAF_UPDATE_CONF_DATA_SIZE: "100m"
       CONF_DATA_SIZE: "100m"
       MODEL_DATA_SIZE: "100m"
+      TZ: Asia/Shanghai
     #volumes:
       #- ./ssl_certs/server.crt:/opt/jxwaf_admin_server/nginx/conf/server.crt
       #- ./ssl_certs/server.key:/opt/jxwaf_admin_server/nginx/conf/server.key
@@ -80,7 +82,7 @@ services:
 
   log_send_to_mysql:
     image: ccr.ccs.tencentyun.com/jxwaf/log_send_to_mysql:v2
-    container_name: data_send_to_mysql
+    container_name: log_send_to_mysql
     network_mode: host
     environment:
       LISTEN_ADDR: ":12997"
@@ -96,6 +98,7 @@ services:
       DB_PASSWORD: "958fba75-56c6-4e81-a892-62517a9e1739"
       DB_TABLE: "jxwaf_waf_attack_log"
       DB_CHARSET: "utf8mb4"
+      TZ: Asia/Shanghai
     restart: unless-stopped
     depends_on:
       - mysql_db

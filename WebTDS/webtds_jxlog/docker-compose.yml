@@ -7,11 +7,13 @@ networks:
 
 services:
   clickhouse:
+    container_name: wtds_clickhouse
     image: "ccr.ccs.tencentyun.com/jxwaf/clickhouse-server:22.8.5-alpine"
     ports:
       - "9000:9000"
       - "9004:9004"
     environment:
+      TZ: Asia/Shanghai
       CLICKHOUSE_DB: wtds
       CLICKHOUSE_USER: jxlog
       CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
@@ -22,12 +24,13 @@ services:
     networks:
       clickhouse_network:
         ipv4_address: 172.60.0.10
-  jxlog:
-    container_name: jxlog
+  wtds_log:
+    container_name: wtds_log
     image: "ccr.ccs.tencentyun.com/jxwaf/wtds_log:2.0"
     ports:
       - "8866:8866"
     environment:
+      TZ: Asia/Shanghai
       CLICKHOUSE: 172.60.0.10:9000
       DATABASE: wtds
       USERNAME: jxlog

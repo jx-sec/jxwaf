@@ -9,6 +9,7 @@ services:
       MYSQL_CHARSET: utf8mb4
       MYSQL_COLLATION: utf8mb4_0900_ai_ci
       MYSQL_DEFAULT_AUTHENTICATION_PLUGIN: mysql_native_password
+      TZ: Asia/Shanghai
     command:
       - --default-authentication-plugin=mysql_native_password
       - --character-set-server=utf8mb4

@@ -7,11 +7,13 @@ networks:
 
 services:
   clickhouse:
+    container_name: clickhouse
     image: "ccr.ccs.tencentyun.com/jxwaf/clickhouse-server:22.8.5-alpine"
     ports:
       - "9000:9000"
       - "9004:9004"
     environment:
+      TZ: Asia/Shanghai
       CLICKHOUSE_DB: jxwaf
       CLICKHOUSE_USER: jxlog
       CLICKHOUSE_PASSWORD: jxlog
@@ -28,6 +30,7 @@ services:
     ports:
       - "8877:8877"
     environment:
+      TZ: Asia/Shanghai
       CLICKHOUSE: 172.10.0.10:9000
       DATABASE: jxwaf
       USERNAME: jxlog

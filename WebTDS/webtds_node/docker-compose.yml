@@ -25,5 +25,6 @@ services:
     environment:
       LISTEN_ADDR: 0.0.0.0:9988
       TARGET_ADDR: 127.0.0.1:9977
+      TZ: Asia/Shanghai
     network_mode: host
     restart: unless-stopped
