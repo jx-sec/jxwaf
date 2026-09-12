@@ -1,6 +1,6 @@
 services:
   wtds_server:
-    image: ccr.ccs.tencentyun.com/jxwaf/wtds_server_authorizatio:2.4
+    image: ccr.ccs.tencentyun.com/jxwaf/wtds_server_authorizatio:2.6
     networks:
       app_net:
         ipv4_address: 172.20.0.3

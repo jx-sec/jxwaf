@@ -1,6 +1,6 @@
 services:
   wtds:
-    image: "ccr.ccs.tencentyun.com/jxwaf/wtds_authorizatio:2.3"
+    image: "ccr.ccs.tencentyun.com/jxwaf/wtds_authorizatio:2.4"
     container_name: wtds
     network_mode: host
     ulimits:
