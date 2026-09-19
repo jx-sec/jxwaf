@@ -106,7 +106,7 @@ services:
   # ==================== SSL 证书自动申请服务（Let's Encrypt 泛域名证书，配合管理台证书管理功能）====================
   # 注意：依赖管理台镜像包含证书管理功能（/request_wildcard_cert 及内部 API），上线前需确认管理台镜像版本已更新
   ssl_cert_service:
-    image: ccr.ccs.tencentyun.com/jxwaf/ssl_cert_service:6.2.2
+    image: ccr.ccs.tencentyun.com/jxwaf/ssl_cert_service:6.2.3
     container_name: ssl_cert_service
     restart: always
     depends_on:

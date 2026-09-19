@@ -53,7 +53,7 @@ services:
       #- ./ssl_certs/server.key:/opt/jxwaf_admin_server/nginx/conf/server.key
 
   ssl_cert_service:
-    image: ccr.ccs.tencentyun.com/jxwaf/ssl_cert_service:6.2.2
+    image: ccr.ccs.tencentyun.com/jxwaf/ssl_cert_service:6.2.3
     container_name: ssl_cert_service
     restart: always
     depends_on:

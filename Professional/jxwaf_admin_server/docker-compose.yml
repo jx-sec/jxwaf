@@ -52,7 +52,7 @@ services:
   # 注意：依赖管理台镜像包含证书管理功能（/request_wildcard_cert 及内部 API），上线前需确认管理台镜像版本已更新
   # 管理台 HTTP_PORT 为 80，回调地址相应使用 80 端口
   ssl_cert_service:
-    image: ccr.ccs.tencentyun.com/jxwaf/ssl_cert_service:6.2.2
+    image: ccr.ccs.tencentyun.com/jxwaf/ssl_cert_service:6.2.3
     container_name: ssl_cert_service
     restart: always
     depends_on:
