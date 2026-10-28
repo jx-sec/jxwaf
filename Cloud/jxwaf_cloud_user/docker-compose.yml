@@ -1,6 +1,6 @@
 services:
   jxwaf_cloud_user:
-    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_cloud_user:6.2.3
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_cloud_user:6.2.14
     restart: unless-stopped
     network_mode: host
     environment:

@@ -1,6 +1,6 @@
 services:
   jxwaf_base:
-    image: "ccr.ccs.tencentyun.com/jxwaf/jxwaf_node_professional:6.2.9"
+    image: "ccr.ccs.tencentyun.com/jxwaf/jxwaf_node_professional:6.2.12"
     network_mode: host
     privileged: true
     ulimits:
@@ -31,7 +31,7 @@ services:
 
 
   jxwaf_nft_node:
-    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_nft_node:6.0
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_nft_node:7.0
     container_name: jxwaf_nft_node
     restart: always
     network_mode: host

@@ -1,6 +1,6 @@
 services:
   jxwaf_base:
-    image: "ccr.ccs.tencentyun.com/jxwaf/jxwaf_node_cloud:6.2.5"
+    image: "ccr.ccs.tencentyun.com/jxwaf/jxwaf_node_cloud:6.2.8"
     network_mode: host
     privileged: true
     ulimits:
@@ -23,7 +23,7 @@ services:
 #      - ./waf.lua:/opt/jxwaf/lualib/resty/jxwaf/waf.lua
 
   jxwaf_nft_node:
-    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_nft_node:6.0
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_nft_node:7.0
     container_name: jxwaf_nft_node
     restart: always
     network_mode: host
