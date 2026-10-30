@@ -174,7 +174,7 @@ services:
       WAF_ENGINES: |-
         {
             "safeline": {
-                "url": "https://waf-ce.demo.chaitin.cn:10082/hello.html",
+                "url": "http://waf-safeline.jxwaf.com/hello.html",
                 "timeout": 5,
                 "match_type": "status_code",
                 "match_value": 403,
