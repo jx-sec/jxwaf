@@ -165,7 +165,7 @@ services:
             "deepseek": {
                 "api_key": "sk-xxx",
                 "api_url": "https://api.deepseek.com/chat/completions",
-                "model": "deepseek-v4-flash",
+                "model": "deepseek-flash",
                 "concurrency": 20,
                 "qps": 10,
                 "column": "res_deepseek"
