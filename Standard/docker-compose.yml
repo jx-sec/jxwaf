@@ -194,7 +194,6 @@ services:
   #               "match_type": "status_code",
   #               "match_value": 403,
   #               "qps": 10,
-  #               "upload_replay": true,
   #               "column": "res_safeline",
   #               "refresh": {
   #                   "interval_hours": 24,
