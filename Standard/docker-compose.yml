@@ -20,7 +20,7 @@ services:
       - /opt/jxwaf_data/standard_mysql:/var/lib/mysql
 
   jxwaf_admin_server:
-    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server_standard:6.2.15
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server_standard:6.2.16
     restart: unless-stopped
     network_mode: host
     environment:
@@ -47,7 +47,7 @@ services:
       - mysql_db
 
   jxwaf_node_standard:
-    image: "ccr.ccs.tencentyun.com/jxwaf/jxwaf_node_standard:6.2.7"
+    image: "ccr.ccs.tencentyun.com/jxwaf/jxwaf_node_standard:6.2.8"
     network_mode: host
     privileged: true
     ulimits:
