@@ -19,7 +19,7 @@ services:
       - /opt/jxwaf_data/professional_mysql:/var/lib/mysql
 
   jxwaf_admin_server:
-    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server_professional:6.2.17
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server_professional:6.2.18
     restart: unless-stopped
     depends_on:
       - mysql_db
