@@ -20,7 +20,7 @@ services:
       - /opt/jxwaf_data/mysql_cloud:/var/lib/mysql
 
   jxwaf_admin_server:
-    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server_cloud:6.2.16
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server_cloud:6.2.19
     restart: unless-stopped
     depends_on:
       - mysql_db
@@ -78,29 +78,84 @@ services:
         soft: 602400
         hard: 602400
     environment:
+      # ==================== 基础配置 ====================
       TZ: Asia/Shanghai
-      MODEL_SERVER_SECRET: jxwaf
-      STREAM_HOST: 0.0.0.0
+      MODEL_SERVER_SECRET: jxwaf                            # 与控制台约定的 HMAC-SHA1 共享密钥（生产建议同步更换强密钥）
+      STREAM_HOST: 0.0.0.0                                  # 监听地址（默认 127.0.0.1，host 网络需 0.0.0.0）
       STREAM_PORT: "39980"
-      ENABLE_TLS: "false"
-      MAX_CONNS_PER_IP: "64"
-      CACHE_CAPACITY: "1000000"
+      ENABLE_TLS: "false"                                   # 公网部署必须 "true" 并挂载下方证书
+      TLS_CERT: /opt/jxwaf_model_server/conf/server.crt
+      TLS_KEY: /opt/jxwaf_model_server/conf/server.key
+      MAX_CONNS_PER_IP: "64"                                # 单 IP 最大并发连接数（0 = 不限制）
+      CACHE_CAPACITY: "1000000"                             # 查询结果 LRU 缓存条目数（满容量约 1GB 内存，按需下调）
+
+      # ==================== MySQL 数据库配置 ====================
       MYSQL_HOST: 127.0.0.1
-      MYSQL_PORT: "3307"
+      MYSQL_PORT: "3307"                                    # 独立 MySQL 实例的宿主机映射端口
       MYSQL_USER: root
       MYSQL_PASSWORD: 958fba75-56c6-4e81-a892-62517a9e1739
       MYSQL_DATABASE: jxwaf_model_server
+      DB_MAX_OPEN_CONNS: "100"
+      DB_MAX_IDLE_CONNS: "100"
+      DB_CONN_MAX_LIFETIME_SECONDS: "1800"
+
+      # ==================== 分析调度配置 ====================
+      SCAN_INTERVAL: "3"                                    # initial worker 扫描周期（秒）
+      RETRY_INTERVAL_SECONDS: "300"                         # 状态 3（可疑）记录重查周期（秒）
+      RETRY_MAX_ATTEMPTS: "2"
+      RETRY_QPS: "2"
+      RETRY_BACKOFF_MS: "500"                               # 单次分析内重试退避起始（毫秒）
+      RETRY_MAX_BACKOFF_MS: "30000"
+
+      # ==================== 输入限制配置 ====================
+      MAX_AI_INPUT_BYTES: "262144"                          # 送 AI 的输入上限（字节，默认 256KB）
+      OVERSIZE_POLICY: truncate
+      MAX_LINE_SIZE: "2097152"                              # 协议单行上限（字节，默认 2MB）
+      MAX_RAW_STRING_SIZE: "262144"                         # raw_string 落库上限（字节）
+
+      # ==================== 熔断配置 ====================
+      CIRCUIT_COOLDOWN_SECONDS: "60"                        # 熔断初始冷却（秒）
+      CIRCUIT_MAX_COOLDOWN_SECONDS: "3600"                  # 冷却上限（连续熔断翻倍递增）
+      CIRCUIT_FAILURE_THRESHOLD: "5"
+      CIRCUIT_FAILURE_WINDOW_SECONDS: "30"
+      CIRCUIT_MIN_REQUESTS: "10"                            # 熔断生效所需最小样本数
+      CIRCUIT_HALF_OPEN_PROBES: "2"
+
+      # ==================== 协议与同步配置 ====================
+      SYNC_BATCH_SIZE: "1000"                               # 同步接口单批返回条数
+      READ_TIMEOUT_SECONDS: "30"
+      WRITE_TIMEOUT_SECONDS: "30"
+      SHUTDOWN_TIMEOUT_SECONDS: "120"
+
+      # ==================== AI 平台配置 ====================
+      # 必填：api_key、model；api_key 部署前必须替换为真实值，model 需对照平台可用模型名核对
+      # column 不配置时自动生成 res_<平台名小写>；fallback_column 可选备用读取列
+      # backfill 可选（不配置 = 新记录由 initial worker 兜底分析）：
+      #   {"mode": "last"} 查询命中未分析记录时即时分析 / {"mode": "full"} 全量回填存量 / {"mode": "window", "window_days": 7} 回填最近 N 天
       PLATFORMS: |-
         {
             "deepseek": {
                 "api_key": "sk-xxx",
                 "api_url": "https://api.deepseek.com/chat/completions",
                 "model": "deepseek-flash",
+                "temperature": 0.2,
+                "timeout": 120,
+                "max_retries": 2,
+                "analysis_count": 3,
+                "analysis_consistency_retries": 2,
+                "thinking_type": "disabled",
+                "stream": false,
                 "concurrency": 20,
                 "qps": 10,
-                "column": "res_deepseek"
+                "column": "res_deepseek",
+                "fallback_column": ""
             }
         }
+
+      # ==================== WAF 引擎配置 ====================
+      # 必填：url、match_type（status_code/content_contains）、match_value
+      # method 未配置默认 POST，payload_location 默认 body；upload_replay 开启后 multipart 请求体原样回放
+      # refresh 定期重查已检出记录（interval_hours 0 = 不启动）
       WAF_ENGINES: |-
         {
             "safeline": {
@@ -108,6 +163,7 @@ services:
                 "timeout": 5,
                 "match_type": "status_code",
                 "match_value": 403,
+                "concurrency": 20,
                 "qps": 10,
                 "upload_replay": true,
                 "column": "res_safeline",
