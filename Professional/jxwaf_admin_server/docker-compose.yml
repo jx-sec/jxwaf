@@ -79,7 +79,7 @@ services:
   # 必须使用全新数据库（jxwaf_model_server），启动时自动建表；对外（公网）部署必须开启 TLS
   # 完整参数参考：jxwaf_model_server 项目目录下 docker-compose-full.yml
   # jxwaf_model_server:
-  #   image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_model_server:2.5
+  #   image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_model_server:2.7
   #   container_name: jxwaf_model_server
   #   restart: unless-stopped
   #   depends_on:

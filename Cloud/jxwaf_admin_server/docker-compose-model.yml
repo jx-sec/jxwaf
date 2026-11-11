@@ -67,7 +67,7 @@ services:
       - /opt/jxwaf_data/ssl_cert_service:/data
 
   jxwaf_model_server:
-    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_model_server:2.5
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_model_server:2.7
     container_name: jxwaf_model_server
     restart: unless-stopped
     depends_on:
@@ -107,11 +107,24 @@ services:
       RETRY_BACKOFF_MS: "500"                               # 单次分析内重试退避起始（毫秒）
       RETRY_MAX_BACKOFF_MS: "30000"
 
+      # ==================== 历史记录重扫（Rescan） ====================
+      # 独立低优先级 worker，按 id 扫描历史记录，弥补 initial 游标只前进不回卷的问题
+      RESCAN_INTERVAL_SECONDS: "86400"                      # 重扫周期（秒），默认一天一次；0 = 关闭
+      RESCAN_SCOPE: pending                                 # pending = 只重扫 res=0；rejected = 重扫 res=0/5（会覆盖 5）
+      RESCAN_QPS: "2"                                       # 重扫每秒请求上限（独立于 analyzer qps）
+      RESCAN_CONCURRENCY: "2"                               # 重扫并发
+      RESCAN_MIN_AGE_SECONDS: "3600"                        # 只重扫创建超过该秒数的 res=0（避免与 initial 处理新记录重叠）；0=不限制
+
       # ==================== 输入限制配置 ====================
       MAX_AI_INPUT_BYTES: "262144"                          # 送 AI 的输入上限（字节，默认 256KB）
       OVERSIZE_POLICY: truncate
       MAX_LINE_SIZE: "2097152"                              # 协议单行上限（字节，默认 2MB）
       MAX_RAW_STRING_SIZE: "262144"                         # raw_string 落库上限（字节）
+      RAW_STRING_STORAGE: db                                # db（默认，raw 落库）/ memory（raw 只放内存，不落库）
+      RAW_MEMORY_TTL_SECONDS: "1800"                        # memory 模式 raw 内存保留时间（秒）
+      RAW_MEMORY_MAX_MB: "1024"                             # memory 模式 raw 内存上限（MB，非预分配）
+      RAW_MEMORY_MAX_ITEMS: "200000"                        # memory 模式 raw 条目上限
+      RAW_MEMORY_SKIP_SECONDS: "1800"                       # raw 未命中时 worker 跳过该记录的时长（秒）；查询带回 raw 会立即清除跳过标记
 
       # ==================== 熔断配置 ====================
       CIRCUIT_COOLDOWN_SECONDS: "60"                        # 熔断初始冷却（秒）
