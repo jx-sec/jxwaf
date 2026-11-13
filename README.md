@@ -35,6 +35,8 @@
 
 标准版把 WAF 节点、控制台、MySQL、日志采集、网络封禁与证书服务打包进一个编排文件。
 
+<p align="center"><img src="img/arch-standard.svg" width="860" alt="JXWAF 标准版部署架构：单机运行全部子系统"></p>
+
 环境要求：Debian 12.x / Ubuntu 20.04+，4 核 8G 以上，已安装 Docker 与 Docker Compose。
 
 ```bash
@@ -60,6 +62,8 @@ docker compose up -d
 详细步骤见 [标准版部署教程](https://docs.jxwaf.com/jxwaf-standard/Deployment-Tutorial.html)。
 
 ### 专业版：控制台 / 节点 / 日志分离部署
+
+<p align="center"><img src="img/arch-professional.svg" width="860" alt="JXWAF 专业版部署架构：控制台、节点集群、日志分离部署"></p>
 
 按顺序在三台服务器上部署，先控制台、再节点、最后日志服务：
 
@@ -89,6 +93,8 @@ docker compose up -d
 ### WebTDS：实时威胁分析
 
 WebTDS 基于自研实时分析引擎，无需编写代码，通过控制台配置检测策略即可实现实体行为分析、APT 持续威胁检测、爬虫对抗与业务风险分析；支持在线学习训练专属安全模型。它既可独立部署，也可由专业版对接。
+
+<p align="center"><img src="img/arch-webtds.svg" width="860" alt="WebTDS 架构：控制台、分析节点、日志系统分离部署"></p>
 
 ```bash
 # 克隆仓库（中国大陆用加速地址；海外直连与源码包地址见上方标准版段落）

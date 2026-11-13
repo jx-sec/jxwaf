@@ -35,6 +35,8 @@ A Web Application Firewall (WAF) powered by AI large models. It analyses web tra
 
 The Standard Edition packages the WAF node, console, MySQL, log collection, network blocking and certificate service into a single orchestration file.
 
+<p align="center"><img src="img/arch-standard-en.svg" width="860" alt="JXWAF Standard Edition architecture: all subsystems on a single server"></p>
+
 Requirements: Debian 12.x / Ubuntu 20.04+, 4 vCPU / 8 GB RAM or more, Docker and Docker Compose installed.
 
 ```bash
@@ -60,6 +62,8 @@ Four protection modes can be switched at any time: **Model Training** (learn onl
 For detailed steps see the [Standard Edition deployment guide](https://docs.jxwaf.com/jxwaf-standard/Deployment-Tutorial.html).
 
 ### Professional Edition: separated console / node / log deployment
+
+<p align="center"><img src="img/arch-professional-en.svg" width="860" alt="JXWAF Professional Edition architecture: console, node cluster and log service deployed separately"></p>
 
 Deploy on three servers in order: console first, then nodes, then the log service:
 
@@ -89,6 +93,8 @@ For detailed steps, environment variables and upgrade instructions see the [Prof
 ### WebTDS: real-time threat analytics
 
 WebTDS is built on a self-developed real-time analytics engine. Without writing any code, you can implement entity behaviour analysis, persistent APT detection, crawler countermeasures and business risk analysis through console policy configuration; it also supports online learning to train a dedicated security model. It can be deployed standalone or connected to the Professional Edition.
+
+<p align="center"><img src="img/arch-webtds-en.svg" width="860" alt="WebTDS architecture: console, analytics node and log system deployed separately"></p>
 
 ```bash
 # Clone the repository (mainland China: use the accelerator; for direct clone and source archives see the Standard Edition section above)

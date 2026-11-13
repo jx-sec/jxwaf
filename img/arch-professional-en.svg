@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="730" viewBox="0 0 1000 730" role="img" aria-label="JXWAF Professional Edition architecture" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Source Han Sans SC',system-ui,-apple-system,'Segoe UI',sans-serif">
+  <title>JXWAF Professional Edition architecture</title>
+  <defs>
+    <filter id="cardShadow" x="-15%" y="-25%" width="130%" height="170%">
+      <feDropShadow dx="0" dy="4" stdDeviation="7" flood-color="#0F172A" flood-opacity="0.06"/>
+    </filter>
+    <marker id="m-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.8 1 L9.2 5 L0.8 9 Z" fill="#2563EB"/></marker>
+    <marker id="m-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.2 L9 5 L1 8.8 Z" fill="#9AA6B8"/></marker>
+    <marker id="m-gray-start" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M9 1.2 L1 5 L9 8.8 Z" fill="#9AA6B8"/></marker>
+    <marker id="m-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.8 1 L9.2 5 L0.8 9 Z" fill="#DC2626"/></marker>
+  </defs>
+  <rect width="1000" height="730" fill="#ffffff"/>
+<g transform="translate(0,-40)"><rect x="200" y="60" width="740" height="552" rx="18" fill="#F7F9FC" stroke="#E3E9F2" stroke-width="1.2"/>
+<rect x="232" y="88" width="4" height="24" rx="2" fill="#2563EB"/>
+<text x="248" y="107" font-size="22" font-weight="700" fill="#0F172A">JXWAF Professional Edition</text>
+<text x="248" y="130" font-size="13.5" fill="#64748B">Console / node / log deployed separately</text>
+<line x1="232" y1="150" x2="908" y2="150" stroke="#E8EDF4" stroke-width="1"/>
+<g>
+<rect x="232" y="168" width="306" height="120" rx="14" fill="#ffffff" stroke="#E6EBF3" stroke-width="1.2"  filter="url(#cardShadow)"/>
+<rect x="246" y="184" width="3" height="88" rx="1.5" fill="#2563EB"/>
+<rect x="260" y="190" width="40" height="40" rx="11" fill="#EAF2FF"/>
+<g transform="translate(280.0,210.0) scale(0.92) translate(-12,-12)" fill="none" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 5 6.1v5.2c0 4.3 2.9 8.1 7 9.4 4.1-1.3 7-5.1 7-9.4V6.1L12 3.2Z"/><path d="m8.8 11.9 2.2 2.2 4.4-4.4"/></g>
+<text x="312" y="217.0" font-size="20" font-weight="700" fill="#0F172A">WAF Node Cluster</text>
+<text x="312" y="236.0" font-size="12.5" fill="#8A94A6">jxwaf_node · OpenResty</text>
+<rect x="312" y="242" width="58" height="28" rx="8" fill="#EAF2FF"/>
+<text x="341.0" y="261" font-size="11.5" fill="#2563EB" text-anchor="middle">Node 1</text>
+<rect x="380" y="242" width="58" height="28" rx="8" fill="#EAF2FF"/>
+<text x="409.0" y="261" font-size="11.5" fill="#2563EB" text-anchor="middle">Node 2</text>
+<rect x="448" y="242" width="58" height="28" rx="8" fill="#EAF2FF"/>
+<text x="477.0" y="261" font-size="11.5" fill="#2563EB" text-anchor="middle">Node N</text>
+</g>
+<g>
+<rect x="602" y="168" width="306" height="120" rx="14" fill="#ffffff" stroke="#E6EBF3" stroke-width="1.2"  filter="url(#cardShadow)"/>
+<rect x="616" y="184" width="3" height="88" rx="1.5" fill="#7C3AED"/>
+<rect x="630" y="190" width="40" height="40" rx="11" fill="#F4F0FF"/>
+<g transform="translate(650.0,210.0) scale(0.92) translate(-12,-12)" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.4" y="4.2" width="17.2" height="11.6" rx="2.2"/><path d="M12 15.8v3.6M8.6 19.4h6.8"/></g>
+<text x="682" y="217.0" font-size="20" font-weight="700" fill="#0F172A">Console</text>
+<text x="682" y="236.0" font-size="12.5" fill="#8A94A6">jxwaf_admin_server</text>
+<text x="630" y="261" font-size="13.5" fill="#5B6678">Site onboarding · policy</text>
+</g>
+<g>
+<rect x="232" y="316" width="306" height="120" rx="14" fill="#ffffff" stroke="#E6EBF3" stroke-width="1.2"  filter="url(#cardShadow)"/>
+<rect x="246" y="332" width="3" height="88" rx="1.5" fill="#0284C7"/>
+<rect x="260" y="338" width="40" height="40" rx="11" fill="#EAF6FE"/>
+<g transform="translate(280.0,358.0) scale(0.92) translate(-12,-12)" fill="none" stroke="#0284C7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3 10.6 13.4"/><path d="M21 3l-6.7 18-3.7-7.6L3 9.7 21 3Z"/></g>
+<text x="312" y="365.0" font-size="20" font-weight="700" fill="#0F172A">JXLOG</text>
+<text x="312" y="384.0" font-size="12.5" fill="#8A94A6">jxlog</text>
+<text x="260" y="409" font-size="13.5" fill="#5B6678">Attack log collection</text>
+</g>
+<g>
+<rect x="602" y="316" width="306" height="120" rx="14" fill="#ffffff" stroke="#E6EBF3" stroke-width="1.2"  filter="url(#cardShadow)"/>
+<rect x="616" y="332" width="3" height="88" rx="1.5" fill="#0D9488"/>
+<rect x="630" y="338" width="40" height="40" rx="11" fill="#E9FAF6"/>
+<g transform="translate(650.0,358.0) scale(0.92) translate(-12,-12)" fill="none" stroke="#0D9488" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.4C4 4.5 7.6 3 12 3s8 1.5 8 3.4-3.6 3.4-8 3.4-8-1.5-8-3.4Z"/><path d="M4 6.4v11.2c0 1.9 3.6 3.4 8 3.4s8-1.5 8-3.4V6.4"/><path d="M4 12c0 1.9 3.6 3.4 8 3.4s8-1.5 8-3.4"/></g>
+<text x="682" y="365.0" font-size="20" font-weight="700" fill="#0F172A">MySQL</text>
+<text x="682" y="384.0" font-size="12.5" fill="#8A94A6">Config storage</text>
+<text x="630" y="409" font-size="13.5" fill="#5B6678">Sites · policies · certs</text>
+</g>
+<g>
+<rect x="232" y="464" width="306" height="120" rx="14" fill="#ffffff" stroke="#E6EBF3" stroke-width="1.2"  filter="url(#cardShadow)"/>
+<rect x="246" y="480" width="3" height="88" rx="1.5" fill="#0D9488"/>
+<rect x="260" y="486" width="40" height="40" rx="11" fill="#E9FAF6"/>
+<g transform="translate(280.0,506.0) scale(0.92) translate(-12,-12)" fill="none" stroke="#0D9488" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20v-7M10 20V6M15 20v-9M20 20V9"/></g>
+<text x="312" y="513.0" font-size="20" font-weight="700" fill="#0F172A">ClickHouse</text>
+<text x="312" y="532.0" font-size="12.5" fill="#8A94A6">Attack log storage</text>
+<text x="260" y="557" font-size="13.5" fill="#5B6678">Columnar · fast search</text>
+</g>
+<g>
+<rect x="602" y="464" width="306" height="120" rx="14" fill="#ffffff" stroke="#E6EBF3" stroke-width="1.2"  filter="url(#cardShadow)"/>
+<rect x="616" y="480" width="3" height="88" rx="1.5" fill="#D97706"/>
+<rect x="630" y="486" width="40" height="40" rx="11" fill="#FFF6E8"/>
+<g transform="translate(650.0,506.0) scale(0.92) translate(-12,-12)" fill="none" stroke="#D97706" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.6"/><path d="m6.1 6.1 11.8 11.8"/></g>
+<text x="682" y="513.0" font-size="20" font-weight="700" fill="#0F172A">NFT Node</text>
+<text x="682" y="532.0" font-size="12.5" fill="#8A94A6">jxwaf_nft_node</text>
+<text x="630" y="557" font-size="13.5" fill="#5B6678">Network-layer IP blocking</text>
+</g>
+<g><rect x="30" y="192" width="150" height="72" rx="14" fill="#ffffff" stroke="#E3E9F2" stroke-width="1.2" filter="url(#cardShadow)"/>
+<g transform="translate(58,228.0) scale(0.95) translate(-12,-12)" fill="none" stroke="#5B6678" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="0" cy="0" r="9"/><ellipse cx="0" cy="0" rx="4" ry="9"/><path d="M-9 0 H9"/></g>
+<text x="80" y="225.0" font-size="16.5" font-weight="700" fill="#0F172A">Internet</text>
+<text x="80" y="243.0" font-size="12.5" fill="#8A94A6">Public traffic</text>
+</g>
+<polyline points="184,228 228,228" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#m-blue)"/>
+<polyline points="542,228 598,228" fill="none" stroke="#9AA6B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#m-gray)" marker-start="url(#m-gray-start)" stroke-dasharray="5 4"/>
+<text x="570" y="212" font-size="12.5" fill="#64748B" text-anchor="middle">Sync</text>
+<polyline points="385,292 385,312" fill="none" stroke="#9AA6B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#m-gray)"/>
+<text x="397" y="306" font-size="12.5" fill="#64748B">Attack logs</text>
+<polyline points="755,292 755,312" fill="none" stroke="#9AA6B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#m-gray)"/>
+<text x="767" y="306" font-size="12.5" fill="#64748B">Config I/O</text>
+<polyline points="385,440 385,460" fill="none" stroke="#9AA6B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#m-gray)"/>
+<text x="397" y="454" font-size="12.5" fill="#64748B">Write</text>
+<polyline points="570,616 570,672" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#m-blue)"/>
+<text x="582" y="648" font-size="12.5" fill="#64748B">Proxy</text>
+<g><rect x="430" y="676" width="280" height="68" rx="14" fill="#ffffff" stroke="#E6EBF3" stroke-width="1.2" filter="url(#cardShadow)"/>
+<rect x="452" y="693" width="34" height="34" rx="10" fill="#F1F5F9"/>
+<g transform="translate(469,710) scale(0.8) translate(-12,-12)" fill="none" stroke="#334155" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="7" rx="2"/><rect x="3.5" y="13" width="17" height="7" rx="2"/><circle cx="7" cy="7.5" r="0.9" fill="currentColor" stroke="none"/><circle cx="7" cy="16.5" r="0.9" fill="currentColor" stroke="none"/></g>
+<text x="496" y="708" font-size="18" font-weight="700" fill="#0F172A">Business Server</text>
+<text x="496" y="726" font-size="12.5" fill="#8A94A6">Web app / origin</text>
+</g></g>
+</svg>

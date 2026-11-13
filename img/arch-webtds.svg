@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="494" viewBox="0 0 1000 494" role="img" aria-label="WebTDS 架构" font-family="'PingFang SC','Hiragino Sans GB','Microsoft YaHei','Source Han Sans SC',system-ui,-apple-system,'Segoe UI',sans-serif">
+  <title>WebTDS 架构</title>
+  <defs>
+    <filter id="cardShadow" x="-15%" y="-25%" width="130%" height="170%">
+      <feDropShadow dx="0" dy="4" stdDeviation="7" flood-color="#0F172A" flood-opacity="0.06"/>
+    </filter>
+    <marker id="m-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.8 1 L9.2 5 L0.8 9 Z" fill="#2563EB"/></marker>
+    <marker id="m-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M1 1.2 L9 5 L1 8.8 Z" fill="#9AA6B8"/></marker>
+    <marker id="m-gray-start" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="8" markerHeight="8" markerUnits="userSpaceOnUse" orient="auto"><path d="M9 1.2 L1 5 L9 8.8 Z" fill="#9AA6B8"/></marker>
+    <marker id="m-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.8 1 L9.2 5 L0.8 9 Z" fill="#DC2626"/></marker>
+  </defs>
+  <rect width="1000" height="494" fill="#ffffff"/>
+<g transform="translate(0,-25)"><rect x="200" y="60" width="740" height="430" rx="18" fill="#F7F9FC" stroke="#E3E9F2" stroke-width="1.2"/>
+<rect x="232" y="88" width="4" height="24" rx="2" fill="#2563EB"/>
+<text x="248" y="107" font-size="22" font-weight="700" fill="#0F172A">WebTDS</text>
+<text x="248" y="130" font-size="13.5" fill="#64748B">控制台 / 分析节点 / 日志系统分离部署</text>
+<line x1="232" y1="150" x2="908" y2="150" stroke="#E8EDF4" stroke-width="1"/>
+<g>
+<rect x="232" y="168" width="306" height="120" rx="14" fill="#ffffff" stroke="#E6EBF3" stroke-width="1.2"  filter="url(#cardShadow)"/>
+<rect x="246" y="184" width="3" height="88" rx="1.5" fill="#0284C7"/>
+<rect x="260" y="190" width="40" height="40" rx="11" fill="#EAF6FE"/>
+<g transform="translate(280.0,210.0) scale(0.92) translate(-12,-12)" fill="none" stroke="#0284C7" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6.4C4 4.5 7.6 3 12 3s8 1.5 8 3.4-3.6 3.4-8 3.4-8-1.5-8-3.4Z"/><path d="M4 6.4v11.2c0 1.9 3.6 3.4 8 3.4s8-1.5 8-3.4V6.4"/><path d="M4 12c0 1.9 3.6 3.4 8 3.4s8-1.5 8-3.4"/></g>
+<text x="312" y="217.0" font-size="20" font-weight="700" fill="#0F172A">日志系统</text>
+<text x="312" y="236.0" font-size="12.5" fill="#8A94A6">wtds_log · ClickHouse</text>
+<text x="260" y="261" font-size="13.5" fill="#5B6678">日志存储与查询</text>
+</g>
+<g>
+<rect x="602" y="168" width="306" height="120" rx="14" fill="#ffffff" stroke="#E6EBF3" stroke-width="1.2"  filter="url(#cardShadow)"/>
+<rect x="616" y="184" width="3" height="88" rx="1.5" fill="#7C3AED"/>
+<rect x="630" y="190" width="40" height="40" rx="11" fill="#F4F0FF"/>
+<g transform="translate(650.0,210.0) scale(0.92) translate(-12,-12)" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.4" y="4.2" width="17.2" height="11.6" rx="2.2"/><path d="M12 15.8v3.6M8.6 19.4h6.8"/></g>
+<text x="682" y="217.0" font-size="20" font-weight="700" fill="#0F172A">控制台</text>
+<text x="682" y="236.0" font-size="12.5" fill="#8A94A6">webtds_server</text>
+<text x="630" y="261" font-size="13.5" fill="#5B6678">策略配置 · 日志查询</text>
+</g>
+<g>
+<rect x="232" y="322" width="306" height="120" rx="14" fill="#ffffff" stroke="#E6EBF3" stroke-width="1.2"  filter="url(#cardShadow)"/>
+<rect x="246" y="338" width="3" height="88" rx="1.5" fill="#2563EB"/>
+<rect x="260" y="344" width="40" height="40" rx="11" fill="#EAF2FF"/>
+<g transform="translate(280.0,364.0) scale(0.92) translate(-12,-12)" fill="none" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7.6"/><circle cx="12" cy="12" r="2.6"/><path d="M12 2.4v3M12 18.6v3M2.4 12h3M18.6 12h3"/></g>
+<text x="312" y="371.0" font-size="20" font-weight="700" fill="#0F172A">分析节点</text>
+<text x="312" y="390.0" font-size="12.5" fill="#8A94A6">webtds_node</text>
+<text x="260" y="415" font-size="13.5" fill="#5B6678">实时分析引擎</text>
+</g>
+<g><rect x="30" y="342" width="150" height="80" rx="14" fill="#ffffff" stroke="#E3E9F2" stroke-width="1.2" filter="url(#cardShadow)"/>
+<g transform="translate(58,374) scale(0.82) translate(-12,-12)" fill="none" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.2 5 6.1v5.2c0 4.3 2.9 8.1 7 9.4 4.1-1.3 7-5.1 7-9.4V6.1L12 3.2Z"/><path d="m8.8 11.9 2.2 2.2 4.4-4.4"/></g>
+<text x="78" y="371" font-size="14.5" font-weight="700" fill="#0F172A">JXWAF 节点</text>
+<text x="78" y="389" font-size="11.5" fill="#8A94A6">流量数据</text>
+</g>
+<polyline points="184,382 228,382" fill="none" stroke="#2563EB" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#m-blue)"/>
+<polyline points="598,228 542,228" fill="none" stroke="#9AA6B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#m-gray)"/>
+<text x="570" y="214" font-size="12.5" fill="#64748B" text-anchor="middle">日志查询</text>
+<polyline points="385,318 385,292" fill="none" stroke="#9AA6B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#m-gray)"/>
+<text x="397" y="308" font-size="12.5" fill="#64748B">日志上报</text>
+<polyline points="755,292 755,382 542,382" fill="none" stroke="#9AA6B8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#m-gray)"/>
+<text x="648" y="368" font-size="12.5" fill="#64748B" text-anchor="middle">配置同步</text></g>
+</svg>
