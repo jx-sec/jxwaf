@@ -2,476 +2,162 @@
 
 # JXWAF
 
-基于 AI 大模型的 Web 应用防火墙，实时分析检测 Web 应用流量，清洗恶意流量后转发至业务服务器，保障业务安全稳定运行。
+基于 AI 大模型的 Web 应用防火墙（WAF）。实时分析检测 Web 应用流量，清洗恶意流量后将正常流量转发至业务服务器，保障业务安全稳定运行。
 
-> 🌐 **产品首页**：**[https://www.jxwaf.com](https://www.jxwaf.com)**
-> 📖 **产品文档**：**[https://docs.jxwaf.com](https://docs.jxwaf.com)**
->
-> **🔗 在线体验**
-> - **专业版**：**[https://waf-demo.jxwaf.com](https://waf-demo.jxwaf.com)**
-> - **云 WAF 版 — 管理员控制台**：**[https://cloud-admin-demo.jxwaf.com](https://cloud-admin-demo.jxwaf.com)**
-> - **云 WAF 版 — 用户控制台**：**[https://cloud-user-demo.jxwaf.com](https://cloud-user-demo.jxwaf.com)**
->
-> 以上体验环境统一账号：`demo`　密码：`123456`
->
-> 技术分享：**[AI大模型语义缓存技术分享](https://mp.weixin.qq.com/s/eGFhzsFtSwRhShwgh9j0mg)** 
+| 资源 | 地址 |
+|------|------|
+| 产品首页 | https://www.jxwaf.com |
+| 产品文档 | https://docs.jxwaf.com |
+| 策略仓库 | https://hub.jxwaf.com |
+| 技术分享 | [AI 大模型语义缓存技术分享](https://mp.weixin.qq.com/s/eGFhzsFtSwRhShwgh9j0mg) |
 
-### 防护效果测试对比
+## 核心技术
 
-以下是通过 BlazeHTTP 对多款 WAF 横向测试结果。其中 CloudFlare、ModSecurity、SafeLine 数据由 BlazeHTTP 公开发布，JXWAF 日常防护数据为最新版本 BlazeHTTP 实测结果：
+- **AI 安全模型**：多维稀疏注意力 + 在线蒸馏，将大模型检测能力继承至本地推理引擎，支持 0day 自动检测与误报自动处理，纯 CPU 运行。
+- **语义分析引擎**：上下文语义动态分析，防御 SQL 注入、XSS、命令/代码执行、反序列化等攻击。
+- **SSL 行为分析引擎**：SSL 指纹与握手行为分析，识别非浏览器访问，检测 CC 与爬虫流量。
+- **WebTDS 实时分析**：毫秒级威胁分析，可视化策略配置实现 APT 检测、爬虫对抗与业务风控。
 
-| WAF | 检出率 ↑ | 误报率 ↓ | 准确率 ↑ |
-|-----|----------|----------|----------|
-| CloudFlare 免费版 | 10.70% | 0.07% | 98.40% |
-| ModSecurity PARANOIA 1 | 69.74% | 17.58% | 82.20% |
-| SafeLine 免费·平衡 | 71.65% | 0.07% | 99.45% |
-| **JXWAF 日常防护（官方免费模型）** | **71.28%** | **0.64%** | **98.81%** |
-| **JXWAF 日常防护（私有部署模型）** | **69.91%** | **0.20%** | **99.22%** |
+## 产品线一览
 
-测试数据表明：
+| 维度 | 标准版 | 专业版 | WebTDS |
+|------|--------|--------|--------|
+| 部署架构 | 一台服务器跑全部子系统 | 控制台 / 节点 / 日志分离部署 | 控制台 / 节点 / 日志分离部署 |
+| 日志存储 | MySQL | ClickHouse | ClickHouse |
+| 扩展方式 | 单节点 | 节点集群水平扩展 | 节点横向扩展 |
+| 典型场景 | 个人站点、小型企业 | 中大型企业、高并发业务 | APT 检测、爬虫对抗、业务风控 |
+| 仓库目录 | `Standard/` | `Professional/` | `WebTDS/` |
+| 产品文档 | [标准版文档](https://docs.jxwaf.com/jxwaf-standard/Product-Introduction.html) | [专业版文档](https://docs.jxwaf.com/jxwaf-professional/Product-Introduction.html) | [WebTDS 文档](https://docs.jxwaf.com/webtds/Product-Introduction.html) |
 
-- **检出率**：JXWAF 日常防护（71.28%）与 SafeLine（71.65%）处于同一水平，ModSecurity 约为 69.74%，CloudFlare 免费版为 10.70%。
-- **误报率**：JXWAF 日常防护（0.64%）明显低于 ModSecurity（17.58%）。使用私有部署模型后，误报率进一步降至 0.20%，准确率达到 99.22%。
+## 快速开始
 
-## 版本选择
+### 标准版：单机一键部署
 
-JXWAF 提供 **标准版**、**专业版** 和 **云WAF** 三个版本，满足不同规模的业务需求：
+标准版把 WAF 节点、控制台、MySQL、日志采集、网络封禁与证书服务打包进一个编排文件。
 
-| 维度 | 标准版 | 专业版 | 云WAF |
-|------|--------|--------|-------|
-| 部署架构 | 单机部署 | 控制台、节点、日志分离部署 | 管理控制台 + 用户控制台 + 节点 |
-| 扩展方式 | 单节点 | 集群部署，可水平扩展 | 集群部署，可水平扩展 |
-| 多租户管理 | 不支持 | 不支持 | 支持 |
-| CNAME 自动接入 | 不支持 | 不支持 | 支持 |
-| WebTDS | 不支持 | 支持 | 支持 |
-| 适用场景 | 个人站点、小型企业 | 中大型企业 | 企业多部门统一管理 |
-
-## 标准版
-
-AI 安全模型 + 语义分析引擎双引擎驱动的 Web 应用防火墙，`docker compose up` 一条命令完成部署，免费使用。
-
-与专业版的多服务器分离部署不同，标准版将 WAF 节点、控制台、数据库、日志采集、封禁模块整合于一台服务器，实时分析 Web 流量，过滤恶意请求后将正常流量转发至业务服务器。
-
-<p align="center"><img src="img/standard-console-dashboard.png" width="720"></p>
-
-### 三大核心技术
-
-#### 1. AI 安全模型
-
-JXWAF 自研多维稀疏注意力机制与在线蒸馏技术，将 AI 大模型的安全检测能力完整继承至本地推理引擎，实现 **高并发、低成本、低幻觉** 的 Web 安全检测。
-
-- **0day 自动检测**：新型攻击出现后，AI 大模型第一时间完成分析，通过在线蒸馏将检测能力"教"给本地模型——无需人工编写规则，0day 攻击自动拦截。
-- **误报自动处理**：模型更新期间出现误拦截，在线蒸馏完成后安全模型会自动加白，全程无需安全人员介入。
-- **高性能、低成本**：纯 CPU 即可部署，一台 4 核 8G 服务器，全防护模块开启可支撑日均 8 亿次请求检测。默认使用官方提供的安全模型服务，大模型推理费用由平台承担，用户可免费使用。
-
-#### 2. 语义分析引擎
-
-采用上下文语义动态分析技术，突破传统正则匹配局限，大幅提升检测准确率、降低误报。可有效防御 SQL 注入、XSS、命令/代码执行、反序列化、高危 Nday 漏洞利用等各类主流 Web 攻击。
-
-#### 3. SSL 行为分析引擎
-
-基于全新 SSL 指纹算法，结合 SSL 协议交互异常行为分析，快速识别非浏览器访问，有效检测 **CC 攻击**、**爬虫访问** 等异常流量。
-
-### 一键部署
-
-标准版将 WAF 节点、控制台、MySQL、日志采集、网络封禁五个子系统打包成一个 `docker-compose.yml`，一条命令全部上线。
-
-**环境要求**：Debian 12.x / Ubuntu 20.04+，4 核 8G 以上，需安装 Docker。
+环境要求：Debian 12.x / Ubuntu 20.04+，4 核 8G 以上，已安装 Docker 与 Docker Compose。
 
 ```bash
 # 1. 安装 Docker（已安装可跳过）
 curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
 
-# 2. 克隆仓库（也可通过 wget 下载源码包：wget https://github.com/jx-sec/jxwaf/archive/refs/heads/master.zip）
-git clone --depth=1 https://github.com/jx-sec/jxwaf.git
-cd jxwaf/Standard/
+# 2. 克隆仓库（中国大陆用加速地址，海外直连 GitHub）
+git clone --depth=1 https://gh.jxwaf.top/https://github.com/jx-sec/jxwaf.git
+# 海外直连：git clone --depth=1 https://github.com/jx-sec/jxwaf.git
+# 源码包（国内）：wget https://gh.jxwaf.top/https://github.com/jx-sec/jxwaf/archive/refs/heads/master.zip
+# 源码包（海外）：wget https://github.com/jx-sec/jxwaf/archive/refs/heads/master.zip
+cd jxwaf/Standard
 
-# 3. 一键启动
-docker compose up -d
-```
-
-部署完成后访问 `http://<服务器IP>:8000`，首次使用需注册账号。
-
-四种防护模式灵活切换：**模型训练**（学习不处置）、**日常防护**（业务优先）、**重保防护**（安全优先）、**离线防护**（不联网可用）。
-
-> 详细部署文档请参考 [标准版部署教程](https://docs.jxwaf.com/jxwaf-standard/Deployment-Tutorial.html)
-
-### 系统架构
-
-标准版将所有子系统部署在同一台服务器上：
-
-<p align="center"><img src="img/standard-architecture.jpeg" width="480"></p>
-
-| 子系统 | 说明 |
-|------|------|
-| `jxwaf_node_standard` | WAF 节点，流量处理与实时攻击检测 |
-| `jxwaf_admin_server` | WAF 控制台，可视化运营界面与 API |
-| `mysql_db` | MySQL 8.0，存储站点配置与攻击日志 |
-| `log_send_to_mysql` | 日志采集，将节点攻击日志写入 MySQL |
-| `jxwaf_nft_node` | 网络封禁模块，在网络层封禁攻击 IP |
-
-### 性能测试（单节点 4C8G）
-
-使用 wrk 对真实业务接口测试（4 线程，1000 并发，60 秒）：
-
-| 测试方案 | HTTP QPS | HTTPS QPS |
-|----------|----------|-----------|
-| 纯转发 | **67,849** | **55,227** |
-| AI + 语义引擎 | **36,388** | **31,081** |
-| 全部防护模块开启 | **10,574** | **7,739** |
-
-全模块开启，单节点日均处理超 **8 亿次请求**。
-
-> JXWAF 标准版不限制处理线程数、并发连接数、接入站点数及防护请求量，实测性能即用户实际可用性能。用户可通过提升服务器配置获得更好的性能表现。
-
-详细压测数据见 [性能测试报告](https://docs.jxwaf.com/jxwaf-standard/Performance-Test.html)
-
-### 防护能力测试
-
-#### BlazeHTTP 横向对比
-
-以下是通过 BlazeHTTP 对多款 WAF 横向测试结果。其中 CloudFlare、ModSecurity、SafeLine 数据由 BlazeHTTP 公开发布，JXWAF 日常防护数据为最新版本 BlazeHTTP 实测结果：
-
-| WAF | 检出率 ↑ | 误报率 ↓ | 准确率 ↑ |
-|-----|----------|----------|----------|
-| CloudFlare 免费版 | 10.70% | 0.07% | 98.40% |
-| ModSecurity PARANOIA 1 | 69.74% | 17.58% | 82.20% |
-| SafeLine 免费·平衡 | 71.65% | 0.07% | 99.45% |
-| **JXWAF 日常防护（官方免费模型）** | **71.28%** | **0.64%** | **98.81%** |
-| **JXWAF 日常防护（私有部署模型）** | **69.91%** | **0.20%** | **99.22%** |
-
-测试数据表明：
-
-- **检出率**：JXWAF 日常防护（71.28%）与 SafeLine（71.65%）处于同一水平，ModSecurity 约为 69.74%，CloudFlare 免费版仅为 10.70%。
-- **误报率**：JXWAF 日常防护（0.64%）明显优于 ModSecurity（17.58%）。使用私有部署模型后，误报率进一步降至 0.20%，准确率达到 99.22%。
-
-#### PayloadsAllTheThings 专项测试
-
-基于 [PayloadsAllTheThings](https://github.com/swisskyrepo/PayloadsAllTheThings)（GitHub Star 78.1k）的 477 项测试，覆盖 36 种攻击分类，**综合通过率 96.6%**。SQL 注入、XSS、文件包含、反序列化、服务端注入等核心类别**全部 100% 通过**。
-
-详细分类通过率见 [防护能力测试报告](https://docs.jxwaf.com/jxwaf-standard/Protection-Capability-Test.html)
-
-## 专业版
-
-**AI 安全模型** | **语义分析引擎** | **SSL 行为分析引擎** | **WebTDS 实时分析**
-
-JXWAF 专业版由三个独立部署的子系统组成：
-
-- **JXWAF 控制台（jxwaf_admin_server）** – Web 可视化运营界面，站点接入管理、策略配置、报表展示。
-- **JXWAF 节点（jxwaf_node）** – 高性能流量处理与实时攻击检测引擎，支持集群与弹性伸缩。
-- **JXLOG 日志系统（jxlog）** – 日志采集与分析，支持事件分析与报表统计。
-
-<table align="center">
-  <tr>
-    <td align="center"><b>网站防护</b></td>
-    <td align="center"><b>Web安全报表</b></td>
-  </tr>
-  <tr>
-    <td><img src="img/console-dashboard1.png" width="380"></td>
-    <td><img src="img/console-dashboard2.png" width="380"></td>
-  </tr>
-  <tr>
-    <td align="center"><b>Web防护引擎配置</b></td>
-    <td align="center"><b>流量防护引擎配置</b></td>
-  </tr>
-  <tr>
-    <td><img src="img/console-dashboard3.png" width="380"></td>
-    <td><img src="img/console-dashboard4.png" width="380"></td>
-  </tr>
-</table>
-
-### 产品亮点
-
-#### AI 安全模型
-基于自研多维稀疏注意力机制与在线蒸馏技术，将大模型检测能力高效继承至本地推理引擎，实现 **高并发、低成本、低幻觉** 的 Web 安全检测。支持 **0day 自动检测** 与 **误报自动处理**，显著降低运营成本。
-
-#### 语义分析引擎
-采用上下文语义动态分析技术，突破传统正则匹配局限，**精准识别攻击、大幅降低误报**。有效防御 SQL 注入、XSS、命令执行、代码执行及高危 NDay 漏洞利用等。
-
-#### SSL 行为分析引擎
-基于全新 SSL 指纹算法与协议异常行为分析，快速识别非浏览器访问，有效检测 **CC 攻击**、**爬虫访问** 等异常流量。
-
-#### WebTDS 实时分析
-对接 Web 流量威胁感知系统，自研实时大数据分析引擎实现毫秒级威胁分析（性能远超通用流处理系统）。无需编码，通过策略配置即可实现 **APT 检测**、**高级爬虫防护** 及 **业务安全风险分析**。
-
-### 系统架构
-
-<p align="center"><img src="img/console-architecture.png" width="720"></p>
-
-JXWAF 专业版由三个独立部署的子系统组成：
-
-- **JXWAF 控制台（jxwaf_admin_server）** – Web 可视化运营界面，站点接入管理、策略配置、报表展示。
-- **JXWAF 节点（jxwaf_node）** – 高性能流量处理与实时攻击检测引擎，支持集群与弹性伸缩。
-- **JXLOG 日志系统（jxlog）** – 日志采集与分析，支持事件分析与报表统计。
-
-### 快速部署
-
-#### 环境要求
-
-| 项目 | 要求 |
-|------|------|
-| 操作系统 | Debian 12.x |
-| 最低配置 | 4 核 8G |
-| 需要 | Docker、Docker Compose |
-
-> 安装命令：`curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun`
-
-#### 1. JXWAF 控制台部署
-
-```bash
-git clone https://github.com/jx-sec/jxwaf.git   # 也可通过 wget 下载源码包：wget https://github.com/jx-sec/jxwaf/archive/refs/heads/master.zip
-cd jxwaf/Professional/jxwaf_admin_server/
-
-# 根据需求修改 docker-compose.yml（如 MySQL 密码、HTTPS 开关）
+# 3. 修改默认凭据后启动
 vim docker-compose.yml
-
 docker compose up -d
 ```
 
-部署后访问 `http://<公网IP>`，首次访问需注册账号（强烈建议开启 OTP 双因素认证）。  
-登录后前往 **系统管理 → 基础信息** 获取 `waf_auth`，后续节点配置使用。
+部署完成后访问 `http://<服务器IP>:8000`，系统会自动跳转到注册页面，创建首个管理员账号即可。
 
-#### 2. JXWAF 节点部署
+四种防护模式可随时切换：**模型训练**（只学习不处置）、**日常防护**（业务优先）、**重保防护**（安全优先）、**离线防护**（不连接模型服务）。
+
+详细步骤见 [标准版部署教程](https://docs.jxwaf.com/jxwaf-standard/Deployment-Tutorial.html)。
+
+### 专业版：控制台 / 节点 / 日志分离部署
+
+按顺序在三台服务器上部署，先控制台、再节点、最后日志服务：
 
 ```bash
+# 克隆仓库（中国大陆用加速地址；海外直连与源码包地址见上方标准版段落）
+git clone --depth=1 https://gh.jxwaf.top/https://github.com/jx-sec/jxwaf.git
+
+# 1. 控制台（同时获取 waf_auth，供节点配置使用）
+cd jxwaf/Professional/jxwaf_admin_server
+vim docker-compose.yml      # 修改 MySQL 密码等配置
+docker compose up -d
+
+# 2. 每台节点服务器
 cd jxwaf/Professional/jxwaf_node
-
-# 编辑 docker-compose.yml，修改：
-#   JXWAF_SERVER = 控制台地址（如 http://47.120.63.196）
-#   WAF_AUTH      = 控制台获取的 waf_auth
-#   HTTP_PORT / HTTPS_PORT = 监听端口（支持逗号分隔）
-vim docker-compose.yml
-
+vim docker-compose.yml      # JXWAF_SERVER = 控制台地址；WAF_AUTH = 控制台 waf_auth
 docker compose up -d
-```
 
-启动后在控制台 **运营中心 → 节点状态** 可查看节点是否上线。
-
-#### 3. JXLOG 日志系统部署
-
-```bash
+# 3. 日志服务器
 cd jxwaf/Professional/jxlog
 docker compose up -d
 ```
 
-部署后，在控制台完成以下配置：
+控制台部署后访问 `http://<控制台公网IP>`，按页面提示注册首个管理员账号；登录后从 **系统管理 → 基础信息** 获取 `waf_auth`。日志部署完成后，还需在控制台完成日志传输配置与日志查询配置，填写日志服务器地址与端口（`8877` / `9004`）。
 
-**系统配置 → 日志传输配置**（攻击日志上报到 jxlog）
+详细步骤、环境变量与升级方式见 [专业版部署教程](https://docs.jxwaf.com/jxwaf-professional/Deployment-Tutorial.html)。
 
-| 配置项 | 值 |
-|--------|-----|
-| 日志服务器地址 | `<jxlog 内网 IP>` |
-| 日志服务器端口 | `8877` |
+### WebTDS：实时威胁分析
 
-**系统配置 → 日志查询配置**（日志查询）
-
-| 配置项 | 值 |
-|--------|-----|
-| 服务器地址 | `<jxlog 内网 IP>` |
-| 端口 | `9004` |
-| 用户名 / 密码 | `jxlog` / `jxlog`（生产环境务必修改） |
-| 数据库 / 表名 | `jxwaf` / `jxlog` |
-
-### 性能测试（单节点 4C8G）
-
-| 测试方案 | HTTP QPS | HTTPS QPS | HTTP 损耗 | HTTPS 损耗 |
-|----------|----------|-----------|-----------|------------|
-| 纯转发（防护全关） | 48,262 | 30,422 | — | — |
-| AI 防护 + 语义引擎 | 31,159 | 21,343 | ↓ 35.5% | ↓ 29.8% |
-| 全部防护引擎开启 | 18,462 | 13,253 | ↓ 61.7% | ↓ 56.4% |
-
-**结论**：
-- 纯转发模式下单节点吞吐量超 **4.8 万 QPS**（HTTP）
-- 开启 AI 与语义引擎后性能仅下降约 **30%**，极小代价换取深度防御
-- 全防护模式下仍可支撑 **1.8 万+ QPS**，平均延迟 < 80ms，单核吞吐超 4600 QPS，日均处理超 15 亿请求
-- 支持集群水平扩展，线性提升吞吐量，适配高并发企业场景
-
-详细压测原始数据见 [性能测试报告](https://docs.jxwaf.com/jxwaf-professional/Performance-Test.html)
-
-### 防护能力测试
-
-测试基于 [PayloadsAllTheThings](https://github.com/swisskyrepo/PayloadsAllTheThings) 生成的 477 个攻击 POC，覆盖 36 种分类。
-
-| 指标 | 数值 |
-|------|------|
-| 测试项目总数 | 477 |
-| 成功拦截 | 461 |
-| 未通过（漏报） | 16 |
-| **综合通过率** | **96.6%** |
-
-主要分类通过率：
-- SQL 注入（含 MySQL/MSSQL/Oracle 等）：**100%**
-- XSS（含上下文绕过）：**100%**
-- 命令注入（含 WAF 绕过）：**95%+**
-- 文件包含 / 目录遍历：**100%**
-- 反序列化（Java/PHP/Python 等）：**100%**
-- 服务端注入（SSTI/SSI/XSLT）：**100%**
-- 文件上传（含绕过）：**100%**
-- WAF 绕过专项（SQLi/XSS/命令/路径等）：**96%+**
-
-详细分类通过率及未通过样本见 [防护能力测试报告](https://docs.jxwaf.com/jxwaf-professional/Protection-Capability-Test.html)
-
-## 云WAF
-
-**多租户架构** | **CNAME 自动接入** | **用户控制台** | **CDN 功能**
-
-JXWAF 云WAF 面向企业提供多租户 Web 安全防护方案，支持部署在企业自有数据中心或混合云环境。通过「管理控制台 + 用户控制台 + 节点」架构，实现企业内部多部门、多业务线的统一安全管理与资源隔离。
-
-### 产品亮点
-
-#### 多租户架构
-主账号统一管理，子账号（业务部门）自助操作。管理团队负责全局防护与系统配置，各部门通过用户控制台独立管理域名、防护策略、证书与缓存，数据完全隔离。
-
-#### CNAME 自动接入
-部门在用户控制台配置 DNS 服务商凭据（阿里云 / 腾讯云 / Cloudflare），添加域名后系统自动完成 DNS 配置，无需人工干预。
-
-#### 泛域名证书自动签发
-基于 ACME 协议（Let's Encrypt）自动签发、续期泛域名证书，部门在用户控制台一键申请。
-
-#### CDN 功能
-提供静态资源缓存、资源预热与刷新功能，加速业务访问。
-
-### 组件说明
-
-| 组件 | 说明 |
-|------|------|
-| 管理控制台（jxwaf_admin_server） | 管理平台，提供子账号管理、全局防护、安全运营、系统配置等功能 |
-| 节点（jxwaf_node） | 流量处理与实时攻击检测 |
-| 用户控制台（jxwaf_user_console） | 业务部门自助管理平台，提供域名管理、防护配置、证书管理、CDN 功能等 |
-| 日志服务（jxlog） | 日志采集与分析 |
-
-### 快速部署
-
-#### 环境要求
-
-| 项目 | 要求 |
-|------|------|
-| 操作系统 | Debian 12.x / Ubuntu 20.04+ |
-| 最低配置 | 管理控制台 4 核 8G；每个节点 4 核 8G |
-| 需要 | Docker、Docker Compose |
-
-> 安装命令：`curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun`
-
-#### 1. 管理控制台部署
-
-管理控制台提供子账号管理、全局防护、安全运营、系统配置等功能，是整个云WAF 的核心。
+WebTDS 基于自研实时分析引擎，无需编写代码，通过控制台配置检测策略即可实现实体行为分析、APT 持续威胁检测、爬虫对抗与业务风险分析；支持在线学习训练专属安全模型。它既可独立部署，也可由专业版对接。
 
 ```bash
-git clone --depth=1 https://github.com/jx-sec/jxwaf.git   # 也可通过 wget 下载源码包：wget https://github.com/jx-sec/jxwaf/archive/refs/heads/master.zip
-cd jxwaf/Cloud/jxwaf_cloud_admin_server/
+# 克隆仓库（中国大陆用加速地址；海外直连与源码包地址见上方标准版段落）
+git clone --depth=1 https://gh.jxwaf.top/https://github.com/jx-sec/jxwaf.git
 
-# 根据需求修改 docker-compose.yml（如 MySQL 密码、HTTPS 开关）
+# 1. 控制台（内置 MySQL；开启 HTTPS 时需准备 ssl_certs/server.crt 与 server.key）
+cd jxwaf/WebTDS/webtds_server
 vim docker-compose.yml
-
 docker compose up -d
-```
 
-部署完成后访问 `http://<服务器IP>:8000`，首次访问需注册主账号。
-
-> 管理控制台默认仅支持单用户注册，注册后自动关闭注册入口。生产环境建议开启 OTP 认证。
-
-登录后进入 **系统管理 → 基础配置** 获取 `waf_auth`，后续节点与用户控制台配置使用。
-
-核心环境变量：
-
-| 环境变量 | 默认值 | 说明 |
-|---|---|---|
-| `ENABLE_HTTPS` | `false` | 是否启用 HTTPS |
-| `HTTP_PORT` | `8000` | HTTP 监听端口 |
-| `ADMIN_API_ENABLE` | `false` | 是否启用 Admin API |
-| `USER_API_ENABLE` | `false` | 是否启用 User API，用户控制台依赖此功能，**必须设为 `"true"`** |
-| `JXWAF_MODEL_SERVER_HOST` | `model.jxwaf.com` | AI 模型服务地址 |
-
-#### 2. 节点部署
-
-节点提供流量处理与实时攻击检测，支持集群弹性伸缩。在每台接入节点服务器上执行：
-
-```bash
-cd jxwaf/Cloud/jxwaf_cloud_node/
-
-# 编辑 docker-compose.yml，修改：
-#   JXWAF_SERVER = 管理控制台地址（如 http://47.120.63.196:8000）
-#   WAF_AUTH      = 管理控制台获取的 waf_auth
-#   HTTP_PORT / HTTPS_PORT = 监听端口（支持逗号分隔多端口）
+# 2. 分析节点（WTDS_SERVER = 控制台地址；WTDS_AUTH = 控制台 wtds_auth）
+cd jxwaf/WebTDS/webtds_node
 vim docker-compose.yml
+docker compose up -d
 
+# 3. 日志服务（wtds_log + ClickHouse）
+cd jxwaf/WebTDS/webtds_jxlog
 docker compose up -d
 ```
 
-启动后在管理控制台 **运营中心 → 节点状态** 可查看节点是否上线。
+部署完成后访问 `http://<公网IP>`，系统会自动跳转到注册页面，创建首个管理员账号即可。
 
-核心环境变量：
+详细步骤见 [WebTDS 部署教程](https://docs.jxwaf.com/webtds/Deployment-Tutorial.html)，检测策略可直接从 [策略仓库](https://hub.jxwaf.com) 加载。
 
-| 环境变量 | 默认值 | 说明 |
-|---|---|---|
-| `HTTP_PORT` | `80` | HTTP 监听端口，多端口用逗号分隔 |
-| `HTTPS_PORT` | `443` | HTTPS 监听端口 |
-| `JXWAF_SERVER` | — | 管理控制台地址（必填） |
-| `WAF_AUTH` | — | 节点认证密钥（必填） |
+## AI 模型服务
 
-#### 3. 用户控制台部署
-
-用户控制台是业务部门自助管理平台，提供域名管理、防护配置、证书管理、CDN 功能等。
-
-**前置条件**：
-
-- 管理控制台已部署并开启 `USER_API_ENABLE=true`
-- 管理控制台已创建 **网站接入配置**（系统管理 → 网站接入配置）
+JXWAF 标准版 / 专业版控制台默认连接官方免费模型服务 `model.jxwaf.com:39980`。用户也可以进行私有化部署：
 
 ```bash
-cd jxwaf/Cloud/jxwaf_cloud_user/
-
-# 编辑 docker-compose.yml，修改：
-#   CLOUD_API_URL = 管理控制台地址
-#   CLOUD_API_KEY = 管理控制台 waf_auth
-#   DEFAULT_WEBSITE_ACCESS_CONF = 网站接入配置名
-vim docker-compose.yml
-
-docker compose up -d
+cd jxwaf/Standard   # 或 jxwaf/Professional/jxwaf_admin_server
+# 先在 docker-compose-model.yml 的 PLATFORMS 中填入 API Key 与模型名
+docker compose -f docker-compose-model.yml up -d
 ```
 
-部署完成后访问 `http://<服务器IP>`，业务部门即可注册账号并登录使用。
+私有化需自备 API Key 并承担模型调用费用；详细步骤见 [标准版私有化部署](https://docs.jxwaf.com/jxwaf-standard/Model-Private-Deployment.html) 或 [专业版私有化部署](https://docs.jxwaf.com/jxwaf-professional/Model-Private-Deployment.html)。
 
-#### 4. 日志服务部署
+## 性能与防护能力测试
 
-```bash
-cd jxwaf/Cloud/jxlog/
-docker compose up -d
-```
+### 性能（单节点 4C8G，wrk 4 线程 / 1000 并发 / 60 秒）
 
-部署后，在管理控制台完成以下配置：
+| 测试方案 | 标准版 HTTP | 标准版 HTTPS | 专业版 HTTP | 专业版 HTTPS |
+|----------|-------------|--------------|-------------|--------------|
+| 纯转发（防护全关） | 67,849 | 55,227 | 48,262 | 30,422 |
+| AI + 语义引擎 | 36,388 | 31,081 | 31,159 | 21,343 |
+| 全部防护模块开启 | 10,574 | 7,739 | 18,462 | 13,253 |
 
-**系统管理 → 日志传输配置**
+详细压测环境与 wrk 原始输出见 [标准版](https://docs.jxwaf.com/jxwaf-standard/Performance-Test.html) / [专业版](https://docs.jxwaf.com/jxwaf-professional/Performance-Test.html) 性能测试报告。
 
-| 配置项 | 值 |
-|--------|-----|
-| 日志服务器地址 | `<jxlog 内网 IP>` |
-| 日志服务器端口 | `8877` |
+### 防护能力
 
-**系统管理 → 日志查询配置**
+BlazeHTTP 横向对比（竞品数据由 BlazeHTTP 公开发布）：
 
-| 配置项 | 值 |
-|--------|-----|
-| 服务器地址 | `<jxlog 内网 IP>` |
-| 端口 | `9004` |
-| 用户名 / 密码 | `jxlog` / `jxlog`（生产环境务必修改） |
-| 数据库 / 表名 | `jxwaf` / `jxlog` |
+| WAF | 检出率 | 误报率 | 准确率 |
+|-----|--------|--------|--------|
+| CloudFlare 免费版 | 10.70% | 0.07% | 98.40% |
+| ModSecurity PARANOIA 1 | 69.74% | 17.58% | 82.20% |
+| SafeLine 免费·平衡 | 71.65% | 0.07% | 99.45% |
+| **JXWAF 官方免费模型** | **71.28%** | **0.64%** | **98.81%** |
+| **JXWAF 私有部署模型** | **69.91%** | **0.20%** | **99.22%** |
+
+基于 [PayloadsAllTheThings](https://github.com/swisskyrepo/PayloadsAllTheThings) 的 477 项测试覆盖 36 种攻击分类，成功拦截 461 项，**综合通过率 96.6%**。
+
+详细分类通过率与未通过样本见 [标准版防护能力测试报告](https://docs.jxwaf.com/jxwaf-standard/Protection-Capability-Test.html)。
 
 ## 社区支持
 
 ### 微信公众号
 
-关注微信公众号，获取最新更新与技术分享。
-
 <p align="center"><img src="img/wx_code.jpeg" width="200"></p>
-
-### 用户交流群
-
-扫码加入微信用户群，与更多开发者交流讨论。
-
-<p align="center"><img src="img/wx_group.jpg" width="240"></p>
-
-> 群二维码过期或满员时，请联系管理员微信：`574604532`（添加请备注 jxwaf）
 
 ## 贡献者
 
@@ -480,4 +166,5 @@ docker compose up -d
 
 ## 问题反馈
 
-- 微信 `574604532`（添加好友请备注 jxwaf）
+- GitHub Issues：https://github.com/jx-sec/jxwaf/issues
+- 微信 `574604532`（添加请备注 jxwaf）
