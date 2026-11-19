@@ -20,7 +20,7 @@ services:
       - /opt/jxwaf_data/standard_mysql:/var/lib/mysql
 
   jxwaf_admin_server:
-    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server_standard:6.2.24
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_admin_server_standard:6.2.25
     restart: unless-stopped
     network_mode: host
     environment:
@@ -137,7 +137,7 @@ services:
       WAF_FILTER_PORTS: "80,443"
 
   jxwaf_model_server:
-    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_model_server:2.7
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_model_server:2.8
     container_name: jxwaf_model_server
     restart: unless-stopped
     depends_on:
