@@ -65,7 +65,7 @@ services:
       - /opt/jxwaf_data/ssl_cert_service:/data
 
   jxwaf_model_server:
-    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_model_server:2.9
+    image: ccr.ccs.tencentyun.com/jxwaf/jxwaf_model_server:2.10
     container_name: jxwaf_model_server
     restart: unless-stopped
     depends_on:
