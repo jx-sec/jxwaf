@@ -26,9 +26,10 @@ services:
         ipv4_address: 172.60.0.10
   wtds_log:
     container_name: wtds_log
-    image: "ccr.ccs.tencentyun.com/jxwaf/wtds_log:2.0"
+    image: "ccr.ccs.tencentyun.com/jxwaf/wtds_log:2.2"
     ports:
       - "8866:8866"
+    # 日志字段新增/变更后需重启本容器，启动后首批数据会重新检测一次表结构
     environment:
       TZ: Asia/Shanghai
       CLICKHOUSE: 172.60.0.10:9000
@@ -37,6 +38,10 @@ services:
       PASSWORD: jxlog
       TABLE: wtds_log
       TCPSERVER: 0.0.0.0
+      TCPPORT: 8866
+      TTL_DAYS: 30      # 数据保留天数，0 表示永久保留（仅建表时生效）
+      BATCH_SIZE: 100   # 批量写入条数
+      FLUSH_MS: 1000    # 批量刷新间隔(毫秒)
     depends_on:
       - clickhouse
     restart: unless-stopped
